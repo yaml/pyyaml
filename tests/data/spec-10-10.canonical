@@ -1,0 +1,16 @@
+%YAML 1.1
+---
+!!map {
+  ? !!str "explicit key1"
+  : !!str "explicit value",
+  ? !!str "explicit key2"
+  : !!str "",
+  ? !!str "explicit key3"
+  : !!str "",
+  ? !!str "simple key1"
+  : !!str "explicit value",
+  ? !!str "simple key2"
+  : !!str "",
+  ? !!str "simple key3"
+  : !!str "",
+}

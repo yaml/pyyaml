@@ -1,0 +1,7 @@
+[
+  Without properties,
+  &anchor "Anchored",
+  !!str 'Tagged',
+  *anchor, # Alias node
+  !!str,   # Empty plain scalar
+]

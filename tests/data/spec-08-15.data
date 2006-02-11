@@ -1,0 +1,6 @@
+seq:
+- # Empty plain scalar
+- ? foo
+  :
+  ?
+  : bar,

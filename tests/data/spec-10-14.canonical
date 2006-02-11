@@ -1,0 +1,11 @@
+%YAML 1.1
+---
+!!map {
+  ? !!str "plain key"
+  : !!str "",
+  ? !!str "quoted key\n"
+  : !!seq [
+    !!str "one",
+    !!str "two",
+  ]
+}
