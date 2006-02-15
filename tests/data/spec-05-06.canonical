@@ -2,7 +2,7 @@
 ---
 !!map {
   ? !!str "anchored"
-  : !local &A1 "value",
+  : &A1 !local "value",
   ? !!str "alias"
   : *A1,
 }

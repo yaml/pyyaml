@@ -3,6 +3,6 @@
 !!map {
   ? &A1 !!str "foo"
   : !!str "bar",
-  ? !!str &A2 "baz"
-  : *a1
+  ? &A2 !!str "baz"
+  : *A1
 }

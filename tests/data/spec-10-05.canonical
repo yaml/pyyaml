@@ -6,7 +6,7 @@
   !!seq [
     !!str "one",
     !!str "two",
-  ]
+  ],
   !!map {
     ? !!str "one"
     : !!str "two",

@@ -10,12 +10,12 @@
         ? !!str "double"
         : !!str "some text"
   } },
-  ? !!str "collections": : !!map {
+  ? !!str "collections" : !!map {
     ? !!str "sequence" : !!seq [
-      ? !!str "entry",
-      : !!map {
+      !!str "entry",
+      !!map {
         ? !!str "key" : !!str "value"
     } ],
-    ? !!str "mapping": : !!map {
+    ? !!str "mapping" : !!map {
       ? !!str "key" : !!str "value"
 } } }

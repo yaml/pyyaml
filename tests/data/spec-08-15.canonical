@@ -5,7 +5,7 @@
   !!map {
     ? !!str "foo"
     : !!str "",
-    ? !!str "",
+    ? !!str ""
     : !!str "bar",
   }
 ]

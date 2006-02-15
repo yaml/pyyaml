@@ -3,7 +3,7 @@
 !!map {
   ? !!str "---"
   : !!str "foo",
-  ? !!str "...",
+  ? !!str "..."
   : !!str "bar"
 }
 %YAML 1.1

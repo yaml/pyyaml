@@ -1,9 +1,9 @@
 %YAML 1.1
 ---
-!!seq {
+!!seq [
   !!map {
     ? !!str "sun"
-    : !!str "yellow",
+    : !!str "yellow"
   },
   !!map {
     ? !!map {
@@ -15,4 +15,4 @@
       : !!str "white"
     }
   }
-}
+]
