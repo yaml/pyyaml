@@ -2,6 +2,7 @@
 import unittest
 
 from test_marker import *
+from test_stream import *
 from test_canonical import *
 from test_tokens import *
 from test_structure import *

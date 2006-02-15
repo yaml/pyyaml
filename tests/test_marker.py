@@ -1,7 +1,7 @@
 
 import test_appliance
 
-from yaml.marker import Marker
+from yaml.stream import Marker
 
 class TestMarker(test_appliance.TestAppliance):
 
@@ -18,18 +18,17 @@ class TestMarker(test_appliance.TestAppliance):
                 else:
                     column += 1
                 index += 1
-            for str_type in [str, unicode]:
-                marker = Marker(test_name, str_type(input), index, line, column)
-                snippet = marker.get_snippet()
-                #print "INPUT:"
-                #print input
-                #print "SNIPPET:"
-                #print snippet
-                self.failUnless(isinstance(snippet, str))
-                self.failUnlessEqual(snippet.count('\n'), 2)
-                data, pointer, dummy = snippet.split('\n')
-                self.failUnless(len(data) < 80)
-                self.failUnlessEqual(data[len(pointer)-1], '*')
+            marker = Marker(test_name, line, column, unicode(input), index)
+            snippet = marker.get_snippet()
+            #print "INPUT:"
+            #print input
+            #print "SNIPPET:"
+            #print snippet
+            self.failUnless(isinstance(snippet, str))
+            self.failUnlessEqual(snippet.count('\n'), 2)
+            data, pointer, dummy = snippet.split('\n')
+            self.failUnless(len(data) < 80)
+            self.failUnlessEqual(data[len(pointer)-1], '*')
 
 TestMarker.add_tests('testMarkers', '.markers')
 
