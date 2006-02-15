@@ -22,80 +22,83 @@ class Token:
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class YAMLDirective(Token):
+class DirectiveToken(Token):
+    pass
+
+class YAMLDirectiveToken(DirectiveToken):
     def __init__(self, major_version, minor_version, start_marker, end_marker):
         self.major_version = major_version
         self.minor_version = minor_version
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class TagDirective(Token):
+class TagDirectiveToken(DirectiveToken):
     pass
 
-class ReservedDirective(Token):
+class ReservedDirectiveToken(DirectiveToken):
     def __init__(self, name, start_marker, end_marker):
         self.name = name
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class DocumentStart(Token):
+class DocumentStartToken(Token):
     pass
 
-class DocumentEnd(Token):
+class DocumentEndToken(Token):
     pass
 
-class End(Token):
+class EndToken(Token):
     pass
 
-class BlockSequenceStart(Token):
+class BlockSequenceStartToken(Token):
     pass
 
-class BlockMappingStart(Token):
+class BlockMappingStartToken(Token):
     pass
 
-class BlockEnd(Token):
+class BlockEndToken(Token):
     pass
 
-class FlowSequenceStart(Token):
+class FlowSequenceStartToken(Token):
     pass
 
-class FlowMappingStart(Token):
+class FlowMappingStartToken(Token):
     pass
 
-class FlowSequenceEnd(Token):
+class FlowSequenceEndToken(Token):
     pass
 
-class FlowMappingEnd(Token):
+class FlowMappingEndToken(Token):
     pass
 
-class Key(Token):
+class KeyToken(Token):
     pass
 
-class Value(Token):
+class ValueToken(Token):
     pass
 
-class Entry(Token):
+class EntryToken(Token):
     pass
 
-class Alias(Token):
+class AliasToken(Token):
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class Anchor(Token):
+class AnchorToken(Token):
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class Tag(Token):
+class TagToken(Token):
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
-class Scalar(Token):
+class ScalarToken(Token):
     def __init__(self, value, plain, start_marker, end_marker):
         self.value = value
         self.plain = plain
@@ -379,7 +382,7 @@ class Scanner:
         while self.indent > column:
             marker = self.stream.get_marker()
             self.indent = self.indents.pop()
-            self.tokens.append(BlockEnd(marker, marker))
+            self.tokens.append(BlockEndToken(marker, marker))
 
     def add_indent(self, column):
         # Check if we need to increase indentation.
@@ -404,7 +407,7 @@ class Scanner:
         marker = self.stream.get_marker()
         
         # Add END.
-        self.tokens.append(End(marker, marker))
+        self.tokens.append(EndToken(marker, marker))
 
         # The stream is ended.
         self.done = True
@@ -422,10 +425,10 @@ class Scanner:
         self.scan_directive()
 
     def fetch_document_start(self):
-        self.fetch_document_indicator(DocumentStart)
+        self.fetch_document_indicator(DocumentStartToken)
 
     def fetch_document_end(self):
-        self.fetch_document_indicator(DocumentEnd)
+        self.fetch_document_indicator(DocumentEndToken)
 
     def fetch_document_indicator(self, TokenClass):
 
@@ -444,18 +447,18 @@ class Scanner:
         self.tokens.append(TokenClass(start_marker, end_marker))
 
     def fetch_flow_sequence_start(self):
-        self.fetch_flow_collection_start(FlowSequenceStart)
+        self.fetch_flow_collection_start(FlowSequenceStartToken)
 
     def fetch_flow_mapping_start(self):
-        self.fetch_flow_collection_start(FlowMappingStart)
+        self.fetch_flow_collection_start(FlowMappingStartToken)
 
     def fetch_flow_collection_start(self, TokenClass):
 
-        # Increase the flow level.
-        self.flow_level += 1
-
         # '[' and '{' may start a simple key.
         self.save_possible_simple_key()
+
+        # Increase the flow level.
+        self.flow_level += 1
 
         # Simple keys are allowed after '[' and '{'.
         self.allow_simple_key = True
@@ -467,10 +470,10 @@ class Scanner:
         self.tokens.append(TokenClass(start_marker, end_marker))
 
     def fetch_flow_sequence_end(self):
-        self.fetch_flow_collection_end(FlowSequenceEnd)
+        self.fetch_flow_collection_end(FlowSequenceEndToken)
 
     def fetch_flow_mapping_end(self):
-        self.fetch_flow_collection_end(FlowMappingEnd)
+        self.fetch_flow_collection_end(FlowMappingEndToken)
 
     def fetch_flow_collection_end(self, TokenClass):
 
@@ -501,7 +504,7 @@ class Scanner:
             # We may need to add BLOCK-SEQUENCE-START.
             if self.add_indent(self.stream.column):
                 marker = self.stream.get_marker()
-                self.tokens.append(BlockSequenceStart(marker, marker))
+                self.tokens.append(BlockSequenceStartToken(marker, marker))
 
         # Simple keys are allowed after '-' and ','.
         self.allow_simple_key = True
@@ -513,7 +516,7 @@ class Scanner:
         start_marker = self.stream.get_marker()
         self.stream.read()
         end_marker = self.stream.get_marker()
-        self.tokens.append(Entry(start_marker, end_marker))
+        self.tokens.append(EntryToken(start_marker, end_marker))
 
     def fetch_key(self):
         
@@ -527,7 +530,7 @@ class Scanner:
             # We may need to add BLOCK-MAPPING-START.
             if self.add_indent(self.stream.column):
                 marker = self.stream.get_marker()
-                self.tokens.append(BlockMappingStart(marker, marker))
+                self.tokens.append(BlockMappingStartToken(marker, marker))
 
         # Simple keys are allowed after '?' in the block context.
         self.allow_simple_key = not self.flow_level
@@ -539,7 +542,7 @@ class Scanner:
         start_marker = self.stream.get_marker()
         self.stream.read()
         end_marker = self.stream.get_marker()
-        self.tokens.append(Key(start_marker, end_marker))
+        self.tokens.append(KeyToken(start_marker, end_marker))
 
     def fetch_value(self):
 
@@ -550,14 +553,14 @@ class Scanner:
             key = self.possible_simple_keys[self.flow_level]
             del self.possible_simple_keys[self.flow_level]
             self.tokens.insert(key.token_number-self.tokens_taken,
-                    Key(key.marker, key.marker))
+                    KeyToken(key.marker, key.marker))
 
             # If this key starts a new block mapping, we need to add
             # BLOCK-MAPPING-START.
             if not self.flow_level:
                 if self.add_indent(key.column):
                     self.tokens.insert(key.token_number-self.tokens_taken,
-                            BlockMappingStart(key.marker, key.marker))
+                            BlockMappingStartToken(key.marker, key.marker))
 
             # There cannot be two simple keys one after another.
             self.allow_simple_key = False
@@ -575,7 +578,7 @@ class Scanner:
         start_marker = self.stream.get_marker()
         self.stream.read()
         end_marker = self.stream.get_marker()
-        self.tokens.append(Value(start_marker, end_marker))
+        self.tokens.append(ValueToken(start_marker, end_marker))
 
     def fetch_alias(self):
 
@@ -586,7 +589,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add ALIAS.
-        self.scan_anchor(Alias)
+        self.scan_anchor(AliasToken)
 
     def fetch_anchor(self):
 
@@ -597,7 +600,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add ANCHOR.
-        self.scan_anchor(Anchor)
+        self.scan_anchor(AnchorToken)
 
     def fetch_tag(self):
 
@@ -738,11 +741,11 @@ class Scanner:
     def scan_directive(self):
         marker = self.stream.get_marker()
         if self.stream.peek(5) == u'%YAML ':
-            self.tokens.append(YAMLDirective(1, 1, marker, marker))
+            self.tokens.append(YAMLDirectiveToken(1, 1, marker, marker))
         elif self.stream.peek(4) == u'%TAG ':
-            self.tokens.append(TagDirective(marker, marker))
+            self.tokens.append(TagDirectiveToken(marker, marker))
         else:
-            self.tokens.append(ReservedDirective('', marker, marker))
+            self.tokens.append(ReservedDirectiveToken('', marker, marker))
         while self.stream.peek() not in u'\0\r\n':
             self.stream.read()
         self.stream.read()
@@ -759,7 +762,7 @@ class Scanner:
         while self.stream.peek() not in u'\0 \t\r\n':
             self.stream.read()
         end_marker = self.stream.get_marker()
-        self.tokens.append(Tag('', start_marker, end_marker))
+        self.tokens.append(TagToken('', start_marker, end_marker))
 
     def scan_block_scalar(self, folded):
         start_marker = self.stream.get_marker()
@@ -767,7 +770,7 @@ class Scanner:
         if indent < 1:
             indent = 1
         while True:
-            while self.stream.peek() and self.stream.peek() and self.stream.peek() not in u'\0\r\n':
+            while self.stream.peek() and self.stream.peek() and self.stream.peek() not in u'\0\r\n\x85\u2028\u2029':
                 self.stream.read()
             if self.stream.peek() != u'\0':
                 self.stream.read()
@@ -775,9 +778,9 @@ class Scanner:
             while count < indent and self.stream.peek() == u' ':
                 self.stream.read()
                 count += 1
-            if count < indent and self.stream.peek() not in u'#\r\n':
+            if count < indent and self.stream.peek() not in u'#\r\n\x85\u2028\u2029':
                 break
-        self.tokens.append(Scalar('', False, start_marker, start_marker))
+        self.tokens.append(ScalarToken('', False, start_marker, start_marker))
 
     def scan_flow_scalar(self, double):
         marker = self.stream.get_marker()
@@ -790,7 +793,7 @@ class Scanner:
             else:
                 self.stream.read(1)
         self.stream.read(1)
-        self.tokens.append(Scalar('', False, marker, marker))
+        self.tokens.append(ScalarToken('', False, marker, marker))
 
     def scan_plain(self):
         indent = self.indent+1
@@ -822,7 +825,7 @@ class Scanner:
             if count < indent:
                 break
             space = True
-        self.tokens.append(Scalar('', True, marker, marker))
+        self.tokens.append(ScalarToken('', True, marker, marker))
 
     def invalid_token(self):
         self.fail("invalid token")

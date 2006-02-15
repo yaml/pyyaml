@@ -25,25 +25,25 @@ class TestTokens(test_appliance.TestAppliance):
     # value:                :
 
     replaces = {
-        YAMLDirective: '%',
-        TagDirective: '%',
-        ReservedDirective: '%',
-        DocumentStart: '---',
-        DocumentEnd: '...',
-        Alias: '*',
-        Anchor: '&',
-        Tag: '!',
-        Scalar: '_',
-        BlockSequenceStart: '[[',
-        BlockMappingStart: '{{',
-        BlockEnd: ']}',
-        FlowSequenceStart: '[',
-        FlowSequenceEnd: ']',
-        FlowMappingStart: '{',
-        FlowMappingEnd: '}',
-        Entry: ',',
-        Key: '?',
-        Value: ':',
+        YAMLDirectiveToken: '%',
+        TagDirectiveToken: '%',
+        ReservedDirectiveToken: '%',
+        DocumentStartToken: '---',
+        DocumentEndToken: '...',
+        AliasToken: '*',
+        AnchorToken: '&',
+        TagToken: '!',
+        ScalarToken: '_',
+        BlockSequenceStartToken: '[[',
+        BlockMappingStartToken: '{{',
+        BlockEndToken: ']}',
+        FlowSequenceStartToken: '[',
+        FlowSequenceEndToken: ']',
+        FlowMappingStartToken: '{',
+        FlowMappingEndToken: '}',
+        EntryToken: ',',
+        KeyToken: '?',
+        ValueToken: ':',
     }
 
     def _testTokens(self, test_name, data_filename, tokens_filename):
@@ -52,7 +52,7 @@ class TestTokens(test_appliance.TestAppliance):
         try:
             scanner = Scanner(data_filename, file(data_filename, 'rb').read())
             tokens1 = []
-            while not isinstance(scanner.peek_token(), End):
+            while not isinstance(scanner.peek_token(), EndToken):
                 tokens1.append(scanner.get_token())
             tokens1 = [self.replaces[t.__class__] for t in tokens1]
             self.failUnlessEqual(tokens1, tokens2)
@@ -74,7 +74,7 @@ class TestScanner(test_appliance.TestAppliance):
             try:
                 scanner = Scanner(filename, file(filename, 'rb').read())
                 tokens = []
-                while not isinstance(scanner.peek_token(), End):
+                while not isinstance(scanner.peek_token(), EndToken):
                     tokens.append(scanner.get_token().__class__.__name__)
             except:
                 print

@@ -1,4 +1,2 @@
-!!str
- &a1
-  "foo" : !!str bar
+!!str &a1 "foo" : !!str bar
 &a2 baz : *a1

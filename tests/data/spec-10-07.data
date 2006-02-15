@@ -1,7 +1,8 @@
 {
-? : value # Empty key
+#? : value # Empty key
+? ~ : value, # Empty key
 ? explicit
  key: value,
-simple key : value
+simple key : value,
 [ collection, simple, key ]: value
 }

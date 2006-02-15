@@ -1,9 +1,7 @@
 %YAML 1.1
 ---
-!!seq [
-  !!str "folded line\n\
-        next line\n\
-        \  * bullet\n\
-        \  * list\n\
-        last line\n"
-]
+!!str "folded line\n\
+      next line\n\
+      \  * bullet\n\
+      \  * list\n\
+      last line\n"

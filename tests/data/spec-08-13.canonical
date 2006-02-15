@@ -2,7 +2,9 @@
 ---
 !!map {
   ? !!str "foo"
-  : !!str "",
-  ? !!str ""
+#  : !!str "",
+#  ? !!str ""
+  : !!null "",
+  ? !!null ""
   : !!str "bar",
 }

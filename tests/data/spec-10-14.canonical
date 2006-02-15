@@ -2,7 +2,7 @@
 ---
 !!map {
   ? !!str "plain key"
-  : !!str "",
+  : !!null "",
   ? !!str "quoted key\n"
   : !!seq [
     !!str "one",

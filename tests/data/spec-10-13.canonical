@@ -2,7 +2,7 @@
 ---
 !!map {
   ? !!str "explicit key"
-  : !!str "",
+  : !!null "",
   ? !!str "block key\n"
   : !!seq [
     !!str "one",

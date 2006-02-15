@@ -32,7 +32,7 @@ class Node:
         for attribute in ['anchor', 'tag', 'value']:
             if hasattr(self, attribute):
                 args.append(repr(getattr(self, attribute)))
-        return "%s(%s)" % (self.__class__.__name__, ''.join(args))
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(args))
 
 class AliasNode(Node):
     def __init__(self, anchor):

@@ -7,11 +7,11 @@
   },
   !!map {
     ? !!str "explicit key2"
-    : !!str "",
+    : !!null "",
   },
   !!map {
     ? !!str "explicit key3"
-    : !!str "",
+    : !!null "",
   },
   !!map {
     ? !!str "simple key1"
@@ -19,6 +19,6 @@
   },
   !!map {
     ? !!str "simple key2"
-    : !!str "",
+    : !!null "",
   },
 ]

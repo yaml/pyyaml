@@ -8,6 +8,7 @@
   ? !!str "mapping"
   : !!map {
     ? !!str "sky" : !!str "blue",
-    ? !!str "sea" : !!str "green",
+#    ? !!str "sea" : !!str "green",
+    ? !!map { ? !!str "sea" : !!str "green" } : !!null "",
   }
 }

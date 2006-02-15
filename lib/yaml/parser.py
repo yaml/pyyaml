@@ -39,128 +39,164 @@
 # flow_sequence_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
+from scanner import *
+
+class Error(Exception):
+    pass
+
+class Node:
+    def __repr__(self):
+        args = []
+        for attribute in ['anchor', 'tag', 'value']:
+            if hasattr(self, attribute):
+                args.append(repr(getattr(self, attribute)))
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(args))
+
+class AliasNode(Node):
+    def __init__(self, anchor):
+        self.anchor = anchor
+
+class ScalarNode(Node):
+    def __init__(self, anchor, tag, value):
+        self.anchor = anchor
+        self.tag = tag
+        self.value = value
+
+class SequenceNode(Node):
+    def __init__(self, anchor, tag, value):
+        self.anchor = anchor
+        self.tag = tag
+        self.value = value
+
+class MappingNode(Node):
+    def __init__(self, anchor, tag, value):
+        self.anchor = anchor
+        self.tag = tag
+        self.value = value
+
 class Parser:
 
-    def parse(self, source, data):
-        scanner = Scanner()
-        self.tokens = scanner.scan(source, data)
-        self.tokens.append('END')
-        documents = self.parse_stream()
-        if len(documents) == 1:
-            return documents[0]
-        return documents
+    def __init__(self, source, data):
+        self.scanner = Scanner(source, data)
+
+    def is_token(self, *choices):
+        token = self.scanner.peek_token()
+        for choice in choices:
+            if isinstance(token, choices):
+                return True
+        return False
+
+    def get_token(self):
+        return self.scanner.get_token()
+
+    def parse(self):
+        return self.parse_stream()
 
     def parse_stream(self):
         documents = []
-        if self.tokens[0] not in ['DIRECTIVE', 'DOCUMENT_START', 'END']:
+        if not self.is_token(DirectiveToken, DocumentStartToken, EndToken):
             documents.append(self.parse_block_node())
-        while self.tokens[0] != 'END':
-            while self.tokens[0] == 'DIRECTIVE':
-                self.tokens.pop(0)
-            if self.tokens[0] != 'DOCUMENT_START':
-                self.error('DOCUMENT_START is expected')
-            self.tokens.pop(0)
-            if self.tokens[0] in ['DIRECTIVE', 'DOCUMENT_START', 'DOCUMENT_END', 'END']:
+        while not self.is_token(EndToken):
+            while self.is_token(DirectiveToken):
+                self.get_token()
+            if not self.is_token(DocumentStartToken):
+                self.fail('DOCUMENT-START is expected')
+            self.get_token()
+            if self.is_token(DirectiveToken,
+                    DocumentStartToken, DocumentEndToken, EndToken):
                 documents.append(None)
             else:
                 documents.append(self.parse_block_node())
-            while self.tokens[0] == 'DOCUMENT_END':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'END':
-            self.error("END is expected")
-        return tuple(documents)
+            while self.is_token(DocumentEndToken):
+                self.get_token()
+        if not self.is_token(EndToken):
+            self.fail("END is expected")
+        return documents
 
     def parse_block_node(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        return self.parse_block_content()
+        return self.parse_node(block=True)
 
     def parse_flow_node(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        return self.parse_flow_content()
+        return self.parse_node()
 
     def parse_block_node_or_indentless_sequence(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        if self.tokens[0] == 'ENTRY':
-            return self.parse_indentless_sequence(self)
-        return self.parse_block_content()
+        return self.parse_node(block=True, indentless_sequence=True)
+
+    def parse_node(self, block=False, indentless_sequence=False):
+        if self.is_token(AliasToken):
+            token = self.get_token()
+            return AliasNode(token.value)
+        anchor = None
+        tag = None
+        if self.is_token(AnchorToken):
+            anchor = self.get_token().value
+            if self.is_token(TagToken):
+                tag = self.get_token().value
+        elif self.is_token(TagToken):
+            tag = self.get_token().value
+            if self.is_token(AnchorToken):
+                anchor = self.get_token().value
+        if indentless_sequence and self.is_token(EntryToken):
+            NodeClass = SequenceNode
+            value = self.parse_indentless_sequence()
+        else:
+            if self.is_token(ScalarToken):
+                NodeClass = ScalarNode
+            elif self.is_token(BlockSequenceStartToken, FlowSequenceStartToken):
+                NodeClass = SequenceNode
+            elif self.is_token(BlockMappingStartToken, FlowMappingStartToken):
+                NodeClass = MappingNode
+            if block:
+                value = self.parse_block_content()
+            else:
+                value = self.parse_flow_content()
+        return NodeClass(anchor, tag, value)
 
     def parse_block_content(self):
-        if self.tokens[0] == 'SCALAR':
-            self.tokens.pop(0)
-            return True
-        elif self.tokens[0] == 'BLOCK_SEQ_START':
+        if self.is_token(ScalarToken):
+            return self.get_token().value
+        elif self.is_token(BlockSequenceStartToken):
             return self.parse_block_sequence()
-        elif self.tokens[0] == 'BLOCK_MAP_START':
+        elif self.is_token(BlockMappingStartToken):
             return self.parse_block_mapping()
-        elif self.tokens[0] == 'FLOW_SEQ_START':
+        elif self.is_token(FlowSequenceStartToken):
             return self.parse_flow_sequence()
-        elif self.tokens[0] == 'FLOW_MAP_START':
+        elif self.is_token(FlowMappingStartToken):
             return self.parse_flow_mapping()
         else:
-            self.error('block content is expected')
+            self.fail('block content is expected')
 
     def parse_flow_content(self):
-        if self.tokens[0] == 'SCALAR':
-            self.tokens.pop(0)
-            return True
-        elif self.tokens[0] == 'FLOW_SEQ_START':
+        if self.is_token(ScalarToken):
+            return self.get_token().value
+        elif self.is_token(FlowSequenceStartToken):
             return self.parse_flow_sequence()
-        elif self.tokens[0] == 'FLOW_MAP_START':
+        elif self.is_token(FlowMappingStartToken):
             return self.parse_flow_mapping()
         else:
-            self.error('flow content is expected')
+            self.fail('flow content is expected')
 
     def parse_block_sequence(self):
         sequence = []
-        if self.tokens[0] != 'BLOCK_SEQ_START':
-            self.error('BLOCK_SEQ_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] == 'ENTRY':
-            self.tokens.pop(0)
-            if self.tokens[0] not in ['ENTRY', 'BLOCK_END']:
+        if not self.is_token(BlockSequenceStartToken):
+            self.fail('BLOCK-SEQUENCE-START is expected')
+        self.get_token()
+        while self.is_token(EntryToken):
+            self.get_token()
+            if not self.is_token(EntryToken, BlockEndToken):
                 sequence.append(self.parse_block_node())
             else:
                 sequence.append(None)
-        if self.tokens[0] != 'BLOCK_END':
-            self.error('BLOCK_END is expected')
-        self.tokens.pop(0)
+        if not self.is_token(BlockEndToken):
+            self.fail('BLOCK-END is expected')
+        self.get_token()
         return sequence
 
     def parse_indentless_sequence(self):
         sequence = []
-        while self.tokens[0] == 'ENTRY':
-            self.tokens.pop(0)
-            if self.tokens[0] not in ['ENTRY']:
+        while self.is_token(EntryToken):
+            self.get_token()
+            if not self.is_token(EntryToken):
                 sequence.append(self.parse_block_node())
             else:
                 sequence.append(None)
@@ -168,83 +204,84 @@ class Parser:
 
     def parse_block_mapping(self):
         mapping = []
-        if self.tokens[0] != 'BLOCK_MAP_START':
-            self.error('BLOCK_MAP_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] in ['KEY', 'VALUE']:
+        if not self.is_token(BlockMappingStartToken):
+            self.fail('BLOCK-MAPPING-START is expected')
+        self.get_token()
+        while self.is_token(KeyToken, ValueToken):
             key = None
             value = None
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
-                if self.tokens[0] not in ['KEY', 'VALUE', 'BLOCK_END']:
+            if self.is_token(KeyToken):
+                self.get_token()
+                if not self.is_token(KeyToken, ValueToken, BlockEndToken):
                     key = self.parse_block_node_or_indentless_sequence()
-            if self.tokens[0] == 'VALUE':
-                self.tokens.pop(0)
-                if self.tokens[0] not in ['KEY', 'VALUE', 'BLOCK_END']:
+            if self.is_token(ValueToken):
+                self.get_token()
+                if not self.is_token(KeyToken, ValueToken, BlockEndToken):
                     value = self.parse_block_node_or_indentless_sequence()
             mapping.append((key, value))
-        if self.tokens[0] != 'BLOCK_END':
-            self.error('BLOCK_END is expected')
-        self.tokens.pop(0)
+        if not self.is_token(BlockEndToken):
+            self.fail('BLOCK-END is expected')
+        self.get_token()
         return mapping
 
     def parse_flow_sequence(self):
         sequence = []
-        if self.tokens[0] != 'FLOW_SEQ_START':
-            self.error('FLOW_SEQ_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] != 'FLOW_SEQ_END':
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
+        if not self.is_token(FlowSequenceStartToken):
+            self.fail('FLOW-SEQUENCE-START is expected')
+        self.get_token()
+        while not self.is_token(FlowSequenceEndToken):
+            if self.is_token(KeyToken):
+                self.get_token()
                 key = None
                 value = None
-                if self.tokens[0] != 'VALUE':
+                if not self.is_token(ValueToken):
                     key = self.parse_flow_node()
-                if self.tokens[0] == 'VALUE':
-                    self.tokens.pop(0)
-                    if self.tokens[0] not in ['ENTRY', 'FLOW_SEQ_END']:
+                if self.is_token(ValueToken):
+                    self.get_token()
+                    if not self.is_token(EntryToken, FlowSequenceEndToken):
                         value = self.parse_flow_node()
-                sequence.append([(key, value)])
+                node = MappingNode(None, None, [(key, value)])
+                sequence.append(node)
             else:
                 sequence.append(self.parse_flow_node())
-            if self.tokens[0] not in ['ENTRY', 'FLOW_SEQ_END']:
-                self.error("ENTRY or FLOW_SEQ_END is expected")
-            if self.tokens[0] == 'ENTRY':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'FLOW_SEQ_END':
-            self.error('FLOW_SEQ_END is expected')
-        self.tokens.pop(0)
+            if not self.is_token(EntryToken, FlowSequenceEndToken):
+                self.fail("ENTRY or FLOW-SEQUENCE-END are expected")
+            if self.is_token(EntryToken):
+                self.get_token()
+        if not self.is_token(FlowSequenceEndToken):
+            self.fail('FLOW-SEQUENCE-END is expected')
+        self.get_token()
         return sequence
 
     def parse_flow_mapping(self):
         mapping = []
-        if self.tokens[0] != 'FLOW_MAP_START':
-            self.error('FLOW_MAP_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] != 'FLOW_MAP_END':
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
+        if not self.is_token(FlowMappingStartToken):
+            self.fail('FLOW-MAPPING-START is expected')
+        self.get_token()
+        while not self.is_token(FlowMappingEndToken):
+            if self.is_token(KeyToken):
+                self.get_token()
                 key = None
                 value = None
-                if self.tokens[0] != 'VALUE':
+                if not self.is_token(ValueToken):
                     key = self.parse_flow_node()
-                if self.tokens[0] == 'VALUE':
-                    self.tokens.pop(0)
-                    if self.tokens[0] not in ['ENTRY', 'FLOW_MAP_END']:
+                if self.is_token(ValueToken):
+                    self.get_token()
+                    if not self.is_token(EntryToken, FlowMappingEndToken):
                         value = self.parse_flow_node()
                 mapping.append((key, value))
             else:
                 mapping.append((self.parse_flow_node(), None))
-            if self.tokens[0] not in ['ENTRY', 'FLOW_MAP_END']:
-                self.error("ENTRY or FLOW_MAP_END is expected")
-            if self.tokens[0] == 'ENTRY':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'FLOW_MAP_END':
-            self.error('FLOW_MAP_END is expected')
-        self.tokens.pop(0)
+            if not self.is_token(EntryToken, FlowMappingEndToken):
+                self.fail("ENTRY or FLOW-MAPPING-END are expected")
+            if self.is_token(EntryToken):
+                self.get_token()
+        if not self.is_token(FlowMappingEndToken):
+            self.fail('FLOW-MAPPING-END is expected')
+        self.get_token()
         return mapping
 
-    def error(self, message):
-        raise Error(message+': '+str(self.tokens))
-
+    def fail(self, message):
+        marker = self.scanner.peek_token().start_marker
+        raise Error(message+':\n'+marker.get_snippet())
 

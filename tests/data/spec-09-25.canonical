@@ -1,6 +1,4 @@
 %YAML 1.1
 ---
-!!seq [
-  !!str "literal\n\
-        \ttext\n"
-]
+!!str "literal\n\
+      \ttext\n"

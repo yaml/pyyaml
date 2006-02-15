@@ -4,5 +4,5 @@
   ? !!str "key"
   : !!str "value",
   ? !!str "empty"
-  : !!str "",
+  : !!null "",
 }

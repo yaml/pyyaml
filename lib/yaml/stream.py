@@ -18,7 +18,7 @@ class Stream:
         for i in range(k):
             if self.index >= len(self.data):
                 break
-            if self.data[self.index] in u'\r\n':
+            if self.data[self.index] in u'\r\n\x85\u2028\u2029':
                 self.line += 1
                 self.column = 0
             else:
