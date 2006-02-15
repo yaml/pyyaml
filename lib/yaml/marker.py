@@ -1,11 +1,11 @@
 
 class Marker:
 
-    def __init__(self, source, data, index, row, column):
+    def __init__(self, source, data, index, line, column):
         self.source = source
         self.data = data
         self.index = index
-        self.row = row
+        self.line = line
         self.column = column
 
     def get_snippet(self, max_length=79):

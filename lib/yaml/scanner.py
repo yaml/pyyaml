@@ -1,15 +1,123 @@
 
+# Tokens:
+# YAML-DIRECTIVE(major_version, minor_version), TAG-DIRECTIVE(handle, prefix)
+# RESERVED-DIRECTIVE(name)
+# DOCUMENT-START, DOCUMENT-END
+# BLOCK-SEQUENCE-START, BLOCK-MAPPING-START, BLOCK-END
+# FLOW-SEQUENCE-START, FLOW-MAPPING-START, FLOW-SEQUENCE-END, FLOW-MAPPING-END
+# ENTRY, KEY, VALUE
+# ALIAS(name), ANCHOR(name), TAG(value), SCALAR(value, plain)
+
+
 from marker import Marker
-from error import ParserError
+#from error import YAMLError
 from stream import Stream
+
+#class ScannerError(YAMLError):
+class ScannerError(Exception):
+    pass
+
+class Token:
+    def __init__(self, start_marker, end_marker):
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class YAMLDirective(Token):
+    def __init__(self, major_version, minor_version, start_marker, end_marker):
+        self.major_version = major_version
+        self.minor_version = minor_version
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class TagDirective(Token):
+    pass
+
+class ReservedDirective(Token):
+    def __init__(self, name, start_marker, end_marker):
+        self.name = name
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class DocumentStart(Token):
+    pass
+
+class DocumentEnd(Token):
+    pass
+
+class End(Token):
+    pass
+
+class BlockSequenceStart(Token):
+    pass
+
+class BlockMappingStart(Token):
+    pass
+
+class BlockEnd(Token):
+    pass
+
+class FlowSequenceStart(Token):
+    pass
+
+class FlowMappingStart(Token):
+    pass
+
+class FlowSequenceEnd(Token):
+    pass
+
+class FlowMappingEnd(Token):
+    pass
+
+class Key(Token):
+    pass
+
+class Value(Token):
+    pass
+
+class Entry(Token):
+    pass
+
+class Alias(Token):
+    def __init__(self, value, start_marker, end_marker):
+        self.value = value
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class Anchor(Token):
+    def __init__(self, value, start_marker, end_marker):
+        self.value = value
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class Tag(Token):
+    def __init__(self, value, start_marker, end_marker):
+        self.value = value
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class Scalar(Token):
+    def __init__(self, value, plain, start_marker, end_marker):
+        self.value = value
+        self.plain = plain
+        self.start_marker = start_marker
+        self.end_marker = end_marker
+
+class SimpleKey:
+    def __init__(self, token_number, required, index, line, column, marker):
+        self.token_number = token_number
+        self.required = required
+        self.index = index
+        self.line = line
+        self.column = column
+        self.marker = marker
 
 class Scanner:
 
     def __init__(self, source, data):
         """Initialize the scanner."""
         # The input stream. The Stream class do the dirty work of checking for
-        # BOM and converting the input data to Unicode. It also adds LF to the
-        # end if the data does not ends with an EOL character.
+        # BOM and converting the input data to Unicode. It also adds NUL to
+        # the end.
         #
         # Stream supports the following methods
         #   self.stream.peek(k=1)   # peek the next k characters
@@ -36,7 +144,7 @@ class Scanner:
         # Past indentation levels.
         self.indents = []
 
-        # Variables related to simple key treatment.
+        # Variables related to simple keys treatment.
 
         # A simple key is a key that is not denoted by the '?' indicator.
         # Example of simple keys:
@@ -48,40 +156,42 @@ class Scanner:
         # simple key, we try to locate the corresponding ':' indicator.
         # Simple keys should be limited to a single line and 1024 characters.
 
-        # Can a block collection start at the current position? A block
-        # collection may start:
-        #   - at the beginning of the line (not counting spaces),
-        #   - after the block sequence indicator '-'.
-        self.allow_block_collection = True
-
-        # Can a simple key in flow context start at the current position? A
-        # simple key may start after the '{', '[', and ',' indicators.
-        self.allow_flow_simple_keys = False
+        # Can a simple key start at the current position? A simple key may
+        # start:
+        # - at the beginning of the line, not counting indentation spaces
+        #       (in block context),
+        # - after '{', '[', ',' (in the flow context),
+        # - after '?', ':', '-' (in the block context).
+        # In the block context, this flag also signify if a block collection
+        # may start at the current position.
+        self.allow_simple_key = True
 
         # Keep track of possible simple keys. This is a dictionary. The key
         # is `flow_level`; there can be no more that one possible simple key
-        # for each level. The value is a record of
-        #   (stream.index, stream.line, stream.column, token_number)
+        # for each level. The value is a SimpleKey record:
+        #   (token_number, required, index, line, column, marker)
+        # A simple key may start with ALIAS, ANCHOR, TAG, SCALAR(flow),
+        # '[', or '{' tokens.
         self.possible_simple_keys = {}
 
-    # Public methods:
+    # Two public methods.
 
     def peek_token(self):
         """Get the current token."""
-        while self.need_more_tokens()
+        while self.need_more_tokens():
             self.fetch_more_tokens()
         if self.tokens:
             return self.tokens[0]
 
     def get_token(self):
-        "Get the current token and remove it from the list."""
+        "Get the current token and remove it from the list of pending tokens."""
         while self.need_more_tokens():
             self.fetch_more_tokens()
         if self.tokens:
             self.tokens_taken += 1
             return self.tokens.pop(0)
 
-    # Private methods:
+    # Private methods.
 
     def need_more_tokens(self):
         if self.done:
@@ -90,23 +200,30 @@ class Scanner:
             return True
         # The current token may be a potential simple key, so we
         # need to look further.
+        self.stale_possible_simple_keys()
         if self.next_possible_simple_key() == self.tokens_taken:
             return True
 
     def fetch_more_tokens(self):
 
         # Eat whitespaces and comments until we reach the next token.
-        self.find_next_token()
+        self.scan_to_next_token()
+
+        # Remove obsolete possible simple keys.
+        self.stale_possible_simple_keys()
 
         # Compare the current indentation and column. It may add some tokens
-        # and decrease the current indentation.
+        # and decrease the current indentation level.
         self.unwind_indent(self.stream.column)
+
+        #print
+        #print self.stream.get_marker().get_snippet()
 
         # Peek the next character.
         ch = self.stream.peek()
 
         # Is it the end of stream?
-        if ch is None:
+        if ch == u'\0':
             return self.fetch_end()
 
         # Is it a directive?
@@ -122,10 +239,6 @@ class Scanner:
             return self.fetch_document_end()
 
         # Note: the order of the following checks is NOT significant.
-
-        # Is it the sequence indicator?
-        if ch in u'-,' and self.check_entry():
-            return self.fetch_entry()
 
         # Is it the flow sequence start indicator?
         if ch == u'[':
@@ -143,6 +256,10 @@ class Scanner:
         if ch == u'}':
             return self.fetch_flow_mapping_end()
 
+        # Is it the entry indicator?
+        if ch in u'-,' and self.check_entry():
+            return self.fetch_entry()
+
         # Is it the key indicator?
         if ch == u'?' and self.check_key():
             return self.fetch_key()
@@ -159,16 +276,16 @@ class Scanner:
         if ch == u'&':
             return self.fetch_anchor()
 
-        # Is is a tag?
+        # Is it a tag?
         if ch == u'!':
             return self.fetch_tag()
 
-        # Is is a literal scalar?
-        if ch == u'|':
+        # Is it a literal scalar?
+        if ch == u'|' and not self.flow_level:
             return self.fetch_literal()
 
         # Is it a folded scalar?
-        if ch == u'>':
+        if ch == u'>' and not self.flow_level:
             return self.fetch_folded()
 
         # Is it a single quoted scalar?
@@ -179,829 +296,537 @@ class Scanner:
         if ch == u'\"':
             return self.fetch_double()
 
-        # It must be a plain scalar.
+        # It must be a plain scalar then.
         if self.check_plain():
             return self.fetch_plain()
 
-        # No? It's an error then. Let's produce a nice error message.
+        # No? It's an error. Let's produce a nice error message.
         self.invalid_token()
+
+    # Simple keys treatment.
+
+    def next_possible_simple_key(self):
+        # Return the number of the nearest possible simple key. Actually we
+        # don't need to loop through the whole dictionary. We may replace it
+        # with the following code:
+        #   if not self.possible_simple_keys:
+        #       return None
+        #   return self.possible_simple_keys[
+        #           min(self.possible_simple_keys.keys())].token_number
+        min_token_number = None
+        for level in self.possible_simple_keys:
+            key = self.possible_simple_keys[level]
+            if min_token_number is None or key.token_number < min_token_number:
+                min_token_number = key.token_number
+        return min_token_number
+
+    def stale_possible_simple_keys(self):
+        # Remove entries that are no longer possible simple keys. According to
+        # the YAML specification, simple keys
+        # - should be limited to a single line,
+        # - should be no longer than 1024 characters.
+        # Disabling this procedure will allow simple keys of any length and
+        # height (may cause problems if indentation is broken though).
+        for level in self.possible_simple_keys.keys():
+            key = self.possible_simple_keys[level]
+            if key.line != self.stream.line  \
+                    or self.stream.index-key.index > 1024:
+                if key.required:
+                    self.fail("simple key is required")
+                del self.possible_simple_keys[level]
+
+    def save_possible_simple_key(self):
+        # The next token may start a simple key. We check if it's possible
+        # and save its position. This function is called for
+        #   ALIAS, ANCHOR, TAG, SCALAR(flow), '[', and '{'.
+
+        # Check if a simple key is required at the current position.
+        required = not self.flow_level and self.indent == self.stream.column
+
+        # The next token might be a simple key. Let's save it's number and
+        # position.
+        if self.allow_simple_key:
+            self.remove_possible_simple_key()
+            token_number = self.tokens_taken+len(self.tokens)
+            index = self.stream.index
+            line = self.stream.line
+            column = self.stream.column
+            marker = self.stream.get_marker()
+            key = SimpleKey(token_number, required,
+                    index, line, column, marker)
+            self.possible_simple_keys[self.flow_level] = key
+
+        # A simple key is required at the current position.
+        elif required:
+            self.fail("simple key is required")
+
+    def remove_possible_simple_key(self):
+        # Remove the saved possible key position at the current flow level.
+        if self.flow_level in self.possible_simple_keys:
+            key = self.possible_simple_keys[self.flow_level]
+            if key.required:
+                self.fail("simple key is required")
+
+    # Indentation functions.
+
+    def unwind_indent(self, column):
+
+        # In flow context, tokens should respect indentation.
+        if self.flow_level and self.indent > column:
+            self.fail("invalid intendation in the flow context")
+
+        # In block context, we may need to issue the BLOCK-END tokens.
+        while self.indent > column:
+            marker = self.stream.get_marker()
+            self.indent = self.indents.pop()
+            self.tokens.append(BlockEnd(marker, marker))
+
+    def add_indent(self, column):
+        # Check if we need to increase indentation.
+        if self.indent < column:
+            self.indents.append(self.indent)
+            self.indent = column
+            return True
+        return False
+
+    # Fetchers.
 
     def fetch_end(self):
 
         # Set the current intendation to -1.
-        self.unwind_indents(-1)
+        self.unwind_indent(-1)
 
         # Reset everything (not really needed).
-        self.allow_block_collection = False
-        self.allow_flow_simple_keys = False
+        self.allow_simple_key = False
         self.possible_simple_keys = {}
 
-        # Add END.
+        # Read the token.
         marker = self.stream.get_marker()
-        self.tokens.append(EndToken(marker))
+        
+        # Add END.
+        self.tokens.append(End(marker, marker))
 
         # The stream is ended.
         self.done = True
 
+    def fetch_directive(self):
+        
+        # Set the current intendation to -1.
+        self.unwind_indent(-1)
+
+        # Reset simple keys.
+        self.remove_possible_simple_key()
+        self.allow_simple_key = False
+
+        # Scan and add DIRECTIVE.
+        self.scan_directive()
+
+    def fetch_document_start(self):
+        self.fetch_document_indicator(DocumentStart)
+
+    def fetch_document_end(self):
+        self.fetch_document_indicator(DocumentEnd)
+
+    def fetch_document_indicator(self, TokenClass):
+
+        # Set the current intendation to -1.
+        self.unwind_indent(-1)
+
+        # Reset simple keys. Note that there could not be a block collection
+        # after '---'.
+        self.remove_possible_simple_key()
+        self.allow_simple_key = False
+
+        # Add DOCUMENT-START or DOCUMENT-END.
+        start_marker = self.stream.get_marker()
+        self.stream.read(3)
+        end_marker = self.stream.get_marker()
+        self.tokens.append(TokenClass(start_marker, end_marker))
+
+    def fetch_flow_sequence_start(self):
+        self.fetch_flow_collection_start(FlowSequenceStart)
+
+    def fetch_flow_mapping_start(self):
+        self.fetch_flow_collection_start(FlowMappingStart)
+
+    def fetch_flow_collection_start(self, TokenClass):
+
+        # Increase the flow level.
+        self.flow_level += 1
+
+        # '[' and '{' may start a simple key.
+        self.save_possible_simple_key()
+
+        # Simple keys are allowed after '[' and '{'.
+        self.allow_simple_key = True
+
+        # Add FLOW-SEQUENCE-START or FLOW-MAPPING-START.
+        start_marker = self.stream.get_marker()
+        self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(TokenClass(start_marker, end_marker))
+
+    def fetch_flow_sequence_end(self):
+        self.fetch_flow_collection_end(FlowSequenceEnd)
+
+    def fetch_flow_mapping_end(self):
+        self.fetch_flow_collection_end(FlowMappingEnd)
+
+    def fetch_flow_collection_end(self, TokenClass):
+
+        # Reset possible simple key on the current level.
+        self.remove_possible_simple_key()
+
+        # Decrease the flow level.
+        self.flow_level -= 1
+
+        # No simple keys after ']' or '}'.
+        self.allow_simple_key = False
+
+        # Add FLOW-SEQUENCE-END or FLOW-MAPPING-END.
+        start_marker = self.stream.get_marker()
+        self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(TokenClass(start_marker, end_marker))
+
+    def fetch_entry(self):
+
+        # Block context needs additional checks.
+        if not self.flow_level:
+
+            # Are we allowed to start a new entry?
+            if not self.allow_simple_key:
+                self.fail("Cannot start a new entry here")
+
+            # We may need to add BLOCK-SEQUENCE-START.
+            if self.add_indent(self.stream.column):
+                marker = self.stream.get_marker()
+                self.tokens.append(BlockSequenceStart(marker, marker))
+
+        # Simple keys are allowed after '-' and ','.
+        self.allow_simple_key = True
+
+        # Reset possible simple key on the current level.
+        self.remove_possible_simple_key()
+
+        # Add ENTRY.
+        start_marker = self.stream.get_marker()
+        self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(Entry(start_marker, end_marker))
+
+    def fetch_key(self):
+        
+        # Block context needs additional checks.
+        if not self.flow_level:
+
+            # Are we allowed to start a key (not nessesary a simple)?
+            if not self.allow_simple_key:
+                self.fail("Cannot start a new key here")
+
+            # We may need to add BLOCK-MAPPING-START.
+            if self.add_indent(self.stream.column):
+                marker = self.stream.get_marker()
+                self.tokens.append(BlockMappingStart(marker, marker))
+
+        # Simple keys are allowed after '?' in the block context.
+        self.allow_simple_key = not self.flow_level
+
+        # Reset possible simple key on the current level.
+        self.remove_possible_simple_key()
+
+        # Add KEY.
+        start_marker = self.stream.get_marker()
+        self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(Key(start_marker, end_marker))
+
+    def fetch_value(self):
+
+        # Do we determine a simple key?
+        if self.flow_level in self.possible_simple_keys:
+
+            # Add KEY.
+            key = self.possible_simple_keys[self.flow_level]
+            del self.possible_simple_keys[self.flow_level]
+            self.tokens.insert(key.token_number-self.tokens_taken,
+                    Key(key.marker, key.marker))
+
+            # If this key starts a new block mapping, we need to add
+            # BLOCK-MAPPING-START.
+            if not self.flow_level:
+                if self.add_indent(key.column):
+                    self.tokens.insert(key.token_number-self.tokens_taken,
+                            BlockMappingStart(key.marker, key.marker))
+
+            # There cannot be two simple keys one after another.
+            self.allow_simple_key = False
+
+        # It must be a part of a complex key.
+        else:
+            
+            # Simple keys are allowed after ':' in the block context.
+            self.allow_simple_key = not self.flow_level
+
+            # Reset possible simple key on the current level.
+            self.remove_possible_simple_key()
+
+        # Add VALUE.
+        start_marker = self.stream.get_marker()
+        self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(Value(start_marker, end_marker))
+
+    def fetch_alias(self):
+
+        # ALIAS could be a simple key.
+        self.save_possible_simple_key()
+
+        # No simple keys after ALIAS.
+        self.allow_simple_key = False
+
+        # Scan and add ALIAS.
+        self.scan_anchor(Alias)
+
+    def fetch_anchor(self):
+
+        # ANCHOR could start a simple key.
+        self.save_possible_simple_key()
+
+        # No simple keys after ANCHOR.
+        self.allow_simple_key = False
+
+        # Scan and add ANCHOR.
+        self.scan_anchor(Anchor)
+
+    def fetch_tag(self):
+
+        # TAG could start a simple key.
+        self.save_possible_simple_key()
+
+        # No simple keys after TAG.
+        self.allow_simple_key = False
+
+        # Scan and add TAG.
+        self.scan_tag()
+
+    def fetch_literal(self):
+        self.fetch_block_scalar(folded=False)
+
+    def fetch_folded(self):
+        self.fetch_block_scalar(folded=True)
+
+    def fetch_block_scalar(self, folded):
+
+        # A simple key may follow a block scalar.
+        self.allow_simple_key = True
+
+        # Reset possible simple key on the current level.
+        self.remove_possible_simple_key()
+
+        # Scan and add SCALAR.
+        self.scan_block_scalar(folded)
+
+    def fetch_single(self):
+        self.fetch_flow_scalar(double=False)
+
+    def fetch_double(self):
+        self.fetch_flow_scalar(double=True)
+
+    def fetch_flow_scalar(self, double):
+
+        # A flow scalar could be a simple key.
+        self.save_possible_simple_key()
+
+        # No simple keys after flow scalars.
+        self.allow_simple_key = False
+
+        # Scan and add SCALAR.
+        self.scan_flow_scalar(double)
+
+    def fetch_plain(self):
+
+        # A plain scalar could be a simple key.
+        self.save_possible_simple_key()
+
+        # No simple keys after plain scalars. But note that `scan_plain` will
+        # change this flag if the scan is finished at the beginning of the
+        # line.
+        self.allow_simple_key = False
+
+        # Scan and add SCALAR. May change `allow_simple_key`.
+        self.scan_plain()
+
+    # Checkers.
+
     def check_directive(self):
 
-        # Checking for
-        #   /* The beginning of the line */ '%'
+        # DIRECTIVE:        ^ '%' ...
         # The '%' indicator is already checked.
         if self.stream.column == 0:
             return True
 
     def check_document_start(self):
 
-        # Checking for
-        #   /* The beginning of the line */ '---' /* Space or EOL */
+        # DOCUMENT-START:   ^ '---' (' '|'\n')
         if self.stream.column == 0:
             prefix = self.stream.peek(4)
-            if prefix[:3] == u'---' and prefix[3] in u' \t\r\n\x85\u2028\u2029':
+            if prefix[:3] == u'---' and prefix[3] in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
-
-    def fetch_document_start(self):
-
-        # Set the current intendation to -1.
-        self.unwind_indents(-1)
-
-        # No block collections after '---'.
-        self.allow_block_collection = False
-
-        # No flow simple keys (not needed -- we are in the block context).
-        self.allow_flow_simple_keys = False
-
-        # Reset possible simple keys (not needed -- EOL should have reset it).
-        self.possible_simple_keys = {}
-
-        start_marker = self.stream.get_marker()
-
-        # The characters are already checked, just move forward.
-        self.stream.read(3)
-
-        end_marker = self.stream.get_marker()
-
-        # Add DOCUMENT-START.
-        self.tokens.append(DocumentStartToken(start_marker, end_marker))
-
 
     def check_document_end(self):
+
+        # DOCUMENT-END:     ^ '...' (' '|'\n')
         if self.stream.column == 0:
             prefix = self.stream.peek(4)
-            if prefix[:3] == u'...' and prefix[3] in u' \t\r\n\x85\u2028\u2029':
+            if prefix[:3] == u'...' and prefix[3] in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
 
-    def fetch_document_end(self):
-        # The same code as `fetch_document_start`.
+    def check_entry(self):
 
-        # Set the current intendation to -1.
-        self.unwind_indents(-1)
+        # ENTRY(flow context):      ','
+        if self.flow_level:
+            return self.stream.peek() == u','
 
-        # Reset everything (not really needed).
-        self.allow_block_collection = False
-        self.allow_flow_simple_keys = False
-        self.possible_simple_keys = {}
+        # ENTRY(block context):     '-' (' '|'\n')
+        else:
+            prefix = self.stream.peek(2)
+            return prefix[0] == u'-' and prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
 
+    def check_key(self):
+
+        # KEY(flow context):    '?'
+        if self.flow_level:
+            return True
+
+        # KEY(block context):   '?' (' '|'\n')
+        else:
+            prefix = self.stream.peek(2)
+            return prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
+
+    def check_value(self):
+
+        # VALUE(flow context):  ':'
+        if self.flow_level:
+            return True
+
+        # VALUE(block context): ':' (' '|'\n')
+        else:
+            prefix = self.stream.peek(2)
+            return prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
+
+    def check_plain(self):
+        return True
+
+    # Scanners.
+
+    def scan_to_next_token(self):
+        found = False
+        while not found:
+            while self.stream.peek() == u' ':
+                self.stream.read()
+            if self.stream.peek() == u'#':
+                while self.stream.peek() not in u'\r\n':
+                    self.stream.read()
+            if self.stream.peek() in u'\r\n':
+                self.stream.read()
+                if not self.flow_level:
+                    self.allow_simple_key = True
+            else:
+                found = True
+
+    def scan_directive(self):
+        marker = self.stream.get_marker()
+        if self.stream.peek(5) == u'%YAML ':
+            self.tokens.append(YAMLDirective(1, 1, marker, marker))
+        elif self.stream.peek(4) == u'%TAG ':
+            self.tokens.append(TagDirective(marker, marker))
+        else:
+            self.tokens.append(ReservedDirective('', marker, marker))
+        while self.stream.peek() not in u'\0\r\n':
+            self.stream.read()
+        self.stream.read()
+
+    def scan_anchor(self, TokenClass):
         start_marker = self.stream.get_marker()
-
-        # The characters are already checked, just move forward.
-        self.stream.read(3)
-
+        while self.stream.peek() not in u'\0 \t\r\n,:':
+            self.stream.read()
         end_marker = self.stream.get_marker()
+        self.tokens.append(TokenClass('', start_marker, end_marker))
 
-        # Add DOCUMENT-END.
-        self.tokens.append(DocumentEndToken(start_marker, end_marker))
+    def scan_tag(self):
+        start_marker = self.stream.get_marker()
+        while self.stream.peek() not in u'\0 \t\r\n':
+            self.stream.read()
+        end_marker = self.stream.get_marker()
+        self.tokens.append(Tag('', start_marker, end_marker))
 
-
-
-# Tokens:
-# YAML_DIRECTIVE: ^ '%' YAML ' '+ (version: \d+ '.' \d+) s-l-comments
-# TAG_DIRECTIVE: ^ % TAG ' '+ (handle: '!' (word-char* '!')? )  (prefix: uri-char+) s-l-comments
-# RESERVED_DIRECTIVE: ^ '%' (directive-name: ns-char+) (' '+ (directive-parameter: ns-char+))* s-l-comments
-# DOCUMENT_START: ^ '---' (' ' | b-any)
-# DOCUMENT_END: ^ ... (' ' | b-any)
-# TAG: '!' ( ('<' uri-char+ '>') | uri-char* ) (' ' | b-any)
-# ANCHOR: '&' ns-char+      <-- bug
-# ALIAS: * ns-char+         <-- bug
-# ENTRY(block): '-' (' ' | b-any)
-# KEY(block): '?' (' ' | b-any)
-# VALUE(block): ':' (' ' | b-any)
-# FLOW_SEQ_START: '['
-# FLOW_SEQ_END: ']'
-# FLOW_MAP_START: '{'
-# FLOW_MAP_END: '}'
-# KEY(flow): '?'
-# VALUE(flow): ':'
-# ENTRY(flow): ','
-# PLAIN: (plain-char - indicator) | ([-?:] plain-char) ...  <-- bugs
-# DOUBLE_QUOTED: '"' ...
-# SINGLE_QUOTED: ''' ...
-# LITERAL: '|' ...
-# FOLDED: '>' ...
-# BLOCK_SEQ_START: indentation before '-'.
-# BLOCK_MAP_START: indentation before '?' or a simple key.
-# BLOCK_END: no indentation
-# LINE: end of line
-
-# b-generic: \r \n | \r | \n | #x85
-# b-specific: #x2028 | #x2029
-# b-any: b-generic | b-specific
-# hex-digit: [0-9A-Fa-f]
-# word-char: [0-9A-Za-z-]
-# uri-char: word-char | % hex-digit hex-digit | [;/?:@&=+$,_.!~*'()[]]
-
-# Production rules:
-# stream :== implicit_document? explicit_document* END
-# explicit_document :== DIRECTIVE* DOCUMENT_START block_node? DOCUMENT_END?
-# implicit_document :== block_node DOCUMENT_END?
-# block_node :== ALIAS | properties? block_content
-# flow_node :== ALIAS | properties? flow_content
-# properties :== TAG ANCHOR? | ANCHOR TAG?
-# block_content :== block_collection | flow_collection | SCALAR
-# flow_content :== flow_collection | SCALAR
-# block_collection :== block_sequence | block_mapping
-# block_sequence :== BLOCK_SEQ_START (ENTRY block_node?)* BLOCK_END
-# block_mapping :== BLOCK_MAP_START ((KEY block_node_or_indentless_sequence?)? (VALUE block_node_or_indentless_sequence?)?)* BLOCK_END
-# block_node_or_indentless_sequence :== ALIAS | properties? (block_content | indentless_block_sequence)
-# indentless_block_sequence :== (ENTRY block_node?)+
-# flow_collection :== flow_sequence | flow_mapping
-# flow_sequence :== FLOW_SEQ_START (flow_sequence_entry ENTRY)* flow_sequence_entry? FLOW_SEQ_END
-# flow_sequence_entry :== flow_node | KEY flow_node (VALUE flow_node?)?
-# flow_mapping :== FLOW_MAP_START flow_mapping_entry ENTRY)* flow_mapping_entry? FLOW_MAP_END
-# flow_mapping_entry :== flow_node | KEY flow_node (VALUE flow_node?)?
-
-# FIRST(rule) sets:
-# stream: {}
-# explicit_document: { DIRECTIVE DOCUMENT_START }
-# implicit_document: block_node
-# block_node: { ALIAS TAG ANCHOR SCALAR BLOCK_SEQ_START BLOCK_MAP_START FLOW_SEQ_START FLOW_MAP_START }
-# flow_node: { ALIAS TAG ANCHOR SCALAR FLOW_SEQ_START FLOW_MAP_START }
-# block_content: { BLOCK_SEQ_START BLOCK_MAP_START FLOW_SEQ_START FLOW_MAP_START SCALAR }
-# flow_content: { FLOW_SEQ_START FLOW_MAP_START SCALAR }
-# block_collection: { BLOCK_SEQ_START BLOCK_MAP_START }
-# flow_collection: { FLOW_SEQ_START FLOW_MAP_START }
-# block_sequence: { BLOCK_SEQ_START }
-# block_mapping: { BLOCK_MAP_START }
-# block_node_or_indentless_sequence: { ALIAS TAG ANCHOR SCALAR BLOCK_SEQ_START BLOCK_MAP_START FLOW_SEQ_START FLOW_MAP_START ENTRY }
-# indentless_sequence: { ENTRY }
-# flow_collection: { FLOW_SEQ_START FLOW_MAP_START }
-# flow_sequence: { FLOW_SEQ_START }
-# flow_mapping: { FLOW_MAP_START }
-# flow_sequence_entry: { ALIAS TAG ANCHOR SCALAR FLOW_SEQ_START FLOW_MAP_START KEY }
-# flow_mapping_entry: { ALIAS TAG ANCHOR SCALAR FLOW_SEQ_START FLOW_MAP_START KEY }
-
-class Marker(object):
-
-    def __init__(self, source, data, index, length=0):
-        self.source = source
-        self.data = data
-        self.index = index
-        self.length = length
-        self._line = None
-        self._position = None
-
-    def line(self):
-        if not self._line:
-            self._make_line_position()
-        return self._line
-
-    def position(self):
-        if not self._position:
-            self._make_line_position()
-        return self._position
-
-    def _make_line_position(self):
-        allow_block_collection = self.data.rfind('\n', 0, self.index)+1
-        line_end = self.data.find('\n', self.index)+1
-        if line_end == 0:
-            line_end = len(self.data)
-        self._line = (allow_block_collection, line_end)
-        row = self.data.count('\n', 0, allow_block_collection)
-        col = self.index-allow_block_collection
-        self._position = (row, col)
-
-class Error(Exception):
-
-    def __init__(self, message=None, marker=None):
-        Exception.__init__(self)
-        self.message = message
-        self.marker = marker
-
-    def __str__(self):
-        if self.marker is not None:
-            row, col = self.marker.position()
-            start, end = self.marker.line()
-            error_position = "source \"%s\", line %s, column %s:\n%s\n"  \
-                    % (self.marker.source, row+1, col+1, self.marker.data[start:end].rstrip().encode('utf-8'))
-            error_pointer = " " * col + "^\n"
-        else:
-            error_position = ""
-            error_pointer = ""
-        if self.message is not None:
-            error_message = self.message
-        else:
-            error_message = "YAML error"
-        return error_position+error_pointer+error_message
-
-class _Scanner:
-
-    def scan(self, source, data):
-        self.source = source
-        self.data = data
-        self.flow_level = 0
-        self.indents = []
-        self.indent = -1
-        self.index = 0
-        self.line = 0
-        self.column = 0
-        self.allow_block_collection = True
-        self.guess_simple_key = False
-        self.guess_simple_key_token = None
-        self.guess_simple_key_indent = None
-        self.allow_flow_key = False
-        self.guess_flow_key_levels = []
-        self.guess_flow_key_tokens = []
-        self.tokens = []
-        while self.eat_ignored() or self.fetch_token():
-            pass
-        return self.tokens
-
-    def eat_ignored(self):
-        result = False
-        while self.eat_ignored_spaces() or self.eat_ignored_comment() or self.eat_ignored_newline():
-            result = True
-        return result
-
-    def eat_ignored_spaces(self):
-        result = False
-        while self.index < len(self.data) and self.data[self.index] == ' ':
-            self.index += 1
-            self.column += 1
-            result = True
-        return result
-
-    def eat_ignored_comment(self):
-        if self.index < len(self.data) and self.data[self.index] == '#':
-            self.eat_line()
-        return False
-
-    def eat_line(self):
-        result = False
-        while self.index < len(self.data) and self.data[self.index] not in '\r\n':
-            self.index += 1
-            self.column += 1
-            result = True
-        return result
-
-    def eat_ignored_newline(self):
-        if self.index < len(self.data) and self.data[self.index] in '\r\n':
-            if self.data[self.index:self.index+2] == '\r\n':
-                self.index += 2
-            else:
-                self.index += 1
-            self.line += 1
-            self.column = 0
-            self.allow_block_collection = True
-            return True
-        return False
-
-    def eat_ns(self):
-        result = False
-        while self.index < len(self.data) and self.data[self.index] not in ' \t\r\n':
-            self.index += 1
-            self.column += 1
-            result = True
-        return result
-
-    def eat_indent(self, indent=0):
-        if indent < self.indent:
-            indent = self.indent
-        if self.column != 0:
-            return False
-        count = 0
-        while self.index < len(self.data) and self.data[self.index] == ' ' and count < indent:
-            self.index += 1
-            self.column += 1
-            count += 1
-        return count == indent
-
-    def eat_double_quoted(self):
-        if self.index < len(self.data) and self.data[self.index] == '"':
-            self.index += 1
-            self.column += 1
-            while self.index < len(self.data) and self.data[self.index] != '"':
-                if self.data[self.index:self.index+2] in ['\\\\', '\\"']:
-                    self.index += 2
-                    self.column += 2
-                elif self.data[self.index] in '\r\n':
-                    self.eat_ignored_newline()
-                    if not self.eat_indent(1):
-                        self.error("Invalid indentation")
-                else:
-                    self.index += 1
-                    self.column += 1
-            if self.index < len(self.data) and self.data[self.index] == '"':
-                self.index += 1
-                self.column += 1
-                return True
-            else:
-                self.error("unclosed double quoted scalar")
-        else:
-            return False
-
-    def eat_single_quoted(self):
-        if self.index < len(self.data) and self.data[self.index] == '\'':
-            self.index += 1
-            self.column += 1
-            while self.index < len(self.data) and   \
-                    (self.data[self.index] != '\'' or self.data[self.index:self.index+2] == '\'\''):
-                if self.data[self.index:self.index+2] == '\'\'':
-                    self.index += 2
-                    self.column += 2
-                elif self.data[self.index] in '\r\n':
-                    self.eat_ignored_newline()
-                    if not self.eat_indent(1):
-                        self.error("Invalid indentation")
-                else:
-                    self.index += 1
-                    self.column += 1
-            if self.index < len(self.data) and self.data[self.index] == '\'':
-                self.index += 1
-                self.column += 1
-                return True
-            else:
-                self.error("unclosed single quoted scalar")
-        else:
-            return False
-
-    def eat_folded(self):
-        self.eat_block_scalar()
-
-    def eat_literal(self):
-        self.eat_block_scalar()
-
-    def eat_block_scalar(self):
-        if self.index < len(self.data) and self.data[self.index] in '>|':
-            self.eat_line()
-            if not self.eat_ignored_newline():
-                return True
-            indent = self.indent+1
-            if indent < 1:
-                indent = 1
-            while (self.eat_indent(indent) and ((self.eat_line() and self.eat_ignored_newline()) or (self.eat_ignored_newline()))) or  \
-                    (self.eat_ignored_comment() and self.eat_ignored_newline()) or  \
-                    self.eat_ignored_newline():
-                pass
-            return True
-        return False
-
-    def eat_block_plain(self):
-        return self.eat_plain(block=True)
-
-    def eat_flow_plain(self):
-        return self.eat_plain(block=False)
-
-    def eat_plain(self, block):
+    def scan_block_scalar(self, folded):
+        start_marker = self.stream.get_marker()
         indent = self.indent+1
         if indent < 1:
             indent = 1
-        if self.index < len(self.data):
-            if self.data[self.index] not in ' \t\r\n-?:,[]{}#&*!|>\'"%@`' or    \
-                    (block and self.data[self.index] == '-' and self.data[self.index:self.index+2] not in ['-', '- ', '-\r', '-\n']) or \
-                    (block and self.data[self.index] == '?' and self.data[self.index:self.index+2] not in ['?', '? ', '?\r', '?\n']) or \
-                    (block and self.data[self.index] == ':' and self.data[self.index:self.index+2] not in [':', ': ', ':\r', ':\n']):
-                if block and self.allow_block_collection:
-                    self.guessing_simple_key()
-                if self.flow_level and self.allow_flow_key:
-                    self.guess_flow_key_levels.append(self.flow_level)
-                    self.guess_flow_key_tokens.append(len(self.tokens))
-                self.allow_flow_key = False
-                self.index += 1
-                self.column += 1
-                space = False
-                while True:
-                    self.eat_ignored_spaces()
-                    while self.index < len(self.data) and (
-                            self.data[self.index] not in '\r\n?:,[]{}#' or
-                            (not space and self.data[self.index] == '#') or
-                            (block and self.data[self.index] in '?,[]{}') or
-                            (block and self.data[self.index] == ':' and self.data[self.index:self.index+2] not in [':', ': ', ':\r', ':\n'])):
-                        space = self.data[self.index] not in ' \t'
-                        self.index += 1
-                        self.column += 1
-                        self.allow_block_collection = False
-                    if not (self.eat_ignored_newline() and self.eat_indent(indent)):
-                        break
-                    space = True
-                return True
-        return False
+        while True:
+            while self.stream.peek() and self.stream.peek() and self.stream.peek() not in u'\0\r\n':
+                self.stream.read()
+            if self.stream.peek() != u'\0':
+                self.stream.read()
+            count = 0
+            while count < indent and self.stream.peek() == u' ':
+                self.stream.read()
+                count += 1
+            if count < indent and self.stream.peek() not in u'#\r\n':
+                break
+        self.tokens.append(Scalar('', False, start_marker, start_marker))
 
-    def no_simple_key(self):
-        self.guess_simple_key = False
-        self.guess_simple_key_token = None
-        self.guess_simple_key_indent = None
-
-    def guessing_simple_key(self):
-        self.guess_simple_key = True
-        self.guess_simple_key_token = len(self.tokens)
-        self.guess_simple_key_indent = self.column
-
-    def unwind_indents(self, level):
-        while self.indent > level:
-            if self.flow_level:
-                self.error("Invalid indentation")
-            self.tokens.append('BLOCK_END')
-            self.indent = self.indents.pop()
-            self.no_simple_key()
-
-    def fetch_token(self):
-        self.unwind_indents(self.column)
-        if self.index < len(self.data):
-            if self.column == 0:
-                if self.data[self.index] == '%':
-                    self.tokens.append('DIRECTIVE')
-                    self.eat_line()
-                    self.no_simple_key()
-                    return True
-                if self.data[self.index:self.index+3] == '---' and  \
-                        (not self.data[self.index+3:self.index+4] or self.data[self.index+3:self.index+4] in ' \r\n'):
-                    self.unwind_indents(-1)
-                    self.tokens.append('DOCUMENT_START')
-                    self.index += 3
-                    self.column += 3
-                    self.allow_block_collection = False
-                    self.allow_flow_key = False
-                    self.guess_flow_keys = []
-                    self.no_simple_key()
-                    return True
-                if self.data[self.index:self.index+3] == '...' and   \
-                        (not self.data[self.index+3:self.index+4] or self.data[self.index+3:self.index+4] in ' \r\n'):
-                    self.unwind_indents(-1)
-                    self.tokens.append('DOCUMENT_END')
-                    self.index += 3
-                    self.column += 3
-                    self.allow_block_collection = False
-                    self.allow_flow_key = False
-                    self.guess_flow_keys = []
-                    self.no_simple_key()
-                    return True
-            if self.data[self.index] in '[]{}':
-                if self.data[self.index] == '[':
-                    self.flow_level += 1
-                    self.allow_flow_key = True
-                    self.tokens.append('FLOW_SEQ_START')
-                elif self.data[self.index] == '{':
-                    self.flow_level += 1
-                    self.allow_flow_key = True
-                    self.tokens.append('FLOW_MAP_START')
-                elif self.data[self.index] == ']':
-                    if not self.flow_level:
-                        self.error("Extra ]")
-                    self.flow_level -= 1
-                    self.allow_flow_key = False
-                    self.tokens.append('FLOW_SEQ_END')
-                else:
-                    if not self.flow_level:
-                        self.error("Extra }")
-                    self.flow_level -= 1
-                    self.allow_flow_key = False
-                    self.tokens.append('FLOW_MAP_END')
-                while self.guess_flow_key_levels and self.guess_flow_key_levels[-1] > self.flow_level:
-                    self.guess_flow_key_levels.pop()
-                    self.guess_flow_key_tokens.pop()
-                self.index += 1
-                self.column += 1
-                self.allow_block_collection = False
-                return True
-            if self.data[self.index] in '!&*':
-                if self.flow_level and self.allow_flow_key:
-                    self.guess_flow_key_levels.append(self.flow_level)
-                    self.guess_flow_key_tokens.append(len(self.tokens))
-                if not self.flow_level and self.allow_block_collection:
-                    self.guessing_simple_key()
-                if self.data[self.index] == '!':
-                    self.tokens.append('TAG')
-                elif self.data[self.index] == '&':
-                    self.tokens.append('ANCHOR')
-                else:
-                    self.tokens.append('ALIAS')
-                self.eat_ns()
-                self.allow_flow_key = False
-                self.allow_block_collection = False
-                return True
-            if self.data[self.index] == '"':
-                if self.flow_level and self.allow_flow_key:
-                    self.guess_flow_key_levels.append(self.flow_level)
-                    self.guess_flow_key_tokens.append(len(self.tokens))
-                if not self.flow_level and self.allow_block_collection:
-                    self.guessing_simple_key()
-                self.tokens.append('SCALAR')
-                self.eat_double_quoted()
-                self.allow_flow_key = False
-                self.allow_block_collection = False
-                return True
-            if self.data[self.index] == '\'':
-                if self.flow_level and self.allow_flow_key:
-                    self.guess_flow_key_levels.append(self.flow_level)
-                    self.guess_flow_key_tokens.append(len(self.tokens))
-                if not self.flow_level and self.allow_block_collection:
-                    self.guessing_simple_key()
-                self.tokens.append('SCALAR')
-                self.eat_single_quoted()
-                self.allow_flow_key = False
-                self.allow_block_collection = False
-                return True
-            if not self.flow_level:
-                if self.data[self.index] in '-?:' and \
-                        (not self.data[self.index+1:self.index+2] or self.data[self.index+1:self.index+2] in ' \r\n'):
-                    if self.guess_simple_key and self.data[self.index] == ':':
-                        self.tokens.insert(self.guess_simple_key_token, 'KEY')
-                        if self.guess_simple_key_indent > self.indent:
-                            self.indents.append(self.indent)
-                            self.indent = self.guess_simple_key_indent
-                            self.tokens.insert(self.guess_simple_key_token, 'BLOCK_MAP_START')
-                        self.tokens.append('VALUE')
-                        self.no_simple_key()
-                        self.index += 1
-                        self.column += 1
-                        self.allow_block_collection = False
-                        return True
-                    else:
-                        if not self.allow_block_collection:
-                            self.error("Block collection should start at the beginning of the line")
-                        if self.column > self.indent:
-                            self.indents.append(self.indent)
-                            self.indent = self.column
-                            if self.data[self.index] == '-':
-                                self.tokens.append('BLOCK_SEQ_START')
-                            else:
-                                self.tokens.append('BLOCK_MAP_START')
-                        if self.data[self.index] == '-':
-                            self.tokens.append('ENTRY')
-                        elif self.data[self.index] == '?':
-                            self.tokens.append('KEY')
-                        else:
-                            self.tokens.append('VALUE')
-                        self.index += 1
-                        self.column += 1
-                        #self.allow_block_collection = False
-                        self.allow_block_collection = True
-                        self.no_simple_key()
-                        return True
-                if self.data[self.index] == '>':
-                    self.no_simple_key()
-                    self.tokens.append('SCALAR')
-                    self.eat_folded()
-                    self.allow_block_collection = True
-                    return True
-                if self.data[self.index] == '|':
-                    self.no_simple_key()
-                    self.tokens.append('SCALAR')
-                    self.eat_literal()
-                    self.allow_block_collection = True
-                    return True
-                if self.eat_block_plain():
-                    self.tokens.append('SCALAR')
-                    return True
+    def scan_flow_scalar(self, double):
+        marker = self.stream.get_marker()
+        quote = self.stream.read()
+        while self.stream.peek() != quote:
+            if double and self.stream.peek() == u'\\':
+                self.stream.read(2)
+            elif not double and self.stream.peek(3)[1:] == u'\'\'':
+                self.stream.read(3)
             else:
-                if self.data[self.index] in ',?:':
-                    if self.data[self.index] == ',':
-                        self.tokens.append('ENTRY')
-                        while self.guess_flow_key_levels and self.guess_flow_key_levels[-1] >= self.flow_level:
-                            self.guess_flow_key_levels.pop()
-                            self.guess_flow_key_tokens.pop()
-                        self.allow_flow_key = True
-                    elif self.data[self.index] == '?':
-                        self.tokens.append('KEY')
-                        while self.guess_flow_key_levels and self.guess_flow_key_levels[-1] >= self.flow_level:
-                            self.guess_flow_key_levels.pop()
-                            self.guess_flow_key_tokens.pop()
-                        self.allow_flow_key = False
-                    else:
-                        self.tokens.append('VALUE')
-                        if self.guess_flow_key_levels and self.guess_flow_key_levels[-1] == self.flow_level:
-                            self.guess_flow_key_levels.pop()
-                            index = self.guess_flow_key_tokens.pop()
-                            self.tokens.insert(index, 'KEY')
-                        self.allow_flow_key =False
-                    self.index += 1
-                    self.column += 1
-                    return True
-                if self.eat_flow_plain():
-                    self.tokens.append('SCALAR')
-                    return True
-            self.error("Invalid token")
-        else:
-            self.unwind_indents(-1)
+                self.stream.read(1)
+        self.stream.read(1)
+        self.tokens.append(Scalar('', False, marker, marker))
 
-    def error(self, message):
-        raise Error(message, Marker(self.source, self.data, self.index))
+    def scan_plain(self):
+        indent = self.indent+1
+        if indent < 1:
+            indent = 1
+        space = False
+        marker = self.stream.get_marker()
+        while True:
+            while self.stream.peek() == u' ':
+                self.stream.read()
+                space = True
+            while self.stream.peek() not in u'\0\r\n?:,[]{}#'   \
+                    or (not space and self.stream.peek() == '#')    \
+                    or (not self.flow_level and self.stream.peek() in '?,[]{}') \
+                    or (not self.flow_level and self.stream.peek() == ':' and self.stream.peek(2)[1] not in u' \0\r\n'):
+                space = self.stream.peek() not in u' \t'
+                self.stream.read()
+                self.allow_simple_key = False
+            if self.stream.peek() not in u'\r\n':
+                break
+            while self.stream.peek() in u'\r\n':
+                self.stream.read()
+                if not self.flow_level:
+                    self.allow_simple_key = True
+            count = 0
+            while self.stream.peek() == u' ' and count < indent:
+                self.stream.read()
+                count += 1
+            if count < indent:
+                break
+            space = True
+        self.tokens.append(Scalar('', True, marker, marker))
 
-class Parser:
+    def invalid_token(self):
+        self.fail("invalid token")
 
-    def parse(self, source, data):
-        scanner = Scanner()
-        self.tokens = scanner.scan(source, data)
-        self.tokens.append('END')
-        documents = self.parse_stream()
-        if len(documents) == 1:
-            return documents[0]
-        return documents
-
-    def parse_stream(self):
-        documents = []
-        if self.tokens[0] not in ['DIRECTIVE', 'DOCUMENT_START', 'END']:
-            documents.append(self.parse_block_node())
-        while self.tokens[0] != 'END':
-            while self.tokens[0] == 'DIRECTIVE':
-                self.tokens.pop(0)
-            if self.tokens[0] != 'DOCUMENT_START':
-                self.error('DOCUMENT_START is expected')
-            self.tokens.pop(0)
-            if self.tokens[0] in ['DIRECTIVE', 'DOCUMENT_START', 'DOCUMENT_END', 'END']:
-                documents.append(None)
-            else:
-                documents.append(self.parse_block_node())
-            while self.tokens[0] == 'DOCUMENT_END':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'END':
-            self.error("END is expected")
-        return tuple(documents)
-
-    def parse_block_node(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        return self.parse_block_content()
-
-    def parse_flow_node(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        return self.parse_flow_content()
-
-    def parse_block_node_or_indentless_sequence(self):
-        if self.tokens[0] == 'ALIAS':
-            self.tokens.pop(0)
-            return '*'
-        if self.tokens[0] == 'TAG':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'ANCHOR':
-                self.tokens.pop(0)
-        elif self.tokens[0] == 'ANCHOR':
-            self.tokens.pop(0)
-            if self.tokens[0] == 'TAG':
-                self.tokens.pop(0)
-        if self.tokens[0] == 'ENTRY':
-            return self.parse_indentless_sequence(self)
-        return self.parse_block_content()
-
-    def parse_block_content(self):
-        if self.tokens[0] == 'SCALAR':
-            self.tokens.pop(0)
-            return True
-        elif self.tokens[0] == 'BLOCK_SEQ_START':
-            return self.parse_block_sequence()
-        elif self.tokens[0] == 'BLOCK_MAP_START':
-            return self.parse_block_mapping()
-        elif self.tokens[0] == 'FLOW_SEQ_START':
-            return self.parse_flow_sequence()
-        elif self.tokens[0] == 'FLOW_MAP_START':
-            return self.parse_flow_mapping()
-        else:
-            self.error('block content is expected')
-
-    def parse_flow_content(self):
-        if self.tokens[0] == 'SCALAR':
-            self.tokens.pop(0)
-            return True
-        elif self.tokens[0] == 'FLOW_SEQ_START':
-            return self.parse_flow_sequence()
-        elif self.tokens[0] == 'FLOW_MAP_START':
-            return self.parse_flow_mapping()
-        else:
-            self.error('flow content is expected')
-
-    def parse_block_sequence(self):
-        sequence = []
-        if self.tokens[0] != 'BLOCK_SEQ_START':
-            self.error('BLOCK_SEQ_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] == 'ENTRY':
-            self.tokens.pop(0)
-            if self.tokens[0] not in ['ENTRY', 'BLOCK_END']:
-                sequence.append(self.parse_block_node())
-            else:
-                sequence.append(None)
-        if self.tokens[0] != 'BLOCK_END':
-            self.error('BLOCK_END is expected')
-        self.tokens.pop(0)
-        return sequence
-
-    def parse_indentless_sequence(self):
-        sequence = []
-        while self.tokens[0] == 'ENTRY':
-            self.tokens.pop(0)
-            if self.tokens[0] not in ['ENTRY']:
-                sequence.append(self.parse_block_node())
-            else:
-                sequence.append(None)
-        return sequence
-
-    def parse_block_mapping(self):
-        mapping = []
-        if self.tokens[0] != 'BLOCK_MAP_START':
-            self.error('BLOCK_MAP_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] in ['KEY', 'VALUE']:
-            key = None
-            value = None
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
-                if self.tokens[0] not in ['KEY', 'VALUE', 'BLOCK_END']:
-                    key = self.parse_block_node_or_indentless_sequence()
-            if self.tokens[0] == 'VALUE':
-                self.tokens.pop(0)
-                if self.tokens[0] not in ['KEY', 'VALUE', 'BLOCK_END']:
-                    value = self.parse_block_node_or_indentless_sequence()
-            mapping.append((key, value))
-        if self.tokens[0] != 'BLOCK_END':
-            self.error('BLOCK_END is expected')
-        self.tokens.pop(0)
-        return mapping
-
-    def parse_flow_sequence(self):
-        sequence = []
-        if self.tokens[0] != 'FLOW_SEQ_START':
-            self.error('FLOW_SEQ_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] != 'FLOW_SEQ_END':
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
-                key = None
-                value = None
-                if self.tokens[0] != 'VALUE':
-                    key = self.parse_flow_node()
-                if self.tokens[0] == 'VALUE':
-                    self.tokens.pop(0)
-                    if self.tokens[0] not in ['ENTRY', 'FLOW_SEQ_END']:
-                        value = self.parse_flow_node()
-                sequence.append([(key, value)])
-            else:
-                sequence.append(self.parse_flow_node())
-            if self.tokens[0] not in ['ENTRY', 'FLOW_SEQ_END']:
-                self.error("ENTRY or FLOW_SEQ_END is expected")
-            if self.tokens[0] == 'ENTRY':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'FLOW_SEQ_END':
-            self.error('FLOW_SEQ_END is expected')
-        self.tokens.pop(0)
-        return sequence
-
-    def parse_flow_mapping(self):
-        mapping = []
-        if self.tokens[0] != 'FLOW_MAP_START':
-            self.error('FLOW_MAP_START is expected')
-        self.tokens.pop(0)
-        while self.tokens[0] != 'FLOW_MAP_END':
-            if self.tokens[0] == 'KEY':
-                self.tokens.pop(0)
-                key = None
-                value = None
-                if self.tokens[0] != 'VALUE':
-                    key = self.parse_flow_node()
-                if self.tokens[0] == 'VALUE':
-                    self.tokens.pop(0)
-                    if self.tokens[0] not in ['ENTRY', 'FLOW_MAP_END']:
-                        value = self.parse_flow_node()
-                mapping.append((key, value))
-            else:
-                mapping.append((self.parse_flow_node(), None))
-            if self.tokens[0] not in ['ENTRY', 'FLOW_MAP_END']:
-                self.error("ENTRY or FLOW_MAP_END is expected")
-            if self.tokens[0] == 'ENTRY':
-                self.tokens.pop(0)
-        if self.tokens[0] != 'FLOW_MAP_END':
-            self.error('FLOW_MAP_END is expected')
-        self.tokens.pop(0)
-        return mapping
-
-    def error(self, message):
-        raise Error(message+': '+str(self.tokens))
+    def fail(self, message):
+        raise ScannerError(message)
 

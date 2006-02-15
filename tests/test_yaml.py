@@ -2,6 +2,7 @@
 import unittest
 
 from test_marker import *
+from test_canonical import *
 from test_tokens import *
 
 def main(module='__main__'):
