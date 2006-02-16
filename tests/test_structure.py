@@ -1,6 +1,8 @@
 
 import test_appliance
 
+from yaml.reader import Reader
+from yaml.scanner import Scanner
 from yaml.parser import *
 
 class TestStructure(test_appliance.TestAppliance):
@@ -9,7 +11,7 @@ class TestStructure(test_appliance.TestAppliance):
         node1 = None
         node2 = eval(file(structure_filename, 'rb').read())
         try:
-            parser = Parser(data_filename, file(data_filename, 'rb').read())
+            parser = Parser(Scanner(Reader(file(data_filename, 'rb'))))
             node1 = parser.parse()
             node1 = [self._convert(n) for n in node1]
             if len(node1) == 1:
@@ -49,7 +51,7 @@ class TestParser(test_appliance.TestAppliance):
         documents1 = None
         documents2 = None
         try:
-            parser = Parser(data_filename, file(data_filename, 'rb').read())
+            parser = Parser(Scanner(Reader(file(data_filename, 'rb'))))
             documents1 = parser.parse()
             canonical = test_appliance.CanonicalParser(canonical_filename, file(canonical_filename, 'rb').read())
             documents2 = canonical.parse()

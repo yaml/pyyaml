@@ -7,14 +7,15 @@
 # It's just a record and its only use is producing nice error messages.
 # Parser does not use it for any other purposes.
 #
-#   Stream(source, data)
-# Stream determines the encoding of `data` and converts it to unicode.
-# Stream provides the following methods and attributes:
-#   stream.peek(length=1) - return the next `length` characters
-#   stream.forward(length=1) - move the current position to `length` characters.
-#   stream.index - the number of the current character.
-#   stream.line, stream.column - the line and the column of the current character.
+#   Reader(source, data)
+# Reader determines the encoding of `data` and converts it to unicode.
+# Reader provides the following methods and attributes:
+#   reader.peek(length=1) - return the next `length` characters
+#   reader.forward(length=1) - move the current position to `length` characters.
+#   reader.index - the number of the current character.
+#   reader.line, stream.column - the line and the column of the current character.
 
+__all__ = ['Marker', 'Reader', 'ReaderError']
 
 from error import YAMLError
 
@@ -57,8 +58,8 @@ except TypeError:
 
 class Marker:
 
-    def __init__(self, source, line, column, buffer, pointer):
-        self.source = source
+    def __init__(self, name, line, column, buffer, pointer):
+        self.name = name
         self.line = line
         self.column = column
         self.buffer = buffer
@@ -87,55 +88,64 @@ class Marker:
         return head + snippet + tail + '\n'  \
                 + ' '*(self.pointer-start+len(head)) + '^' + '\n'
 
-class StreamError(YAMLError):
+class ReaderError(YAMLError):
 
-    def __init__(self, source, encoding, character, position, reason):
-        self.source = source
-        self.encoding = encoding
+    def __init__(self, name, position, character, encoding, reason):
+        self.name = name
         self.character = character
         self.position = position
+        self.encoding = encoding
         self.reason = reason
 
     def __str__(self):
         if isinstance(self.character, str):
             return "'%s' codec can't decode byte #x%02x: %s\n"  \
-                    "\tin file '%s', position %d."   \
+                    "\tin '%s', position %d."   \
                     % (self.encoding, ord(self.character), self.reason,
-                            self.source, self.position)
+                            self.name, self.position)
         else:
             return "unacceptable character #x%04x: %s\n"    \
-                    "\tin file '%s', position %d."   \
+                    "\tin '%s', position %d."   \
                     % (ord(self.character), self.reason,
-                            self.source, self.position)
+                            self.name, self.position)
 
-class Stream:
-    # Stream:
+class Reader:
+    # Reader:
     # - determines the data encoding and converts it to unicode,
     # - checks if characters are in allowed range,
     # - adds '\0' to the end.
 
+    # Reader accepts
+    #  - a `str` object,
+    #  - a `unicode` object,
+    #  - a file-like object with its `read` method returning `str`,
+    #  - a file-like object with its `read` method returning `unicode`.
+
     # Yeah, it's ugly and slow.
 
-    def __init__(self, source, data):
-        self.source = source
+    def __init__(self, data):
+        self.name = None
         self.stream = None
         self.stream_pointer = 0
         self.eof = True
         self.buffer = u''
         self.pointer = 0
         self.raw_buffer = None
-        self.raw_decoder = None
+        self.raw_decode = None
         self.index = 0
         self.line = 0
         self.column = 0
         if isinstance(data, unicode):
+            self.name = "<unicode string>"
             self.check_printable(data)
             self.buffer = data+u'\0'
         elif isinstance(data, str):
+            self.name = "<string>"
             self.raw_buffer = data
             self.determine_encoding()
         else:
             self.stream = data
+            self.name = getattr(data, 'name', "<file>")
             self.eof = False
             self.raw_buffer = ''
             self.determine_encoding()
@@ -161,20 +171,21 @@ class Stream:
 
     def get_marker(self):
         if self.stream is None:
-            return Marker(self.source, self.line, self.column,
+            return Marker(self.name, self.line, self.column,
                     self.buffer, self.pointer)
         else:
-            return Marker(self.source, self.line, self.column, None, None)
+            return Marker(self.name, self.line, self.column, None, None)
 
     def determine_encoding(self):
         while not self.eof and len(self.raw_buffer) < 2:
             self.update_raw()
-        if self.raw_buffer.startswith(codecs.BOM_UTF16_LE):
-            self.raw_decode = utf_16_le_decode
-        elif self.raw_buffer.startswith(codecs.BOM_UTF16_BE):
-            self.raw_decode = utf_16_be_decode
-        else:
-            self.raw_decode = utf_8_decode
+        if not isinstance(self.raw_buffer, unicode):
+            if self.raw_buffer.startswith(codecs.BOM_UTF16_LE):
+                self.raw_decode = utf_16_le_decode
+            elif self.raw_buffer.startswith(codecs.BOM_UTF16_BE):
+                self.raw_decode = utf_16_be_decode
+            else:
+                self.raw_decode = utf_8_decode
         self.update(1)
 
     NON_PRINTABLE = re.compile(u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]')
@@ -183,8 +194,8 @@ class Stream:
         if match:
             character = match.group()
             position = self.index+(len(self.buffer)-self.pointer)+match.start()
-            raise StreamError(self.source, 'unicode', character, position,
-                    "control characters are not allowed")
+            raise ReaderError(self.name, position, character,
+                    'unicode', "special characters are not allowed")
 
     def update(self, length):
         if self.raw_buffer is None:
@@ -194,17 +205,21 @@ class Stream:
         while len(self.buffer) < length:
             if not self.eof:
                 self.update_raw()
-            try:
-                data, converted = self.raw_decode(self.raw_buffer,
-                        'strict', self.eof)
-            except UnicodeDecodeError, exc:
-                character = exc.object[exc.start]
-                if self.stream is not None:
-                    position = self.stream_pointer-len(self.raw_buffer)+exc.start
-                else:
-                    position = exc.start
-                raise StreamError(self.source, exc.encoding,
-                        character, position, exc.reason)
+            if self.raw_decode is not None:
+                try:
+                    data, converted = self.raw_decode(self.raw_buffer,
+                            'strict', self.eof)
+                except UnicodeDecodeError, exc:
+                    character = exc.object[exc.start]
+                    if self.stream is not None:
+                        position = self.stream_pointer-len(self.raw_buffer)+exc.start
+                    else:
+                        position = exc.start
+                    raise ReaderError(self.name, position, character,
+                            exc.encoding, exc.reason)
+            else:
+                data = self.raw_buffer
+                converted = len(data)
             self.check_printable(data)
             self.buffer += data
             self.raw_buffer = self.raw_buffer[converted:]
@@ -223,7 +238,7 @@ class Stream:
 
 #try:
 #    import psyco
-#    psyco.bind(Stream)
+#    psyco.bind(Reader)
 #except ImportError:
 #    pass
 

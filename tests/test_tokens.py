@@ -1,6 +1,8 @@
 
 import test_appliance
 
+from yaml.reader import *
+from yaml.tokens import *
 from yaml.scanner import *
 
 class TestTokens(test_appliance.TestAppliance):
@@ -50,7 +52,7 @@ class TestTokens(test_appliance.TestAppliance):
         tokens1 = None
         tokens2 = file(tokens_filename, 'rb').read().split()
         try:
-            scanner = Scanner(data_filename, file(data_filename, 'rb').read())
+            scanner = Scanner(Reader(file(data_filename, 'rb')))
             tokens1 = []
             while not isinstance(scanner.peek_token(), EndToken):
                 tokens1.append(scanner.get_token())
@@ -72,7 +74,7 @@ class TestScanner(test_appliance.TestAppliance):
         for filename in [canonical_filename, data_filename]:
             tokens = None
             try:
-                scanner = Scanner(filename, file(filename, 'rb').read())
+                scanner = Scanner(Reader(file(filename, 'rb')))
                 tokens = []
                 while not isinstance(scanner.peek_token(), EndToken):
                     tokens.append(scanner.get_token().__class__.__name__)

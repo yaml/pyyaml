@@ -39,9 +39,10 @@
 # flow_sequence_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
-from scanner import *
+from error import YAMLError
+from tokens import *
 
-class Error(Exception):
+class ParserError(YAMLError):
     pass
 
 class Node:
@@ -76,8 +77,8 @@ class MappingNode(Node):
 
 class Parser:
 
-    def __init__(self, source, data):
-        self.scanner = Scanner(source, data)
+    def __init__(self, scanner):
+        self.scanner = scanner
 
     def is_token(self, *choices):
         token = self.scanner.peek_token()

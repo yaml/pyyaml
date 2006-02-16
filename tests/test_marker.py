@@ -1,7 +1,7 @@
 
 import test_appliance
 
-from yaml.stream import Marker
+from yaml.reader import Marker
 
 class TestMarker(test_appliance.TestAppliance):
 

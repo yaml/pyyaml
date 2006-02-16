@@ -8,102 +8,22 @@
 # ENTRY, KEY, VALUE
 # ALIAS(name), ANCHOR(name), TAG(value), SCALAR(value, plain)
 
+__all__ = ['Scanner', 'ScannerError']
 
-from marker import Marker
-#from error import YAMLError
-from stream import Stream
+from error import YAMLError
+from tokens import *
 
-#class ScannerError(YAMLError):
-class ScannerError(Exception):
+class ScannerError(YAMLError):
+    # TODO:
+    # ScannerError: while reading a quoted string
+    #         in '...', line 5, column 10:
+    # key: "valu\?e"
+    #      ^
+    # got unknown quote character '?'
+    #         in '...', line 5, column 15:
+    # key: "valu\?e"
+    #            ^
     pass
-
-class Token:
-    def __init__(self, start_marker, end_marker):
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class DirectiveToken(Token):
-    pass
-
-class YAMLDirectiveToken(DirectiveToken):
-    def __init__(self, major_version, minor_version, start_marker, end_marker):
-        self.major_version = major_version
-        self.minor_version = minor_version
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class TagDirectiveToken(DirectiveToken):
-    pass
-
-class ReservedDirectiveToken(DirectiveToken):
-    def __init__(self, name, start_marker, end_marker):
-        self.name = name
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class DocumentStartToken(Token):
-    pass
-
-class DocumentEndToken(Token):
-    pass
-
-class EndToken(Token):
-    pass
-
-class BlockSequenceStartToken(Token):
-    pass
-
-class BlockMappingStartToken(Token):
-    pass
-
-class BlockEndToken(Token):
-    pass
-
-class FlowSequenceStartToken(Token):
-    pass
-
-class FlowMappingStartToken(Token):
-    pass
-
-class FlowSequenceEndToken(Token):
-    pass
-
-class FlowMappingEndToken(Token):
-    pass
-
-class KeyToken(Token):
-    pass
-
-class ValueToken(Token):
-    pass
-
-class EntryToken(Token):
-    pass
-
-class AliasToken(Token):
-    def __init__(self, value, start_marker, end_marker):
-        self.value = value
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class AnchorToken(Token):
-    def __init__(self, value, start_marker, end_marker):
-        self.value = value
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class TagToken(Token):
-    def __init__(self, value, start_marker, end_marker):
-        self.value = value
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class ScalarToken(Token):
-    def __init__(self, value, plain, start_marker, end_marker):
-        self.value = value
-        self.plain = plain
-        self.start_marker = start_marker
-        self.end_marker = end_marker
 
 class SimpleKey:
     def __init__(self, token_number, required, index, line, column, marker):
@@ -116,17 +36,18 @@ class SimpleKey:
 
 class Scanner:
 
-    def __init__(self, source, data):
+
+    def __init__(self, reader):
         """Initialize the scanner."""
-        # The input stream. The Stream class do the dirty work of checking for
+        # The input stream. The Reader class do the dirty work of checking for
         # BOM and converting the input data to Unicode. It also adds NUL to
         # the end.
         #
-        # Stream supports the following methods
-        #   self.stream.peek(k=1)   # peek the next k characters
-        #   self.stream.forward(k=1)   # read the next k characters and move the
+        # Reader supports the following methods
+        #   self.reader.peek(k=1)   # peek the next k characters
+        #   self.reader.forward(k=1)   # read the next k characters and move the
         #                           # pointer
-        self.stream = Stream(source, data)
+        self.reader = reader
 
         # Had we reached the end of the stream?
         self.done = False
@@ -217,15 +138,15 @@ class Scanner:
 
         # Compare the current indentation and column. It may add some tokens
         # and decrease the current indentation level.
-        self.unwind_indent(self.stream.column)
+        self.unwind_indent(self.reader.column)
 
         #print
-        #print self.stream.get_marker().get_snippet()
+        #print self.reader.get_marker().get_snippet()
 
         # Peek the next character.
-        ch = self.stream.peek()
+        ch = self.reader.peek()
 
-        # Is it the end of stream?
+        # Is it the end of reader?
         if ch == u'\0':
             return self.fetch_end()
 
@@ -332,8 +253,8 @@ class Scanner:
         # height (may cause problems if indentation is broken though).
         for level in self.possible_simple_keys.keys():
             key = self.possible_simple_keys[level]
-            if key.line != self.stream.line  \
-                    or self.stream.index-key.index > 1024:
+            if key.line != self.reader.line  \
+                    or self.reader.index-key.index > 1024:
                 if key.required:
                     self.fail("simple key is required")
                 del self.possible_simple_keys[level]
@@ -344,17 +265,17 @@ class Scanner:
         #   ALIAS, ANCHOR, TAG, SCALAR(flow), '[', and '{'.
 
         # Check if a simple key is required at the current position.
-        required = not self.flow_level and self.indent == self.stream.column
+        required = not self.flow_level and self.indent == self.reader.column
 
         # The next token might be a simple key. Let's save it's number and
         # position.
         if self.allow_simple_key:
             self.remove_possible_simple_key()
             token_number = self.tokens_taken+len(self.tokens)
-            index = self.stream.index
-            line = self.stream.line
-            column = self.stream.column
-            marker = self.stream.get_marker()
+            index = self.reader.index
+            line = self.reader.line
+            column = self.reader.column
+            marker = self.reader.get_marker()
             key = SimpleKey(token_number, required,
                     index, line, column, marker)
             self.possible_simple_keys[self.flow_level] = key
@@ -380,7 +301,7 @@ class Scanner:
 
         # In block context, we may need to issue the BLOCK-END tokens.
         while self.indent > column:
-            marker = self.stream.get_marker()
+            marker = self.reader.get_marker()
             self.indent = self.indents.pop()
             self.tokens.append(BlockEndToken(marker, marker))
 
@@ -404,12 +325,12 @@ class Scanner:
         self.possible_simple_keys = {}
 
         # Read the token.
-        marker = self.stream.get_marker()
+        marker = self.reader.get_marker()
         
         # Add END.
         self.tokens.append(EndToken(marker, marker))
 
-        # The stream is ended.
+        # The reader is ended.
         self.done = True
 
     def fetch_directive(self):
@@ -441,9 +362,9 @@ class Scanner:
         self.allow_simple_key = False
 
         # Add DOCUMENT-START or DOCUMENT-END.
-        start_marker = self.stream.get_marker()
-        self.stream.forward(3)
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward(3)
+        end_marker = self.reader.get_marker()
         self.tokens.append(TokenClass(start_marker, end_marker))
 
     def fetch_flow_sequence_start(self):
@@ -464,9 +385,9 @@ class Scanner:
         self.allow_simple_key = True
 
         # Add FLOW-SEQUENCE-START or FLOW-MAPPING-START.
-        start_marker = self.stream.get_marker()
-        self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(TokenClass(start_marker, end_marker))
 
     def fetch_flow_sequence_end(self):
@@ -487,9 +408,9 @@ class Scanner:
         self.allow_simple_key = False
 
         # Add FLOW-SEQUENCE-END or FLOW-MAPPING-END.
-        start_marker = self.stream.get_marker()
-        self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(TokenClass(start_marker, end_marker))
 
     def fetch_entry(self):
@@ -502,8 +423,8 @@ class Scanner:
                 self.fail("Cannot start a new entry here")
 
             # We may need to add BLOCK-SEQUENCE-START.
-            if self.add_indent(self.stream.column):
-                marker = self.stream.get_marker()
+            if self.add_indent(self.reader.column):
+                marker = self.reader.get_marker()
                 self.tokens.append(BlockSequenceStartToken(marker, marker))
 
         # Simple keys are allowed after '-' and ','.
@@ -513,9 +434,9 @@ class Scanner:
         self.remove_possible_simple_key()
 
         # Add ENTRY.
-        start_marker = self.stream.get_marker()
-        self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(EntryToken(start_marker, end_marker))
 
     def fetch_key(self):
@@ -528,8 +449,8 @@ class Scanner:
                 self.fail("Cannot start a new key here")
 
             # We may need to add BLOCK-MAPPING-START.
-            if self.add_indent(self.stream.column):
-                marker = self.stream.get_marker()
+            if self.add_indent(self.reader.column):
+                marker = self.reader.get_marker()
                 self.tokens.append(BlockMappingStartToken(marker, marker))
 
         # Simple keys are allowed after '?' in the block context.
@@ -539,9 +460,9 @@ class Scanner:
         self.remove_possible_simple_key()
 
         # Add KEY.
-        start_marker = self.stream.get_marker()
-        self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(KeyToken(start_marker, end_marker))
 
     def fetch_value(self):
@@ -575,9 +496,9 @@ class Scanner:
             self.remove_possible_simple_key()
 
         # Add VALUE.
-        start_marker = self.stream.get_marker()
-        self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(ValueToken(start_marker, end_marker))
 
     def fetch_alias(self):
@@ -666,22 +587,22 @@ class Scanner:
 
         # DIRECTIVE:        ^ '%' ...
         # The '%' indicator is already checked.
-        if self.stream.column == 0:
+        if self.reader.column == 0:
             return True
 
     def check_document_start(self):
 
         # DOCUMENT-START:   ^ '---' (' '|'\n')
-        if self.stream.column == 0:
-            prefix = self.stream.peek(4)
+        if self.reader.column == 0:
+            prefix = self.reader.peek(4)
             if prefix[:3] == u'---' and prefix[3] in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
 
     def check_document_end(self):
 
         # DOCUMENT-END:     ^ '...' (' '|'\n')
-        if self.stream.column == 0:
-            prefix = self.stream.peek(4)
+        if self.reader.column == 0:
+            prefix = self.reader.peek(4)
             if prefix[:3] == u'...' and prefix[3] in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
 
@@ -689,11 +610,11 @@ class Scanner:
 
         # ENTRY(flow context):      ','
         if self.flow_level:
-            return self.stream.peek() == u','
+            return self.reader.peek() == u','
 
         # ENTRY(block context):     '-' (' '|'\n')
         else:
-            prefix = self.stream.peek(2)
+            prefix = self.reader.peek(2)
             return prefix[0] == u'-' and prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
 
     def check_key(self):
@@ -704,7 +625,7 @@ class Scanner:
 
         # KEY(block context):   '?' (' '|'\n')
         else:
-            prefix = self.stream.peek(2)
+            prefix = self.reader.peek(2)
             return prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
 
     def check_value(self):
@@ -715,7 +636,7 @@ class Scanner:
 
         # VALUE(block context): ':' (' '|'\n')
         else:
-            prefix = self.stream.peek(2)
+            prefix = self.reader.peek(2)
             return prefix[1] in u'\0 \t\r\n\x85\u2028\u2029'
 
     def check_plain(self):
@@ -726,74 +647,74 @@ class Scanner:
     def scan_to_next_token(self):
         found = False
         while not found:
-            while self.stream.peek() == u' ':
-                self.stream.forward()
-            if self.stream.peek() == u'#':
-                while self.stream.peek() not in u'\r\n':
-                    self.stream.forward()
-            if self.stream.peek() in u'\r\n':
-                self.stream.forward()
+            while self.reader.peek() == u' ':
+                self.reader.forward()
+            if self.reader.peek() == u'#':
+                while self.reader.peek() not in u'\r\n':
+                    self.reader.forward()
+            if self.reader.peek() in u'\r\n':
+                self.reader.forward()
                 if not self.flow_level:
                     self.allow_simple_key = True
             else:
                 found = True
 
     def scan_directive(self):
-        marker = self.stream.get_marker()
-        if self.stream.peek(5) == u'%YAML ':
+        marker = self.reader.get_marker()
+        if self.reader.peek(5) == u'%YAML ':
             self.tokens.append(YAMLDirectiveToken(1, 1, marker, marker))
-        elif self.stream.peek(4) == u'%TAG ':
+        elif self.reader.peek(4) == u'%TAG ':
             self.tokens.append(TagDirectiveToken(marker, marker))
         else:
             self.tokens.append(ReservedDirectiveToken('', marker, marker))
-        while self.stream.peek() not in u'\0\r\n':
-            self.stream.forward()
-        self.stream.forward()
+        while self.reader.peek() not in u'\0\r\n':
+            self.reader.forward()
+        self.reader.forward()
 
     def scan_anchor(self, TokenClass):
-        start_marker = self.stream.get_marker()
-        while self.stream.peek() not in u'\0 \t\r\n,:':
-            self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        while self.reader.peek() not in u'\0 \t\r\n,:':
+            self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(TokenClass('', start_marker, end_marker))
 
     def scan_tag(self):
-        start_marker = self.stream.get_marker()
-        while self.stream.peek() not in u'\0 \t\r\n':
-            self.stream.forward()
-        end_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
+        while self.reader.peek() not in u'\0 \t\r\n':
+            self.reader.forward()
+        end_marker = self.reader.get_marker()
         self.tokens.append(TagToken('', start_marker, end_marker))
 
     def scan_block_scalar(self, folded):
-        start_marker = self.stream.get_marker()
+        start_marker = self.reader.get_marker()
         indent = self.indent+1
         if indent < 1:
             indent = 1
         while True:
-            while self.stream.peek() and self.stream.peek() and self.stream.peek() not in u'\0\r\n\x85\u2028\u2029':
-                self.stream.forward()
-            if self.stream.peek() != u'\0':
-                self.stream.forward()
+            while self.reader.peek() and self.reader.peek() and self.reader.peek() not in u'\0\r\n\x85\u2028\u2029':
+                self.reader.forward()
+            if self.reader.peek() != u'\0':
+                self.reader.forward()
             count = 0
-            while count < indent and self.stream.peek() == u' ':
-                self.stream.forward()
+            while count < indent and self.reader.peek() == u' ':
+                self.reader.forward()
                 count += 1
-            if count < indent and self.stream.peek() not in u'#\r\n\x85\u2028\u2029':
+            if count < indent and self.reader.peek() not in u'#\r\n\x85\u2028\u2029':
                 break
         self.tokens.append(ScalarToken('', False, start_marker, start_marker))
 
     def scan_flow_scalar(self, double):
-        marker = self.stream.get_marker()
-        quote = self.stream.peek()
-        self.stream.forward()
-        while self.stream.peek() != quote:
-            if double and self.stream.peek() == u'\\':
-                self.stream.forward(2)
-            elif not double and self.stream.peek(3)[1:] == u'\'\'':
-                self.stream.forward(3)
+        marker = self.reader.get_marker()
+        quote = self.reader.peek()
+        self.reader.forward()
+        while self.reader.peek() != quote:
+            if double and self.reader.peek() == u'\\':
+                self.reader.forward(2)
+            elif not double and self.reader.peek(3)[1:] == u'\'\'':
+                self.reader.forward(3)
             else:
-                self.stream.forward(1)
-        self.stream.forward(1)
+                self.reader.forward(1)
+        self.reader.forward(1)
         self.tokens.append(ScalarToken('', False, marker, marker))
 
     def scan_plain(self):
@@ -801,27 +722,27 @@ class Scanner:
         if indent < 1:
             indent = 1
         space = False
-        marker = self.stream.get_marker()
+        marker = self.reader.get_marker()
         while True:
-            while self.stream.peek() == u' ':
-                self.stream.forward()
+            while self.reader.peek() == u' ':
+                self.reader.forward()
                 space = True
-            while self.stream.peek() not in u'\0\r\n?:,[]{}#'   \
-                    or (not space and self.stream.peek() == '#')    \
-                    or (not self.flow_level and self.stream.peek() in '?,[]{}') \
-                    or (not self.flow_level and self.stream.peek() == ':' and self.stream.peek(2)[1] not in u' \0\r\n'):
-                space = self.stream.peek() not in u' \t'
-                self.stream.forward()
+            while self.reader.peek() not in u'\0\r\n?:,[]{}#'   \
+                    or (not space and self.reader.peek() == '#')    \
+                    or (not self.flow_level and self.reader.peek() in '?,[]{}') \
+                    or (not self.flow_level and self.reader.peek() == ':' and self.reader.peek(2)[1] not in u' \0\r\n'):
+                space = self.reader.peek() not in u' \t'
+                self.reader.forward()
                 self.allow_simple_key = False
-            if self.stream.peek() not in u'\r\n':
+            if self.reader.peek() not in u'\r\n':
                 break
-            while self.stream.peek() in u'\r\n':
-                self.stream.forward()
+            while self.reader.peek() in u'\r\n':
+                self.reader.forward()
                 if not self.flow_level:
                     self.allow_simple_key = True
             count = 0
-            while self.stream.peek() == u' ' and count < indent:
-                self.stream.forward()
+            while self.reader.peek() == u' ' and count < indent:
+                self.reader.forward()
                 count += 1
             if count < indent:
                 break
