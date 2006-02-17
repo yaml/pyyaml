@@ -19,15 +19,15 @@ class TestMarker(test_appliance.TestAppliance):
                     column += 1
                 index += 1
             marker = Marker(test_name, line, column, unicode(input), index)
-            snippet = marker.get_snippet()
+            snippet = marker.get_snippet(indent=2, max_length=79)
             #print "INPUT:"
             #print input
             #print "SNIPPET:"
             #print snippet
             self.failUnless(isinstance(snippet, str))
-            self.failUnlessEqual(snippet.count('\n'), 2)
-            data, pointer, dummy = snippet.split('\n')
-            self.failUnless(len(data) < 80)
+            self.failUnlessEqual(snippet.count('\n'), 1)
+            data, pointer = snippet.split('\n')
+            self.failUnless(len(data) < 82)
             self.failUnlessEqual(data[len(pointer)-1], '*')
 
 TestMarker.add_tests('testMarkers', '.markers')

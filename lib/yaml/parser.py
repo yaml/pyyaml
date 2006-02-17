@@ -95,23 +95,23 @@ class Parser:
 
     def parse_stream(self):
         documents = []
-        if not self.is_token(DirectiveToken, DocumentStartToken, EndToken):
+        if not self.is_token(DirectiveToken, DocumentStartToken, StreamEndToken):
             documents.append(self.parse_block_node())
-        while not self.is_token(EndToken):
+        while not self.is_token(StreamEndToken):
             while self.is_token(DirectiveToken):
                 self.get_token()
             if not self.is_token(DocumentStartToken):
                 self.fail('DOCUMENT-START is expected')
             self.get_token()
             if self.is_token(DirectiveToken,
-                    DocumentStartToken, DocumentEndToken, EndToken):
+                    DocumentStartToken, DocumentEndToken, StreamEndToken):
                 documents.append(None)
             else:
                 documents.append(self.parse_block_node())
             while self.is_token(DocumentEndToken):
                 self.get_token()
-        if not self.is_token(EndToken):
-            self.fail("END is expected")
+        if not self.is_token(StreamEndToken):
+            self.fail("STREAM-END is expected")
         return documents
 
     def parse_block_node(self):
@@ -284,5 +284,5 @@ class Parser:
 
     def fail(self, message):
         marker = self.scanner.peek_token().start_marker
-        raise Error(message+':\n'+marker.get_snippet())
+        raise ParserError(message+':\n'+marker.get_snippet())
 

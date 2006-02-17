@@ -23,7 +23,25 @@ class ScannerError(YAMLError):
     #         in '...', line 5, column 15:
     # key: "valu\?e"
     #            ^
-    pass
+    def __init__(self, context=None, context_marker=None,
+            problem=None, problem_marker=None, description=None):
+        self.context = context
+        self.context_marker = context_marker
+        self.problem = problem
+        self.problem_marker = problem_marker
+        self.description = description
+
+    def __str__(self):
+        lines = []
+        for (place, marker) in [(self.context, self.context_marker),
+                                (self.problem, self.problem_marker)]:
+            if place is not None:
+                lines.append(place)
+                if marker is not None:
+                    lines.append(str(marker))
+        if self.description is not None:
+            lines.append(self.description)
+        return '\n'.join(lines)
 
 class SimpleKey:
     def __init__(self, token_number, required, index, line, column, marker):
@@ -140,9 +158,6 @@ class Scanner:
         # and decrease the current indentation level.
         self.unwind_indent(self.reader.column)
 
-        #print
-        #print self.reader.get_marker().get_snippet()
-
         # Peek the next character.
         ch = self.reader.peek()
 
@@ -256,7 +271,8 @@ class Scanner:
             if key.line != self.reader.line  \
                     or self.reader.index-key.index > 1024:
                 if key.required:
-                    self.fail("simple key is required")
+                    raise ScannerError("while scanning a simple key", key.marker,
+                            "could not found expected ':'", self.reader.get_marker())
                 del self.possible_simple_keys[level]
 
     def save_possible_simple_key(self):
@@ -266,6 +282,10 @@ class Scanner:
 
         # Check if a simple key is required at the current position.
         required = not self.flow_level and self.indent == self.reader.column
+
+        # A simple key is required only if it is the first token in the current
+        # line. Therefore it is always allowed.
+        assert self.allow_simple_key or not required
 
         # The next token might be a simple key. Let's save it's number and
         # position.
@@ -280,24 +300,31 @@ class Scanner:
                     index, line, column, marker)
             self.possible_simple_keys[self.flow_level] = key
 
-        # A simple key is required at the current position.
-        elif required:
-            self.fail("simple key is required")
-
     def remove_possible_simple_key(self):
         # Remove the saved possible key position at the current flow level.
         if self.flow_level in self.possible_simple_keys:
             key = self.possible_simple_keys[self.flow_level]
-            if key.required:
-                self.fail("simple key is required")
+            
+            # I don't think it's possible, but I could be wrong.
+            assert not key.required
+            #if key.required:
+            #    raise ScannerError("while scanning a simple key", key.marker,
+            #            "could not found expected ':'", self.reader.get_marker())
 
     # Indentation functions.
 
     def unwind_indent(self, column):
 
         # In flow context, tokens should respect indentation.
+        # Actually the condition should be `self.indent >= column` according to
+        # the spec. But this condition will prohibit intuitively correct
+        # constructions such as
+        # key : {
+        # }
         if self.flow_level and self.indent > column:
-            self.fail("invalid intendation in the flow context")
+            raise ScannerError(None, None,
+                    "invalid intendation or unclosed '[' or '{'",
+                    self.reader.get_marker())
 
         # In block context, we may need to issue the BLOCK-END tokens.
         while self.indent > column:
@@ -328,7 +355,7 @@ class Scanner:
         marker = self.reader.get_marker()
         
         # Add END.
-        self.tokens.append(EndToken(marker, marker))
+        self.tokens.append(StreamEndToken(marker, marker))
 
         # The reader is ended.
         self.done = True
@@ -343,7 +370,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add DIRECTIVE.
-        self.scan_directive()
+        self.tokens.append(self.scan_directive())
 
     def fetch_document_start(self):
         self.fetch_document_indicator(DocumentStartToken)
@@ -420,7 +447,9 @@ class Scanner:
 
             # Are we allowed to start a new entry?
             if not self.allow_simple_key:
-                self.fail("Cannot start a new entry here")
+                raise ScannerError(None, None,
+                        "sequence entries are not allowed here",
+                        self.reader.get_marker())
 
             # We may need to add BLOCK-SEQUENCE-START.
             if self.add_indent(self.reader.column):
@@ -446,7 +475,9 @@ class Scanner:
 
             # Are we allowed to start a key (not nessesary a simple)?
             if not self.allow_simple_key:
-                self.fail("Cannot start a new key here")
+                raise ScannerError(None, None,
+                        "mapping keys are not allowed here",
+                        self.reader.get_marker())
 
             # We may need to add BLOCK-MAPPING-START.
             if self.add_indent(self.reader.column):
@@ -489,6 +520,18 @@ class Scanner:
         # It must be a part of a complex key.
         else:
             
+            # Block context needs additional checks.
+            # (Do we really need them? They will be catched by the parser
+            # anyway.)
+            if not self.flow_level:
+
+                # We are allowed to start a complex value if and only if
+                # we can start a simple key.
+                if not self.allow_simple_key:
+                    raise ScannerError(None, None,
+                            "mapping values are not allowed here",
+                            self.reader.get_marker())
+
             # Simple keys are allowed after ':' in the block context.
             self.allow_simple_key = not self.flow_level
 
@@ -510,7 +553,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add ALIAS.
-        self.scan_anchor(AliasToken)
+        self.tokens.append(self.scan_anchor(AliasToken))
 
     def fetch_anchor(self):
 
@@ -521,7 +564,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add ANCHOR.
-        self.scan_anchor(AnchorToken)
+        self.tokens.append(self.scan_anchor(AnchorToken))
 
     def fetch_tag(self):
 
@@ -532,7 +575,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add TAG.
-        self.scan_tag()
+        self.tokens.append(self.scan_tag())
 
     def fetch_literal(self):
         self.fetch_block_scalar(folded=False)
@@ -549,7 +592,7 @@ class Scanner:
         self.remove_possible_simple_key()
 
         # Scan and add SCALAR.
-        self.scan_block_scalar(folded)
+        self.tokens.append(self.scan_block_scalar(folded))
 
     def fetch_single(self):
         self.fetch_flow_scalar(double=False)
@@ -566,7 +609,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add SCALAR.
-        self.scan_flow_scalar(double)
+        self.tokens.append(self.scan_flow_scalar(double))
 
     def fetch_plain(self):
 
@@ -579,7 +622,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add SCALAR. May change `allow_simple_key`.
-        self.scan_plain()
+        self.tokens.append(self.scan_plain())
 
     # Checkers.
 
@@ -645,15 +688,17 @@ class Scanner:
     # Scanners.
 
     def scan_to_next_token(self):
+        # We ignore spaces, line breaks and comments.
+        # If we find a line break in the block context, we set the flag
+        # `allow_simple_key` on.
         found = False
         while not found:
             while self.reader.peek() == u' ':
                 self.reader.forward()
             if self.reader.peek() == u'#':
-                while self.reader.peek() not in u'\r\n':
+                while self.reader.peek() not in u'\0\r\n\x85\u2028\u2029':
                     self.reader.forward()
-            if self.reader.peek() in u'\r\n':
-                self.reader.forward()
+            if self.scan_line_break():
                 if not self.flow_level:
                     self.allow_simple_key = True
             else:
@@ -662,28 +707,29 @@ class Scanner:
     def scan_directive(self):
         marker = self.reader.get_marker()
         if self.reader.peek(5) == u'%YAML ':
-            self.tokens.append(YAMLDirectiveToken(1, 1, marker, marker))
+            token = YAMLDirectiveToken(1, 1, marker, marker)
         elif self.reader.peek(4) == u'%TAG ':
-            self.tokens.append(TagDirectiveToken(marker, marker))
+            token = TagDirectiveToken(marker, marker)
         else:
-            self.tokens.append(ReservedDirectiveToken('', marker, marker))
+            token = ReservedDirectiveToken('', marker, marker)
         while self.reader.peek() not in u'\0\r\n':
             self.reader.forward()
         self.reader.forward()
+        return token
 
     def scan_anchor(self, TokenClass):
         start_marker = self.reader.get_marker()
         while self.reader.peek() not in u'\0 \t\r\n,:':
             self.reader.forward()
         end_marker = self.reader.get_marker()
-        self.tokens.append(TokenClass('', start_marker, end_marker))
+        return TokenClass('', start_marker, end_marker)
 
     def scan_tag(self):
         start_marker = self.reader.get_marker()
         while self.reader.peek() not in u'\0 \t\r\n':
             self.reader.forward()
         end_marker = self.reader.get_marker()
-        self.tokens.append(TagToken('', start_marker, end_marker))
+        return TagToken('', start_marker, end_marker)
 
     def scan_block_scalar(self, folded):
         start_marker = self.reader.get_marker()
@@ -701,7 +747,7 @@ class Scanner:
                 count += 1
             if count < indent and self.reader.peek() not in u'#\r\n\x85\u2028\u2029':
                 break
-        self.tokens.append(ScalarToken('', False, start_marker, start_marker))
+        return ScalarToken('', False, start_marker, start_marker)
 
     def scan_flow_scalar(self, double):
         marker = self.reader.get_marker()
@@ -715,7 +761,7 @@ class Scanner:
             else:
                 self.reader.forward(1)
         self.reader.forward(1)
-        self.tokens.append(ScalarToken('', False, marker, marker))
+        return ScalarToken('', False, marker, marker)
 
     def scan_plain(self):
         indent = self.indent+1
@@ -747,13 +793,31 @@ class Scanner:
             if count < indent:
                 break
             space = True
-        self.tokens.append(ScalarToken('', True, marker, marker))
+        return ScalarToken('', True, marker, marker)
+
+    def scan_line_break(self):
+        # Transforms:
+        #   '\r\n'      :   '\n'
+        #   '\r'        :   '\n'
+        #   '\n'        :   '\n'
+        #   '\x85'      :   '\n'
+        #   '\u2028'    :   '\u2028'
+        #   '\u2029     :   '\u2029'
+        #   default     :   ''
+        ch = self.reader.peek()
+        if ch in u'\r\n\x85':
+            if self.reader.peek(2) == u'\r\n':
+                self.forward(2)
+            else:
+                self.reader.forward()
+            return u'\n'
+        elif ch in u'\u2028\u2029':
+            self.reader.forward()
+            return ch
+        return u''
 
     def invalid_token(self):
         self.fail("invalid token")
-
-    def fail(self, message):
-        raise ScannerError(message)
 
 #try:
 #    import psyco

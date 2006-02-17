@@ -1,0 +1,5 @@
+test:
+    - [ foo: bar
+    - baz
+"we could have detected the unclosed bracket on the above line, but this would forbid such syntax as": {
+}

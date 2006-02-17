@@ -5,9 +5,10 @@ class Token:
         self.end_marker = end_marker
 
 class DirectiveToken(Token):
-    pass
+    code = '<directive>'
 
 class YAMLDirectiveToken(DirectiveToken):
+    code = '<%YAML directive>'
     def __init__(self, major_version, minor_version, start_marker, end_marker):
         self.major_version = major_version
         self.minor_version = minor_version
@@ -15,72 +16,77 @@ class YAMLDirectiveToken(DirectiveToken):
         self.end_marker = end_marker
 
 class TagDirectiveToken(DirectiveToken):
-    pass
+    code = '<%TAG directive>'
 
 class ReservedDirectiveToken(DirectiveToken):
+    code = '<unknown directive>'
     def __init__(self, name, start_marker, end_marker):
         self.name = name
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class DocumentStartToken(Token):
-    pass
+    code = '<document start>'
 
 class DocumentEndToken(Token):
-    pass
+    code = '<document end>'
 
-class EndToken(Token):
-    pass
+class StreamEndToken(Token):
+    code = '<stream end>'
 
 class BlockSequenceStartToken(Token):
-    pass
+    code = '<block sequence start>'
 
 class BlockMappingStartToken(Token):
-    pass
+    code = '<block mapping end>'
 
 class BlockEndToken(Token):
-    pass
+    code = '<block end>'
 
 class FlowSequenceStartToken(Token):
-    pass
+    code = '['
 
 class FlowMappingStartToken(Token):
-    pass
+    code = '{'
 
 class FlowSequenceEndToken(Token):
-    pass
+    code = ']'
 
 class FlowMappingEndToken(Token):
-    pass
+    code = '}'
 
 class KeyToken(Token):
-    pass
+    code = '?'
 
 class ValueToken(Token):
-    pass
+    code = ':'
 
 class EntryToken(Token):
-    pass
+    code = '- or ,'
 
 class AliasToken(Token):
+    code = '<alias>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class AnchorToken(Token):
+    code = '<anchor>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class TagToken(Token):
+    code = '<tag>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class ScalarToken(Token):
+    code = '<scalar>'
     def __init__(self, value, plain, start_marker, end_marker):
         self.value = value
         self.plain = plain

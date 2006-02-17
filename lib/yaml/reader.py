@@ -65,7 +65,7 @@ class Marker:
         self.buffer = buffer
         self.pointer = pointer
 
-    def get_snippet(self, max_length=79):
+    def get_snippet(self, indent=4, max_length=75):
         if self.buffer is None:
             return None
         head = ''
@@ -85,8 +85,16 @@ class Marker:
                 end -= 5
                 break
         snippet = self.buffer[start:end].encode('utf-8')
-        return head + snippet + tail + '\n'  \
-                + ' '*(self.pointer-start+len(head)) + '^' + '\n'
+        return ' '*indent + head + snippet + tail + '\n'  \
+                + ' '*(indent+self.pointer-start+len(head)) + '^'
+
+    def __str__(self):
+        snippet = self.get_snippet()
+        where = "  in \"%s\", line %d, column %d"   \
+                % (self.name, self.line+1, self.column+1)
+        if snippet is not None:
+            where += ":\n"+snippet
+        return where
 
 class ReaderError(YAMLError):
 
@@ -100,12 +108,12 @@ class ReaderError(YAMLError):
     def __str__(self):
         if isinstance(self.character, str):
             return "'%s' codec can't decode byte #x%02x: %s\n"  \
-                    "\tin '%s', position %d."   \
+                    "  in \"%s\", position %d"    \
                     % (self.encoding, ord(self.character), self.reason,
                             self.name, self.position)
         else:
             return "unacceptable character #x%04x: %s\n"    \
-                    "\tin '%s', position %d."   \
+                    "  in \"%s\", position %d"    \
                     % (ord(self.character), self.reason,
                             self.name, self.position)
 

@@ -1,6 +1,5 @@
 {
-#? : value # Empty key
-? ~ : value, # Empty key
+? : value, # Empty key
 ? explicit
  key: value,
 simple key : value,

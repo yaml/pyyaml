@@ -69,7 +69,7 @@ class Token:
             args.append(repr(self.value))
         return "%s(%s)" % (self.__class__.__name__, ''.join(args))
 
-class EndToken(Token):
+class StreamEndToken(Token):
     pass
 
 class DirectiveToken(Token):
@@ -132,7 +132,7 @@ class CanonicalScanner:
             self.find_token()
             ch = self.data[self.index]
             if ch == u'\0':
-                tokens.append(EndToken())
+                tokens.append(StreamEndToken())
                 break
             elif ch == u'%':
                 tokens.append(self.scan_directive())
@@ -285,7 +285,7 @@ class CanonicalParser:
     # stream: document* END
     def parse_stream(self):
         documents = []
-        while not self.test_token(EndToken):
+        while not self.test_token(StreamEndToken):
             if self.test_token(DirectiveToken, DocumentStartToken):
                 documents.append(self.parse_document())
             else:

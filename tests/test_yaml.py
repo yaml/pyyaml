@@ -6,6 +6,7 @@ from test_reader import *
 from test_canonical import *
 from test_tokens import *
 from test_structure import *
+from test_errors import *
 
 def main(module='__main__'):
     unittest.main(module)
