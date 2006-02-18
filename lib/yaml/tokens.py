@@ -6,22 +6,9 @@ class Token:
 
 class DirectiveToken(Token):
     code = '<directive>'
-
-class YAMLDirectiveToken(DirectiveToken):
-    code = '<%YAML directive>'
-    def __init__(self, major_version, minor_version, start_marker, end_marker):
-        self.major_version = major_version
-        self.minor_version = minor_version
-        self.start_marker = start_marker
-        self.end_marker = end_marker
-
-class TagDirectiveToken(DirectiveToken):
-    code = '<%TAG directive>'
-
-class ReservedDirectiveToken(DirectiveToken):
-    code = '<unknown directive>'
-    def __init__(self, name, start_marker, end_marker):
+    def __init__(self, name, value, start_marker, end_marker):
         self.name = name
+        self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 

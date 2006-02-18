@@ -8,5 +8,7 @@ Not indented:
  Flow style: [    # Leading spaces
    By two,        # in flow style
   Also by two,    # are neither
-  	Still by two   # content nor
+# Tabs are not allowed:
+#  	Still by two   # content nor
+    Still by two   # content nor
     ]             # indentation.

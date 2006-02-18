@@ -27,9 +27,7 @@ class TestTokens(test_appliance.TestAppliance):
     # value:                :
 
     replaces = {
-        YAMLDirectiveToken: '%',
-        TagDirectiveToken: '%',
-        ReservedDirectiveToken: '%',
+        DirectiveToken: '%',
         DocumentStartToken: '---',
         DocumentEndToken: '...',
         AliasToken: '*',

@@ -15,7 +15,7 @@ install: build
 	${PYTHON} setup.py install ${PARAMETERS}
 
 test: build
-	${PYTHON} tests/test_build.py -v ${TEST}
+	${PYTHON} tests/test_build.py ${TEST}
 
 clean:
 	${PYTHON} setup.py clean -a

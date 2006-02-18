@@ -3,7 +3,7 @@
 !!str "Root flow scalar"
 %YAML 1.1
 ---
-!!str "Root block scalar"
+!!str "Root block scalar\n"
 %YAML 1.1
 ---
 !!map {

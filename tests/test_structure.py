@@ -76,8 +76,46 @@ class TestParser(test_appliance.TestAppliance):
                 self._compare(item1, item2)
         else:
             self.failUnlessEqual(value1.__class__.__name__, value2.__class__.__name__)
-            if isinstance(value1, SequenceNode) or isinstance(value1, MappingNode):
+            if isinstance(value1, SequenceNode): # or isinstance(value1, MappingNode):
                 self._compare(value1.value, value2.value)
+            elif isinstance(value1, ScalarNode):
+                self.failUnlessEqual(value1.value, value2.value)
 
 TestParser.add_tests('testParser', '.data', '.canonical')
+
+class TestParserOnCanonical(test_appliance.TestAppliance):
+
+    def _testParserOnCanonical(self, test_name, canonical_filename):
+        documents1 = None
+        documents2 = None
+        try:
+            parser = Parser(Scanner(Reader(file(canonical_filename, 'rb'))))
+            documents1 = parser.parse()
+            canonical = test_appliance.CanonicalParser(canonical_filename, file(canonical_filename, 'rb').read())
+            documents2 = canonical.parse()
+            self._compare(documents1, documents2)
+        except:
+            print
+            print "DATA:"
+            print file(canonical_filename, 'rb').read()
+            print "DOCUMENTS1:", documents1
+            print "DOCUMENTS2:", documents2
+            raise
+
+    def _compare(self, value1, value2):
+        if value1 is None and hasattr(value2, 'tag') and value2.tag == 'tag:yaml.org,2002:null':
+            return
+        self.failUnlessEqual(type(value1), type(value2))
+        if isinstance(value1, list) or isinstance(value1, tuple):
+            self.failUnlessEqual(len(value1), len(value2))
+            for item1, item2 in zip(value1, value2):
+                self._compare(item1, item2)
+        else:
+            self.failUnlessEqual(value1.__class__.__name__, value2.__class__.__name__)
+            if isinstance(value1, SequenceNode) or isinstance(value1, MappingNode):
+                self._compare(value1.value, value2.value)
+            elif isinstance(value1, ScalarNode):
+                self.failUnlessEqual(value1.value, value2.value)
+
+TestParserOnCanonical.add_tests('testParserOnCanonical', '.canonical')
 

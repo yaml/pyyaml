@@ -3,7 +3,7 @@
 !!map {
   ? !!str "plain key"
   : !!null "",
-  ? !!str "quoted key\n"
+  ? !!str "quoted key"
   : !!seq [
     !!str "one",
     !!str "two",

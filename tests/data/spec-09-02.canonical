@@ -3,5 +3,5 @@
 !!str "as space \
   trimmed\n\
   specific\L\n\
-  escaped\t\
+  escaped\t\n\
   none"

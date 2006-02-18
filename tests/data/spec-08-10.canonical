@@ -4,9 +4,9 @@
   ? !!str "block styles" : !!map {
     ? !!str "scalars" : !!map {
       ? !!str "literal"
-      : !!str "#!!/usr/bin/perl\n\
+      : !!str "#!/usr/bin/perl\n\
           print \"Hello,
-          world!!\\n\";\n",
+          world!\\n\";\n",
       ? !!str "folded"
       : !!str "This sentence
           is false.\n"

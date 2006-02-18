@@ -6,5 +6,5 @@
   ? !!str "quoted"
   : !!str "text lines",
   ? !!str "block"
-  : !!str "text 	lines\n"
+  : !!str "text\n 	lines\n"
 }

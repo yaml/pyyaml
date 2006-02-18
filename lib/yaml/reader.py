@@ -158,7 +158,12 @@ class Reader:
             self.raw_buffer = ''
             self.determine_encoding()
 
-    def peek(self, length=1):
+    def peek(self, index=0):
+        if self.pointer+index+1 >= len(self.buffer):
+            self.update(index+1)
+        return self.buffer[self.pointer+index]
+
+    def prefix(self, length=1):
         if self.pointer+length >= len(self.buffer):
             self.update(length)
         return self.buffer[self.pointer:self.pointer+length]

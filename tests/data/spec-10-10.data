@@ -1,5 +1,5 @@
 {
-? explicit key1 : Explicit value,
+? explicit key1 : explicit value,
 ? explicit key2 : , # Explicit empty
 ? explicit key3,     # Empty value
 simple key1 : explicit value,

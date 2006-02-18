@@ -251,8 +251,10 @@ class CanonicalScanner:
                     chunks.append(self.QUOTE_REPLACES[ch])
                 start = self.index
             elif self.data[self.index] == u'\n':
+                chunks.append(self.data[start:self.index])
                 chunks.append(u' ')
                 self.index += 1
+                start = self.index
                 ignore_spaces = True
             elif ignore_spaces and self.data[self.index] == u' ':
                 self.index += 1

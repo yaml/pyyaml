@@ -12,4 +12,4 @@
 !!str "foo bar"
 %YAML 1.1
 ---
-!!str "foo bar\n"
+!!str "foo\n"
