@@ -41,7 +41,8 @@ class TestTokens(test_appliance.TestAppliance):
         FlowSequenceEndToken: ']',
         FlowMappingStartToken: '{',
         FlowMappingEndToken: '}',
-        EntryToken: ',',
+        BlockEntryToken: ',',
+        FlowEntryToken: ',',
         KeyToken: '?',
         ValueToken: ':',
     }
@@ -52,8 +53,9 @@ class TestTokens(test_appliance.TestAppliance):
         try:
             scanner = Scanner(Reader(file(data_filename, 'rb')))
             tokens1 = []
-            while not isinstance(scanner.peek_token(), StreamEndToken):
-                tokens1.append(scanner.get_token())
+            for token in scanner:
+                if not isinstance(token, StreamEndToken):
+                    tokens1.append(token)
             tokens1 = [self.replaces[t.__class__] for t in tokens1]
             self.failUnlessEqual(tokens1, tokens2)
         except:
@@ -74,8 +76,9 @@ class TestScanner(test_appliance.TestAppliance):
             try:
                 scanner = Scanner(Reader(file(filename, 'rb')))
                 tokens = []
-                while not isinstance(scanner.peek_token(), StreamEndToken):
-                    tokens.append(scanner.get_token().__class__.__name__)
+                for token in scanner:
+                    if not isinstance(token, StreamEndToken):
+                        tokens.append(token.__class__.__name__)
             except:
                 print
                 print "DATA:"

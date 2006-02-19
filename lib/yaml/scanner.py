@@ -14,7 +14,6 @@ from error import YAMLError
 from tokens import *
 
 class ScannerError(YAMLError):
-    # TODO:
     # ScannerError: while reading a quoted string
     #         in '...', line 5, column 10:
     # key: "valu\?e"
@@ -23,6 +22,7 @@ class ScannerError(YAMLError):
     #         in '...', line 5, column 15:
     # key: "valu\?e"
     #            ^
+
     def __init__(self, context=None, context_marker=None,
             problem=None, problem_marker=None):
         self.context = context
@@ -41,6 +41,8 @@ class ScannerError(YAMLError):
         return '\n'.join(lines)
 
 class SimpleKey:
+    # See below simple keys treatment.
+
     def __init__(self, token_number, required, index, line, column, marker):
         self.token_number = token_number
         self.required = required
@@ -114,22 +116,42 @@ class Scanner:
         # '[', or '{' tokens.
         self.possible_simple_keys = {}
 
-    # Two public methods.
+    # Public methods.
 
-    def peek_token(self):
-        """Get the current token."""
+    def check(self, *choices):
+        # Check if the next token is one of the given types.
+        while self.need_more_tokens():
+            self.fetch_more_tokens()
+        if self.tokens:
+            for choice in choices:
+                if isinstance(self.tokens[0], choice):
+                    return True
+        return False
+
+    def peek(self):
+        # Return the next token, but do not delete if from the queue.
         while self.need_more_tokens():
             self.fetch_more_tokens()
         if self.tokens:
             return self.tokens[0]
 
-    def get_token(self):
-        "Get the current token and remove it from the list of pending tokens."""
+    def get(self):
+        # Return the next token.
         while self.need_more_tokens():
             self.fetch_more_tokens()
         if self.tokens:
             self.tokens_taken += 1
             return self.tokens.pop(0)
+
+    def __iter__(self):
+        # Iterator protocol.
+        while self.need_more_tokens():
+            self.fetch_more_tokens()
+        while self.tokens:
+            self.tokens_taken += 1
+            yield self.tokens.pop(0)
+            while self.need_more_tokens():
+                self.fetch_more_tokens()
 
     # Private methods.
 
@@ -163,10 +185,6 @@ class Scanner:
         if ch == u'\0':
             return self.fetch_stream_end()
 
-        # Is it the byte order mark?
-        if ch == u'\uFEFF':
-            return self.fetch_bom()
-
         # Is it a directive?
         if ch == u'%' and self.check_directive():
             return self.fetch_directive()
@@ -197,9 +215,13 @@ class Scanner:
         if ch == u'}':
             return self.fetch_flow_mapping_end()
 
-        # Is it the entry indicator?
-        if ch in u'-,' and self.check_entry():
-            return self.fetch_entry()
+        # Is it the flow entry indicator?
+        if ch in u',':
+            return self.fetch_flow_entry()
+
+        # Is it the block entry indicator?
+        if ch in u'-' and self.check_block_entry():
+            return self.fetch_block_entry()
 
         # Is it the key indicator?
         if ch == u'?' and self.check_key():
@@ -364,33 +386,6 @@ class Scanner:
         # The reader is ended.
         self.done = True
 
-    def fetch_bom(self):
-        # We consider the BOM marker as a DOCUMENT-END indicator unless it's
-        # the first character in the stream. It's a reasonable approximation
-        # of the specification requirements. We can follow the specification
-        # literally, but it will require a new token class. Probably later.
-
-        # We ignore BOM if it is the first character in the stream.
-        if self.reader.index == 0:
-            slef.reader.forward()
-
-        # Otherwise we issue DOCUMENT-END.
-        else:
-
-            # Set the current intendation to -1.
-            self.unwind_indent(-1)
-
-            # Reset simple keys. Note that there could not be a block
-            # collection after BOM.
-            self.remove_possible_simple_key()
-            self.allow_simple_key = False
-
-            # Add DOCUMENT-END.
-            start_marker = self.reader.get_marker()
-            self.reader.forward()
-            end_marker = self.reader.get_marker()
-            self.tokens.append(DocumentEndToken(start_marker, end_marker))
-
     def fetch_directive(self):
         
         # Set the current intendation to -1.
@@ -471,7 +466,21 @@ class Scanner:
         end_marker = self.reader.get_marker()
         self.tokens.append(TokenClass(start_marker, end_marker))
 
-    def fetch_entry(self):
+    def fetch_flow_entry(self):
+
+        # Simple keys are allowed after ','.
+        self.allow_simple_key = True
+
+        # Reset possible simple key on the current level.
+        self.remove_possible_simple_key()
+
+        # Add FLOW-ENTRY.
+        start_marker = self.reader.get_marker()
+        self.reader.forward()
+        end_marker = self.reader.get_marker()
+        self.tokens.append(FlowEntryToken(start_marker, end_marker))
+
+    def fetch_block_entry(self):
 
         # Block context needs additional checks.
         if not self.flow_level:
@@ -487,17 +496,22 @@ class Scanner:
                 marker = self.reader.get_marker()
                 self.tokens.append(BlockSequenceStartToken(marker, marker))
 
-        # Simple keys are allowed after '-' and ','.
+        # It's an error for the block entry to occur in the flow context,
+        # but we let the parser detect this.
+        else:
+            pass
+
+        # Simple keys are allowed after '-'.
         self.allow_simple_key = True
 
         # Reset possible simple key on the current level.
         self.remove_possible_simple_key()
 
-        # Add ENTRY.
+        # Add BLOCK-ENTRY.
         start_marker = self.reader.get_marker()
         self.reader.forward()
         end_marker = self.reader.get_marker()
-        self.tokens.append(EntryToken(start_marker, end_marker))
+        self.tokens.append(BlockEntryToken(start_marker, end_marker))
 
     def fetch_key(self):
         
@@ -681,16 +695,10 @@ class Scanner:
                     and self.reader.peek(3) in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
 
-    def check_entry(self):
+    def check_block_entry(self):
 
-        # ENTRY(flow context):      ','
-        if self.flow_level:
-            return self.reader.peek() == u','
-
-        # ENTRY(block context):     '-' (' '|'\n')
-        else:
-            return self.reader.peek() == u'-'   \
-                    and self.reader.peek(1) in u'\0 \t\r\n\x85\u2028\u2029'
+        # BLOCK-ENTRY:      '-' (' '|'\n')
+        return self.reader.peek(1) in u'\0 \t\r\n\x85\u2028\u2029'
 
     def check_key(self):
 
@@ -737,6 +745,12 @@ class Scanner:
         # We ignore spaces, line breaks and comments.
         # If we find a line break in the block context, we set the flag
         # `allow_simple_key` on.
+        # The byte order mark is stripped if it's the first character in the
+        # stream. We do not yet support BOM inside the stream as the
+        # specification requires. Any such mark will be considered as a part
+        # of the document.
+        if self.reader.index == 0 and self.reader.peek() == u'\uFEFF':
+            self.reader.forward()
         found = False
         while not found:
             while self.reader.peek() == u' ':
@@ -980,25 +994,25 @@ class Scanner:
                 # Unfortunately, folding rules are ambiguous.
                 #
                 # This is the folding according to the specification:
-                #
-                #if folded and line_break == u'\n'   \
-                #        and leading_non_space and self.reader.peek() not in u' \t':
-                #    if not breaks:
-                #        chunks.append(u' ')
-                #else:
-                #    chunks.append(line_break)
-                #
+                
+                if folded and line_break == u'\n'   \
+                        and leading_non_space and self.reader.peek() not in u' \t':
+                    if not breaks:
+                        chunks.append(u' ')
+                else:
+                    chunks.append(line_break)
+                
                 # This is Clark Evans's interpretation (also in the spec
                 # examples):
                 #
-                if folded and line_break == u'\n':
-                    if not breaks:
-                        if self.reader.peek() not in ' \t':
-                            chunks.append(u' ')
-                        else:
-                            chunks.append(line_break)
-                else:
-                    chunks.append(line_break)
+                #if folded and line_break == u'\n':
+                #    if not breaks:
+                #        if self.reader.peek() not in ' \t':
+                #            chunks.append(u' ')
+                #        else:
+                #            chunks.append(line_break)
+                #else:
+                #    chunks.append(line_break)
             else:
                 break
 

@@ -3,9 +3,19 @@ class Token:
     def __init__(self, start_marker, end_marker):
         self.start_marker = start_marker
         self.end_marker = end_marker
+    def __repr__(self):
+        attributes = [key for key in self.__dict__
+                if not key.endswith('_marker')]
+        attributes.sort()
+        arguments = ', '.join(['%s=%r' % (key, getattr(self, key))
+                for key in attributes])
+        return '%s(%s)' % (self.__class__.__name__, arguments)
+
+#class BOMToken(Token):
+#    id = '<byte order mark>'
 
 class DirectiveToken(Token):
-    code = '<directive>'
+    id = '<directive>'
     def __init__(self, name, value, start_marker, end_marker):
         self.name = name
         self.value = value
@@ -13,67 +23,70 @@ class DirectiveToken(Token):
         self.end_marker = end_marker
 
 class DocumentStartToken(Token):
-    code = '<document start>'
+    id = '<document start>'
 
 class DocumentEndToken(Token):
-    code = '<document end>'
+    id = '<document end>'
 
 class StreamEndToken(Token):
-    code = '<stream end>'
+    id = '<stream end>'
 
 class BlockSequenceStartToken(Token):
-    code = '<block sequence start>'
+    id = '<block sequence start>'
 
 class BlockMappingStartToken(Token):
-    code = '<block mapping end>'
+    id = '<block mapping end>'
 
 class BlockEndToken(Token):
-    code = '<block end>'
+    id = '<block end>'
 
 class FlowSequenceStartToken(Token):
-    code = '['
+    id = '['
 
 class FlowMappingStartToken(Token):
-    code = '{'
+    id = '{'
 
 class FlowSequenceEndToken(Token):
-    code = ']'
+    id = ']'
 
 class FlowMappingEndToken(Token):
-    code = '}'
+    id = '}'
 
 class KeyToken(Token):
-    code = '?'
+    id = '?'
 
 class ValueToken(Token):
-    code = ':'
+    id = ':'
 
-class EntryToken(Token):
-    code = '- or ,'
+class BlockEntryToken(Token):
+    id = '-'
+
+class FlowEntryToken(Token):
+    id = ','
 
 class AliasToken(Token):
-    code = '<alias>'
+    id = '<alias>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class AnchorToken(Token):
-    code = '<anchor>'
+    id = '<anchor>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class TagToken(Token):
-    code = '<tag>'
+    id = '<tag>'
     def __init__(self, value, start_marker, end_marker):
         self.value = value
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class ScalarToken(Token):
-    code = '<scalar>'
+    id = '<scalar>'
     def __init__(self, value, plain, start_marker, end_marker):
         self.value = value
         self.plain = plain

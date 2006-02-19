@@ -8,8 +8,8 @@
       ? !!str "Flow style"
       : !!seq [
           !!str "By two",
+          !!str "Also by two",
           !!str "Still by two",
-          !!str "Again by two",
         ]
     }
 }

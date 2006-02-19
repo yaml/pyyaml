@@ -4,5 +4,5 @@
   !!str "detected\n",
   !!str "\n\n# detected\n",
   !!str " explicit\n",
-  !!str "\t detected\n",
+  !!str "\t\ndetected\n",
 ]

@@ -18,14 +18,12 @@ class TestErrors(test_appliance.TestAppliance):
     def _load(self, filename):
         reader = Reader(file(filename, 'rb'))
         scanner = Scanner(reader)
-        while scanner.peek_token():
-            scanner.get_token()
+        return list(scanner)
 
     def _load_string(self, filename):
         reader = Reader(file(filename, 'rb').read())
         scanner = Scanner(reader)
-        while scanner.peek_token():
-            scanner.get_token()
+        return list(scanner)
 
 TestErrors.add_tests('testErrors', '.error-message')
 TestErrors.add_tests('testStringErrors', '.error-message')

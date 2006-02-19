@@ -1,8 +1,8 @@
 %YAML 1.1
 ---
 !!map {
-  ? !!str "double"
-  : !!str "text",
   ? !!str "single"
+  : !!str "text",
+  ? !!str "double"
   : !!str "text",
 }
