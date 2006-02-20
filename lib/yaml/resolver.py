@@ -38,7 +38,7 @@ class BaseResolver:
             self.resolve_scalar(path, node)
         elif isinstance(node, SequenceNode):
             self.resolve_sequence(path, node)
-            for index in len(node.value):
+            for index in range(len(node.value)):
                 self.resolve_node(path+[node, index], node.value[index])
         elif isinstance(node, MappingNode):
             self.resolve_mapping(path, node)
@@ -46,17 +46,17 @@ class BaseResolver:
                 self.resolve_node(path+[node, None], key)
                 self.resolve_node(path+[node, key], value)
 
-    def resolve_scalar(self, node):
+    def resolve_scalar(self, path, node):
         if node.tag is None:
             node.tag = self.detect_scalar(node.value)
         if node.tag is None or node.tag == u'!':
             node.tag = self.DEFAULT_SCALAR_TAG
 
-    def resolve_sequence(self, node):
+    def resolve_sequence(self, path, node):
         if node.tag is None or node.tag == u'!':
             node.tag = self.DEFAULT_SEQUENCE_TAG
 
-    def resolve_mapping(self, node):
+    def resolve_mapping(self, path, node):
         if node.tag is None or node.tag == u'!':
             node.tag = self.DEFAULT_MAPPING_TAG
 

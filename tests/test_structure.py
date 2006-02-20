@@ -4,6 +4,9 @@ import test_appliance
 from yaml.reader import Reader
 from yaml.scanner import Scanner
 from yaml.parser import *
+from yaml.composer import *
+from yaml.resolver import *
+from yaml.nodes import *
 
 class TestStructure(test_appliance.TestAppliance):
 
@@ -96,8 +99,49 @@ class TestParser(test_appliance.TestAppliance):
                 #self.failUnlessEqual(event1.tag, event2.tag)
                 pass
 
-
 TestParser.add_tests('testParser', '.data', '.canonical')
+
+class TestResolver(test_appliance.TestAppliance):
+
+    def _testResolver(self, test_name, data_filename, canonical_filename):
+        nodes1 = None
+        nodes2 = None
+        try:
+            resolver1 = Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb'))))))
+            nodes1 = list(iter(resolver1))
+            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
+            canonical.parse()
+            resolver2 = Resolver(Composer(canonical))
+            nodes2 = list(iter(resolver2))
+            self.failUnlessEqual(len(nodes1), len(nodes2))
+            for node1, node2 in zip(nodes1, nodes2):
+                self._compare(node1, node2)
+        except:
+            print
+            print "DATA1:"
+            print file(data_filename, 'rb').read()
+            print "DATA2:"
+            print file(canonical_filename, 'rb').read()
+            print "NODES1:", nodes1
+            print "NODES2:", nodes2
+            raise
+
+    def _compare(self, node1, node2):
+        self.failUnlessEqual(node1.__class__, node2.__class__)
+        if isinstance(node1, ScalarNode):
+            #self.failUnlessEqual(node1.tag, node2.tag)
+            self.failUnlessEqual(node1.value, node2.value)
+        elif isinstance(node1, SequenceNode):
+            self.failUnlessEqual(len(node1.value), len(node2.value))
+            for item1, item2 in zip(node1.value, node2.value):
+                self._compare(item1, item2)
+        elif isinstance(node1, MappingNode):
+            self.failUnlessEqual(len(node1.value), len(node2.value))
+            for (key1, value1), (key2, value2) in zip(node1.value, node2.value):
+                self._compare(key1, key2)
+                self._compare(value1, value2)
+
+TestResolver.add_tests('testResolver', '.data', '.canonical')
 
 class TestParserOnCanonical(test_appliance.TestAppliance):
 

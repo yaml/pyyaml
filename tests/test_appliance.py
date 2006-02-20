@@ -298,3 +298,15 @@ class CanonicalParser:
         self.parse_stream()
         return self.events
 
+    def get(self):
+        return self.events.pop(0)
+
+    def check(self, *choices):
+        for choice in choices:
+            if isinstance(self.events[0], choice):
+                return True
+        return False
+
+    def peek(self):
+        return self.events[0]
+
