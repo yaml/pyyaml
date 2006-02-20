@@ -5,6 +5,8 @@ from yaml.error import YAMLError
 from yaml.reader import *
 from yaml.scanner import *
 from yaml.parser import *
+from yaml.composer import *
+from yaml.resolver import *
 
 class TestErrors(test_appliance.TestAppliance):
 
@@ -21,10 +23,13 @@ class TestErrors(test_appliance.TestAppliance):
             reader = Reader(file(filename, 'rb'))
             scanner = Scanner(reader)
             parser = Parser(scanner)
-            return list(parser)
+            composer = Composer(parser)
+            resolver = Resolver(composer)
+            return list(composer)
         except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
+        #except ComposerError, exc:
             #print '.'*70
             #print "%s:" % exc.__class__.__name__, exc
             raise
@@ -34,10 +39,13 @@ class TestErrors(test_appliance.TestAppliance):
             reader = Reader(file(filename, 'rb').read())
             scanner = Scanner(reader)
             parser = Parser(scanner)
-            return list(parser)
+            composer = Composer(parser)
+            resolver = Resolver(composer)
+            return list(composer)
         except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
+        #except ComposerError, exc:
             #print '.'*70
             #print "%s:" % filename
             #print "%s:" % exc.__class__.__name__, exc

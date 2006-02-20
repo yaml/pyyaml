@@ -99,6 +99,15 @@ class Parser:
                     return True
         return False
 
+    def peek(self):
+        # Get the next event.
+        if self.current_event is None:
+            try:
+                self.current_event = self.event_generator.next()
+            except StopIteration:
+                pass
+        return self.current_event
+
     def get(self):
         # Get the next event.
         if self.current_event is None:

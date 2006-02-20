@@ -123,7 +123,7 @@ class TestParserOnCanonical(test_appliance.TestAppliance):
         for event1, event2 in zip(events1, events2):
             self.failUnlessEqual(event1.__class__, event2.__class__)
             if isinstance(event1, AliasEvent):
-                self.failUnlessEqual(event1.name, event2.name)
+                self.failUnlessEqual(event1.anchor, event2.anchor)
             elif isinstance(event1, ScalarEvent):
                 self.failUnlessEqual(event1.anchor, event2.anchor)
                 self.failUnlessEqual(event1.tag, event2.tag)

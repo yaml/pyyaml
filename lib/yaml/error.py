@@ -63,16 +63,16 @@ class MarkedYAMLError(YAMLError):
         #            lines.append(str(marker))
         if self.context is not None:
             lines.append(self.context)
-            if self.context_marker is not None  \
-                and (self.problem is None or self.problem_marker is None
-                        or self.context_marker.name != self.problem_marker.name
-                        or self.context_marker.line != self.problem_marker.line
-                        or self.context_marker.column != self.problem_marker.column):
-                lines.append(str(self.context_marker))
+        if self.context_marker is not None  \
+            and (self.problem is None or self.problem_marker is None
+                    or self.context_marker.name != self.problem_marker.name
+                    or self.context_marker.line != self.problem_marker.line
+                    or self.context_marker.column != self.problem_marker.column):
+            lines.append(str(self.context_marker))
         if self.problem is not None:
             lines.append(self.problem)
-            if self.problem_marker is not None:
-                lines.append(str(self.problem_marker))
+        if self.problem_marker is not None:
+            lines.append(str(self.problem_marker))
         return '\n'.join(lines)
 
 

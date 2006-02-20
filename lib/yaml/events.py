@@ -12,17 +12,13 @@ class Event:
         return '%s(%s)' % (self.__class__.__name__, arguments)
 
 class NodeEvent(Event):
-    def __init__(self, anchor, tag, start_marker, end_marker):
+    def __init__(self, anchor, start_marker, end_marker):
         self.anchor = anchor
-        self.tag = tag
         self.start_marker = start_marker
         self.end_marker = end_marker
 
 class AliasEvent(NodeEvent):
-    def __init__(self, name, start_marker, end_marker):
-        self.name = name
-        self.start_marker = start_marker
-        self.end_marker = end_marker
+    pass
 
 class ScalarEvent(NodeEvent):
     def __init__(self, anchor, tag, value, start_marker, end_marker):
@@ -33,7 +29,11 @@ class ScalarEvent(NodeEvent):
         self.end_marker = end_marker
 
 class CollectionEvent(NodeEvent):
-    pass
+    def __init__(self, anchor, tag, start_marker, end_marker):
+        self.anchor = anchor
+        self.tag = tag
+        self.start_marker = start_marker
+        self.end_marker = end_marker
 
 class SequenceEvent(CollectionEvent):
     pass
