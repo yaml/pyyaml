@@ -20,7 +20,10 @@
 # flow_mapping      ::= FLOW-MAPPING-START (flow_mapping_entry FLOW-ENTRY)* flow_mapping_entry? FLOW-MAPPING-END
 # flow_sequence_entry   ::= flow_node | KEY flow_node? (VALUE flow_node?)?
 # flow_mapping_entry    ::= flow_node | KEY flow_node? (VALUE flow_node?)?
-#
+
+# TODO: support for BOM within a stream.
+# stream ::= (BOM? implicit_document)? (BOM? explicit_document)* STREAM-END
+
 # Note that there is a slight deviation from the specification. We require a
 # non-empty node content if ANCHOR or TAG is specified. This disallow such
 # documents as
@@ -58,28 +61,12 @@
 # flow_sequence_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
-from error import YAMLError
+from error import MarkedYAMLError
 from tokens import *
 from events import *
 
-class ParserError(YAMLError):
-
-    def __init__(self, context=None, context_marker=None,
-            problem=None, problem_marker=None):
-        self.context = context
-        self.context_marker = context_marker
-        self.problem = problem
-        self.problem_marker = problem_marker
-
-    def __str__(self):
-        lines = []
-        for (place, marker) in [(self.context, self.context_marker),
-                                (self.problem, self.problem_marker)]:
-            if place is not None:
-                lines.append(place)
-                if marker is not None:
-                    lines.append(str(marker))
-        return '\n'.join(lines)
+class ParserError(MarkedYAMLError):
+    pass
 
 class Parser:
     # Since writing an LL(1) parser is a straightforward task, we do not give
@@ -168,19 +155,19 @@ class Parser:
             if token.name == u'YAML':
                 if self.yaml_version is not None:
                     raise ParserError(None, None,
-                            "found duplicate YAML directive", token.start_marker())
+                            "found duplicate YAML directive", token.start_marker)
                 major, minor = token.value
                 if major != 1:
                     raise ParserError(None, None,
                             "found incompatible YAML document (version 1.* is required)",
-                            token.start_marker())
+                            token.start_marker)
                 self.yaml_version = token.value
             elif token.name == u'TAG':
                 handle, prefix = token.value
                 if handle in self.tag_handles:
                     raise ParserError(None, None,
                             "duplicate tag handle %r" % handle.encode('utf-8'),
-                            token.start_marker())
+                            token.start_marker)
                 self.tag_handles[handle] = prefix
         for key in self.DEFAULT_TAGS:
             if key not in self.tag_handles:
@@ -393,10 +380,6 @@ class Parser:
                         "expected ',' or ']', but got %r" % token.id, token.start_marker)
             if self.scanner.check(FlowEntryToken):
                 self.scanner.get()
-        if not self.scanner.check(FlowSequenceEndToken):
-            token = self.scanner.peek()
-            raise ParserError("while scanning a flow sequence", start_marker,
-                    "expected ']', but found %r" % token.id, token.start_marker)
         token = self.scanner.get()
         yield CollectionEndEvent(token.start_marker, token.end_marker)
 

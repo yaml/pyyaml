@@ -2,8 +2,9 @@
 import test_appliance
 
 from yaml.error import YAMLError
-from yaml.reader import Reader
-from yaml.scanner import Scanner
+from yaml.reader import *
+from yaml.scanner import *
+from yaml.parser import *
 
 class TestErrors(test_appliance.TestAppliance):
 
@@ -16,14 +17,31 @@ class TestErrors(test_appliance.TestAppliance):
         self.failUnlessRaises(YAMLError, lambda: self._load_string(invalid_filename))
 
     def _load(self, filename):
-        reader = Reader(file(filename, 'rb'))
-        scanner = Scanner(reader)
-        return list(scanner)
+        try:
+            reader = Reader(file(filename, 'rb'))
+            scanner = Scanner(reader)
+            parser = Parser(scanner)
+            return list(parser)
+        except YAMLError, exc:
+        #except ScannerError, exc:
+        #except ParserError, exc:
+            #print '.'*70
+            #print "%s:" % exc.__class__.__name__, exc
+            raise
 
     def _load_string(self, filename):
-        reader = Reader(file(filename, 'rb').read())
-        scanner = Scanner(reader)
-        return list(scanner)
+        try:
+            reader = Reader(file(filename, 'rb').read())
+            scanner = Scanner(reader)
+            parser = Parser(scanner)
+            return list(parser)
+        except YAMLError, exc:
+        #except ScannerError, exc:
+        #except ParserError, exc:
+            #print '.'*70
+            #print "%s:" % filename
+            #print "%s:" % exc.__class__.__name__, exc
+            raise
 
 TestErrors.add_tests('testErrors', '.error-message')
 TestErrors.add_tests('testStringErrors', '.error-message')

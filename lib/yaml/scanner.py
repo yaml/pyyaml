@@ -10,35 +10,11 @@
 
 __all__ = ['Scanner', 'ScannerError']
 
-from error import YAMLError
+from error import MarkedYAMLError
 from tokens import *
 
-class ScannerError(YAMLError):
-    # ScannerError: while reading a quoted string
-    #         in '...', line 5, column 10:
-    # key: "valu\?e"
-    #      ^
-    # got unknown quote character '?'
-    #         in '...', line 5, column 15:
-    # key: "valu\?e"
-    #            ^
-
-    def __init__(self, context=None, context_marker=None,
-            problem=None, problem_marker=None):
-        self.context = context
-        self.context_marker = context_marker
-        self.problem = problem
-        self.problem_marker = problem_marker
-
-    def __str__(self):
-        lines = []
-        for (place, marker) in [(self.context, self.context_marker),
-                                (self.problem, self.problem_marker)]:
-            if place is not None:
-                lines.append(place)
-                if marker is not None:
-                    lines.append(str(marker))
-        return '\n'.join(lines)
+class ScannerError(MarkedYAMLError):
+    pass
 
 class SimpleKey:
     # See below simple keys treatment.
@@ -196,6 +172,10 @@ class Scanner:
         # Is it the document end?
         if ch == u'.' and self.check_document_end():
             return self.fetch_document_end()
+
+        # TODO: support for BOM within a stream.
+        #if ch == u'\uFEFF':
+        #    return self.fetch_bom()    <-- issue BOMToken
 
         # Note: the order of the following checks is NOT significant.
 
@@ -749,6 +729,18 @@ class Scanner:
         # stream. We do not yet support BOM inside the stream as the
         # specification requires. Any such mark will be considered as a part
         # of the document.
+        #
+        # TODO: We need to make tab handling rules more sane. A good rule is
+        #   Tabs cannot precede tokens
+        #   BLOCK-SEQUENCE-START, BLOCK-MAPPING-START, BLOCK-END,
+        #   KEY(block), VALUE(block), BLOCK-ENTRY
+        # So the checking code is
+        #   if <TAB>:
+        #       self.allow_simple_keys = False
+        # We also need to add the check for `allow_simple_keys == True` to
+        # `unwind_indent` before issuing BLOCK-END.
+        # Scanners for block, flow, and plain scalars need to be modified.
+
         if self.reader.index == 0 and self.reader.peek() == u'\uFEFF':
             self.reader.forward()
         found = False
@@ -793,13 +785,13 @@ class Scanner:
             ch = self.reader.peek(length)
         if not length:
             raise ScannerError("while scanning a directive", start_marker,
-                    "expected directive name, but found %r" % ch.encode('utf-8'),
-                    self.reader.get_marker())
+                    "expected alphabetic or numeric character, but found %r"
+                    % ch.encode('utf-8'), self.reader.get_marker())
         value = self.reader.prefix(length)
         self.reader.forward(length)
         ch = self.reader.peek()
         if ch not in u'\0 \r\n\x85\u2028\u2029':
-            raise ScannerError("while scanning a directive" % name, start_marker,
+            raise ScannerError("while scanning a directive", start_marker,
                     "expected alphabetic or numeric character, but found %r"
                     % ch.encode('utf-8'), self.reader.get_marker())
         return value
@@ -811,13 +803,15 @@ class Scanner:
         major = self.scan_yaml_directive_number(start_marker)
         if self.reader.peek() != '.':
             raise ScannerError("while scanning a directive", start_marker,
-                    "expected a digit or '.', but found %r" % ch.encode('utf-8'),
+                    "expected a digit or '.', but found %r"
+                    % self.reader.peek().encode('utf-8'),
                     self.reader.get_marker())
         self.reader.forward()
         minor = self.scan_yaml_directive_number(start_marker)
         if self.reader.peek() not in u'\0 \r\n\x85\u2028\u2029':
             raise ScannerError("while scanning a directive", start_marker,
-                    "expected a digit or ' ', but found %r" % ch.encode('utf-8'),
+                    "expected a digit or ' ', but found %r"
+                    % self.reader.peek().encode('utf-8'),
                     self.reader.get_marker())
         return (major, minor)
 
@@ -848,7 +842,8 @@ class Scanner:
     def scan_tag_directive_handle(self, start_marker):
         # See the specification for details.
         value = self.scan_tag_handle('directive', start_marker)
-        if self.reader.peek() != u' ':
+        ch = self.reader.peek()
+        if ch != u' ':
             raise ScannerError("while scanning a directive", start_marker,
                     "expected ' ', but found %r" % ch.encode('utf-8'),
                     self.reader.get_marker())
@@ -902,8 +897,8 @@ class Scanner:
             ch = self.reader.peek(length)
         if not length:
             raise ScannerError("while scanning an %s" % name, start_marker,
-                    "expected anchor name, but found %r" % ch.encode('utf-8'),
-                    self.reader.get_marker())
+                    "expected alphabetic or numeric character, but found %r"
+                    % ch.encode('utf-8'), self.reader.get_marker())
         value = self.reader.prefix(length)
         self.reader.forward(length)
         ch = self.reader.peek()
@@ -923,8 +918,8 @@ class Scanner:
             self.reader.forward(2)
             suffix = self.scan_tag_uri('tag', start_marker)
             if self.reader.peek() != u'>':
-                raise ScannerError("while parsing a tag", start_marking,
-                        "expected '>', but got %r" % self.reader.peek().encode('utf-8'),
+                raise ScannerError("while parsing a tag", start_marker,
+                        "expected '>', but found %r" % self.reader.peek().encode('utf-8'),
                         self.reader.get_marker())
             self.reader.forward()
         elif ch in u'\0 \t\r\n\x85\u2028\u2029':
@@ -1309,7 +1304,8 @@ class Scanner:
         # See the specification for details.
         # For some strange reasons, the specification does not allow '_' in
         # tag handles. I have allowed it anyway.
-        if self.reader.peek() != u'!':
+        ch = self.reader.peek()
+        if ch != u'!':
             raise ScannerError("while scanning a %s" % name, start_marker,
                     "expected '!', but found %r" % ch.encode('utf-8'),
                     self.reader.get_marker())

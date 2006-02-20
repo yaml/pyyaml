@@ -35,7 +35,7 @@ class BlockSequenceStartToken(Token):
     id = '<block sequence start>'
 
 class BlockMappingStartToken(Token):
-    id = '<block mapping end>'
+    id = '<block mapping start>'
 
 class BlockEndToken(Token):
     id = '<block end>'
