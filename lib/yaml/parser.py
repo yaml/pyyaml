@@ -71,7 +71,7 @@ class ParserError(MarkedYAMLError):
 class Parser:
     # Since writing an LL(1) parser is a straightforward task, we do not give
     # many comments here.
-    # Note that we use Python generators. If you rewrite the parser to another
+    # Note that we use Python generators. If you rewrite the parser in another
     # language, you may replace all 'yield'-s with event handler calls.
 
     DEFAULT_TAGS = {

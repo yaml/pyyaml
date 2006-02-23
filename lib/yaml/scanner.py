@@ -1,12 +1,24 @@
 
-# Tokens:
-# YAML-DIRECTIVE(major_version, minor_version), TAG-DIRECTIVE(handle, prefix)
-# RESERVED-DIRECTIVE(name)
-# DOCUMENT-START, DOCUMENT-END
-# BLOCK-SEQUENCE-START, BLOCK-MAPPING-START, BLOCK-END
-# FLOW-SEQUENCE-START, FLOW-MAPPING-START, FLOW-SEQUENCE-END, FLOW-MAPPING-END
-# ENTRY, KEY, VALUE
-# ALIAS(name), ANCHOR(name), TAG(value), SCALAR(value, plain)
+# Scanner produces tokens of the following types:
+# DIRECTIVE(name, value)
+# DOCUMENT-START
+# DOCUMENT-END
+# STREAM-END
+# BLOCK-SEQUENCE-START
+# BLOCK-MAPPING-START
+# BLOCK-END
+# FLOW-SEQUENCE-START
+# FLOW-MAPPING-START
+# FLOW-SEQUENCE-END
+# FLOW-MAPPING-END
+# BLOCK-ENTRY
+# FLOW-ENTRY
+# KEY
+# VALUE
+# ALIAS(value)
+# ANCHOR(value)
+# TAG(value)
+# SCALAR(value, plain)
 
 __all__ = ['Scanner', 'ScannerError']
 

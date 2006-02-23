@@ -81,11 +81,15 @@ class Composer:
 
     def compose_mapping_node(self):
         start_event = self.parser.get()
-        value = []
+        value = {}
         while not self.parser.check(CollectionEndEvent):
+            key_event = self.parser.peek()
             item_key = self.compose_node()
             item_value = self.compose_node()
-            value.append((item_key, item_value))
+            if item_key in value:
+                raise ComposerError("while composing a mapping", start_event.start_marker,
+                        "found duplicate key", key_event.start_marker)
+            value[item_key] = item_value
         end_event = self.parser.get()
         return MappingNode(start_event.tag, value,
                 start_event.start_marker, end_event.end_marker)

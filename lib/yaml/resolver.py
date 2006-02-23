@@ -1,6 +1,8 @@
 
 from nodes import *
 
+import re
+
 class BaseResolver:
 
     DEFAULT_SCALAR_TAG = u'tag:yaml.org,2002:str'
@@ -39,12 +41,12 @@ class BaseResolver:
         elif isinstance(node, SequenceNode):
             self.resolve_sequence(path, node)
             for index in range(len(node.value)):
-                self.resolve_node(path+[node, index], node.value[index])
+                self.resolve_node(path+[(node, index)], node.value[index])
         elif isinstance(node, MappingNode):
             self.resolve_mapping(path, node)
-            for key, value in node.value:
+            for key in node.value:
                 self.resolve_node(path+[node, None], key)
-                self.resolve_node(path+[node, key], value)
+                self.resolve_node(path+[node, key], node.value[key])
 
     def resolve_scalar(self, path, node):
         if node.tag is None:
@@ -61,8 +63,74 @@ class BaseResolver:
             node.tag = self.DEFAULT_MAPPING_TAG
 
     def detect_scalar(self, value):
-        return None
+        if value == u'':
+            detectors = self.yaml_detectors.get(u'', [])
+        else:
+            detectors = self.yaml_detectors.get(value[0], [])
+        detectors += self.yaml_detectors.get(None, [])
+        for tag, regexp in detectors:
+            if regexp.match(value):
+                return tag
+
+    def add_detector(cls, tag, regexp, first):
+        if not 'yaml_detectors' in cls.__dict__:
+            cls.yaml_detectors = cls.yaml_detectors.copy()
+        for ch in first:
+            cls.yaml_detectors.setdefault(ch, []).append((tag, regexp))
+    add_detector = classmethod(add_detector)
+
+    yaml_detectors = {}
 
 class Resolver(BaseResolver):
     pass
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:bool',
+        re.compile(ur'''^(?:y|Y|yes|Yes|YES|n|N|no|No|NO
+                    |true|True|TRUE|false|False|FALSE
+                    |on|On|ON|off|Off|OFF)$''', re.X),
+        list(u'yYnNtTfFoO'))
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:float',
+        re.compile(ur'''^(?:[-+]?(?:[0-9][0-9_]*)?\.[0-9_]*(?:[eE][-+][0-9]+)?
+                    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+                    |[-+]?\.(?:inf|Inf|INF)
+                    |\.(?:nan|NaN|NAN))$''', re.X),
+        list(u'-+0123456789.'))
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:int',
+        re.compile(ur'''^(?:[-+]?0b[0-1_]+
+                    |[-+]?0[0-7_]+
+                    |[-+]?(?:0|[1-9][0-9_]*)
+                    |[-+]?0x[0-9a-fA-F_]+
+                    |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
+        list(u'-+0123456789'))
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:merge',
+        re.compile(ur'^(?:<<)$'),
+        ['<'])
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:null',
+        re.compile(ur'''^(?: ~
+                    |null|Null|NULL
+                    | )$''', re.X),
+        [u'~', u'n', u'N', u''])
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:timestamp',
+        re.compile(ur'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+                    |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
+                     (?:[Tt]|[ \t]+)[0-9][0-9]?
+                     :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
+                     (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
+        list(u'0123456789'))
+
+Resolver.add_detector(
+        u'tag:yaml.org,2002:value',
+        re.compile(ur'^(?:=)$'),
+        ['='])
 

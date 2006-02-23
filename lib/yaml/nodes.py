@@ -22,14 +22,14 @@ class Node:
         return '%s(tag=%r, value=%s)' % (self.__class__.__name__, self.tag, value)
 
 class ScalarNode(Node):
-    pass
+    id = 'scalar'
 
 class CollectionNode(Node):
     pass
 
 class SequenceNode(CollectionNode):
-    pass
+    id = 'sequence'
 
 class MappingNode(CollectionNode):
-    pass
+    id = 'mapping'
 

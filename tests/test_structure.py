@@ -6,6 +6,7 @@ from yaml.scanner import Scanner
 from yaml.parser import *
 from yaml.composer import *
 from yaml.resolver import *
+from yaml.constructor import *
 from yaml.nodes import *
 
 class TestStructure(test_appliance.TestAppliance):
@@ -137,11 +138,52 @@ class TestResolver(test_appliance.TestAppliance):
                 self._compare(item1, item2)
         elif isinstance(node1, MappingNode):
             self.failUnlessEqual(len(node1.value), len(node2.value))
-            for (key1, value1), (key2, value2) in zip(node1.value, node2.value):
+            items1 = node1.value.items()
+            items1.sort(lambda (k1,v1), (k2,v2): cmp((k1.tag,k1.value,v1.tag,v1.value),
+                                                    (k2.tag,k2.value,v2.tag,v2.value)))
+            items2 = node2.value.items()
+            items2.sort(lambda (k1,v1), (k2,v2): cmp((k1.tag,k1.value,v1.tag,v1.value),
+                                                    (k2.tag,k2.value,v2.tag,v2.value)))
+            for (key1, value1), (key2, value2) in zip(items1, items2):
                 self._compare(key1, key2)
                 self._compare(value1, value2)
 
 TestResolver.add_tests('testResolver', '.data', '.canonical')
+
+class MyConstructor(Constructor):
+
+    def construct_sequence(self, node):
+        return tuple(Constructor.construct_sequence(self, node))
+
+    def construct_mapping(self, node):
+        pairs = self.construct_pairs(node)
+        pairs.sort()
+        return pairs
+
+class TestConstructor(test_appliance.TestAppliance):
+
+    def _testConstructor(self, test_name, data_filename, canonical_filename):
+        natives1 = None
+        natives2 = None
+        try:
+            constructor1 = MyConstructor(Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb')))))))
+            natives1 = list(iter(constructor1))
+            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
+            canonical.parse()
+            constructor2 = MyConstructor(Resolver(Composer(canonical)))
+            natives2 = list(iter(constructor2))
+            self.failUnlessEqual(natives1, natives2)
+        except:
+            print
+            print "DATA1:"
+            print file(data_filename, 'rb').read()
+            print "DATA2:"
+            print file(canonical_filename, 'rb').read()
+            print "NATIVES1:", natives1
+            print "NATIVES2:", natives2
+            raise
+
+TestConstructor.add_tests('testConstructor', '.data', '.canonical')
 
 class TestParserOnCanonical(test_appliance.TestAppliance):
 
