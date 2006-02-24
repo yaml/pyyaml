@@ -1,4 +1,7 @@
 
+__all__ = ['BaseConstructor', 'Constructor', 'ConstructorError',
+    'YAMLObject', 'YAMLObjectMetaclass']
+
 from error import *
 from nodes import *
 
@@ -324,6 +327,11 @@ class Constructor(BaseConstructor):
     def construct_yaml_map(self, node):
         return self.construct_mapping(node)
 
+    def construct_undefined(self, node):
+        raise ConstructorError(None, None,
+                "could not determine a constructor for the tag %r" % node.tag.encode('utf-8'),
+                node.start_marker)
+
 Constructor.add_constructor(
         u'tag:yaml.org,2002:null',
         Constructor.construct_yaml_null)
@@ -367,6 +375,9 @@ Constructor.add_constructor(
 Constructor.add_constructor(
         u'tag:yaml.org,2002:map',
         Constructor.construct_yaml_map)
+
+Constructor.add_constructor(None,
+        Constructor.construct_undefined)
 
 class YAMLObjectMetaclass(type):
 

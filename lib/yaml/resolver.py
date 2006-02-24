@@ -1,7 +1,14 @@
 
+__all__ = ['BaseResolver', 'Resolver', 'ResolverError']
+
+from error import MarkedYAMLError
 from nodes import *
 
 import re
+
+# Not really used.
+class ResolverError(MarkedYAMLError):
+    pass
 
 class BaseResolver:
 

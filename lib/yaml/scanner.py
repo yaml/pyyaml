@@ -19,6 +19,9 @@
 # ANCHOR(value)
 # TAG(value)
 # SCALAR(value, plain)
+#
+# Read comments in the Scanner code for more details.
+#
 
 __all__ = ['Scanner', 'ScannerError']
 

@@ -1,11 +1,11 @@
 
-from error import YAMLError
-from reader import Reader
-from scanner import Scanner
-from parser import Parser
-from composer import Composer
-from resolver import Resolver
-from constructor import Constructor
+from error import *
+from reader import *
+from scanner import *
+from parser import *
+from composer import *
+from resolver import *
+from constructor import *
 
 from tokens import *
 from events import *

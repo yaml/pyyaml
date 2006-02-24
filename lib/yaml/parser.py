@@ -61,6 +61,8 @@
 # flow_sequence_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
+__all__ = ['Parser', 'ParserError']
+
 from error import MarkedYAMLError
 from tokens import *
 from events import *

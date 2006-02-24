@@ -1,13 +1,7 @@
 
 import test_appliance
 
-from yaml.reader import Reader
-from yaml.scanner import Scanner
-from yaml.parser import *
-from yaml.composer import *
-from yaml.resolver import *
-from yaml.constructor import *
-from yaml.nodes import *
+from yaml import *
 
 class TestStructure(test_appliance.TestAppliance):
 
@@ -159,6 +153,8 @@ class MyConstructor(Constructor):
         pairs = self.construct_pairs(node)
         pairs.sort()
         return pairs
+
+MyConstructor.add_constructor(None, MyConstructor.construct_scalar)
 
 class TestConstructor(test_appliance.TestAppliance):
 
