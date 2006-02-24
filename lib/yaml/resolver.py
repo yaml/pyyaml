@@ -134,3 +134,10 @@ Resolver.add_detector(
         re.compile(ur'^(?:=)$'),
         ['='])
 
+# The following detector is only for documentation purposes. It cannot work
+# because plain scalars cannot start with '!', '&', or '*'.
+Resolver.add_detector(
+        u'tag:yaml.org,2002:yaml',
+        re.compile(ur'^(?:!|&|\*)$'),
+        list(u'!&*'))
+

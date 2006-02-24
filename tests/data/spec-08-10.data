@@ -6,7 +6,7 @@ block styles:
     folded: >
       This sentence
       is false.
-  collections: !!seq
+  collections: !!map
     sequence: !!seq # Entry:
       - entry # Plain
       # Mapping entry:
