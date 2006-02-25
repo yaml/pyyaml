@@ -161,9 +161,7 @@ class Constructor(BaseConstructor):
         return None
 
     bool_values = {
-        u'y':       True,
         u'yes':     True,
-        u'n':       False,
         u'no':      False,
         u'true':    True,
         u'false':   False,

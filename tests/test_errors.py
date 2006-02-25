@@ -26,6 +26,7 @@ class TestErrors(test_appliance.TestAppliance):
         #except ScannerError, exc:
         #except ParserError, exc:
         #except ComposerError, exc:
+        #except ConstructorError, exc:
             #print '.'*70
             #print "%s:" % exc.__class__.__name__, exc
             raise
@@ -39,14 +40,14 @@ class TestErrors(test_appliance.TestAppliance):
             resolver = Resolver(composer)
             constructor = Constructor(resolver)
             return list(constructor)
-        #except YAMLError, exc:
+        except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
         #except ComposerError, exc:
-        except ConstructorError, exc:
-            print '.'*70
-            print "%s:" % filename
-            print "%s:" % exc.__class__.__name__, exc
+        #except ConstructorError, exc:
+            #print '.'*70
+            #print "%s:" % filename
+            #print "%s:" % exc.__class__.__name__, exc
             raise
 
 TestErrors.add_tests('testErrors', '.error-message')

@@ -4,6 +4,10 @@ try:
     import datetime
 except ImportError:
     pass
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 from yaml import *
 

@@ -1,10 +1,10 @@
 
 NAME = 'PyYAML3000'
 VERSION = '0.1'
-DESCRIPTION = "YAML parser (and emitter)"
+DESCRIPTION = "The next generation YAML parser for Python"
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = 'xi@resolvent.net'
-LICENSE = "BSD"
+LICENSE = "MIT"
 
 from distutils.core import setup
 
