@@ -1,12 +1,7 @@
 
 import test_appliance
 
-from yaml.error import YAMLError
-from yaml.reader import *
-from yaml.scanner import *
-from yaml.parser import *
-from yaml.composer import *
-from yaml.resolver import *
+from yaml import *
 
 class TestErrors(test_appliance.TestAppliance):
 
@@ -25,7 +20,8 @@ class TestErrors(test_appliance.TestAppliance):
             parser = Parser(scanner)
             composer = Composer(parser)
             resolver = Resolver(composer)
-            return list(composer)
+            constructor = Constructor(resolver)
+            return list(constructor)
         except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
@@ -41,14 +37,16 @@ class TestErrors(test_appliance.TestAppliance):
             parser = Parser(scanner)
             composer = Composer(parser)
             resolver = Resolver(composer)
-            return list(composer)
-        except YAMLError, exc:
+            constructor = Constructor(resolver)
+            return list(constructor)
+        #except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
         #except ComposerError, exc:
-            #print '.'*70
-            #print "%s:" % filename
-            #print "%s:" % exc.__class__.__name__, exc
+        except ConstructorError, exc:
+            print '.'*70
+            print "%s:" % filename
+            print "%s:" % exc.__class__.__name__, exc
             raise
 
 TestErrors.add_tests('testErrors', '.error-message')

@@ -92,23 +92,23 @@ class BaseConstructor:
                 if merge is not None:
                     raise ConstructorError("while constructing a mapping", node.start_marker,
                             "found duplicate merge key", key_node.start_marker)
-                    value_node = node.value[key_node]
-                    if isinstance(value_node, MappingNode):
-                        merge = [self.construct_mapping(value_node)]
-                    elif isinstance(value_node, SequenceNode):
-                        merge = []
-                        for subnode in value_node.value:
-                            if not isinstance(subnode, MappingNode):
-                                raise ConstructorError("while constructing a mapping",
-                                        node.start_marker,
-                                        "expected a mapping for merging, but found %s"
-                                        % subnode.id, subnode.start_marker)
-                            merge.append(self.construct_mapping(subnode))
-                        merge.reverse()
-                    else:
-                        raise ConstructorError("while constructing a mapping", node.start_marker,
-                                "expected a mapping or list of mappings for merging, but found %s"
-                                % value_node.id, value_node.start_marker)
+                value_node = node.value[key_node]
+                if isinstance(value_node, MappingNode):
+                    merge = [self.construct_mapping(value_node)]
+                elif isinstance(value_node, SequenceNode):
+                    merge = []
+                    for subnode in value_node.value:
+                        if not isinstance(subnode, MappingNode):
+                            raise ConstructorError("while constructing a mapping",
+                                    node.start_marker,
+                                    "expected a mapping for merging, but found %s"
+                                    % subnode.id, subnode.start_marker)
+                        merge.append(self.construct_mapping(subnode))
+                    merge.reverse()
+                else:
+                    raise ConstructorError("while constructing a mapping", node.start_marker,
+                            "expected a mapping or list of mappings for merging, but found %s"
+                            % value_node.id, value_node.start_marker)
             elif key_node.tag == u'tag:yaml.org,2002:value':
                 if '=' in mapping:
                     raise ConstructorError("while construction a mapping", node.start_marker,
@@ -211,7 +211,7 @@ class Constructor(BaseConstructor):
         value = value.replace('_', '')
         sign = +1
         if value[0] == '-':
-            value = -1
+            sign = -1
         if value[0] in '+-':
             value = value[1:]
         if value.lower() == '.inf':
@@ -236,23 +236,23 @@ class Constructor(BaseConstructor):
             return str(value).decode('base64')
         except (binascii.Error, UnicodeEncodeError), exc:
             raise ConstructorError(None, None,
-                    "failed to decode base64 data: %s" % exc, node.start_mark) 
+                    "failed to decode base64 data: %s" % exc, node.start_marker) 
 
     timestamp_regexp = re.compile(
             ur'''^(?P<year>[0-9][0-9][0-9][0-9])
                 -(?P<month>[0-9][0-9]?)
                 -(?P<day>[0-9][0-9]?)
-                (?:[Tt]|[ \t]+)
+                (?:(?:[Tt]|[ \t]+)
                 (?P<hour>[0-9][0-9]?)
                 :(?P<minute>[0-9][0-9])
                 :(?P<second>[0-9][0-9])
                 (?:\.(?P<fraction>[0-9]*))?
                 (?:[ \t]*(?:Z|(?P<tz_hour>[-+][0-9][0-9]?)
-                (?::(?P<tz_minute>[0-9][0-9])?)))?$''', re.X),
+                (?::(?P<tz_minute>[0-9][0-9])?)?))?)?$''', re.X)
 
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
-        match = self.timestamp_expr.match(node.value)
+        match = self.timestamp_regexp.match(node.value)
         values = match.groupdict()
         for key in values:
             if values[key]:
@@ -260,7 +260,7 @@ class Constructor(BaseConstructor):
             else:
                 values[key] = 0
         fraction = values['fraction']
-        if micro:
+        if fraction:
             while 10*fraction < 1000000:
                 fraction *= 10
             values['fraction'] = fraction
@@ -281,34 +281,36 @@ class Constructor(BaseConstructor):
                 raise ConstructorError("while constructing an ordered map", node.start_marker,
                         "expected a mapping of length 1, but found %s" % subnode.id,
                         subnode.start_marker)
-                if len(subnode.value) != 1:
-                    raise ConstructorError("while constructing an ordered map", node.start_marker,
-                            "expected a single mapping item, but found %d items" % len(subnode.value),
-                            subnode.start_marker)
-                key_node = subnode.value.keys()[0]
-                key = self.construct_object(key_node)
-                value = self.construct_object(subnode.value[key_node])
-                omap.append((key, value))
+            if len(subnode.value) != 1:
+                raise ConstructorError("while constructing an ordered map", node.start_marker,
+                        "expected a single mapping item, but found %d items" % len(subnode.value),
+                        subnode.start_marker)
+            key_node = subnode.value.keys()[0]
+            key = self.construct_object(key_node)
+            value = self.construct_object(subnode.value[key_node])
+            omap.append((key, value))
+        return omap
 
     def construct_yaml_pairs(self, node):
         # Note: the same code as `construct_yaml_omap`.
         if not isinstance(node, SequenceNode):
             raise ConstructorError("while constructing pairs", node.start_marker,
                     "expected a sequence, but found %s" % node.id, node.start_marker)
-        omap = []
+        pairs = []
         for subnode in node.value:
             if not isinstance(subnode, MappingNode):
                 raise ConstructorError("while constructing pairs", node.start_marker,
                         "expected a mapping of length 1, but found %s" % subnode.id,
                         subnode.start_marker)
-                if len(subnode.value) != 1:
-                    raise ConstructorError("while constructing pairs", node.start_marker,
-                            "expected a single mapping item, but found %d items" % len(subnode.value),
-                            subnode.start_marker)
-                key_node = subnode.value.keys()[0]
-                key = self.construct_object(key_node)
-                value = self.construct_object(subnode.value[key_node])
-                omap.append((key, value))
+            if len(subnode.value) != 1:
+                raise ConstructorError("while constructing pairs", node.start_marker,
+                        "expected a single mapping item, but found %d items" % len(subnode.value),
+                        subnode.start_marker)
+            key_node = subnode.value.keys()[0]
+            key = self.construct_object(key_node)
+            value = self.construct_object(subnode.value[key_node])
+            pairs.append((key, value))
+        return pairs
 
     def construct_yaml_set(self, node):
         value = self.construct_mapping(node)
@@ -349,8 +351,13 @@ Constructor.add_constructor(
         Constructor.construct_yaml_float)
 
 Constructor.add_constructor(
-        u'tag:yaml.org,2002:timestamp',
-        Constructor.construct_yaml_timestamp)
+        u'tag:yaml.org,2002:binary',
+        Constructor.construct_yaml_binary)
+
+if datetime_available:
+    Constructor.add_constructor(
+            u'tag:yaml.org,2002:timestamp',
+            Constructor.construct_yaml_timestamp)
 
 Constructor.add_constructor(
         u'tag:yaml.org,2002:omap',
@@ -384,13 +391,13 @@ class YAMLObjectMetaclass(type):
     def __init__(cls, name, bases, kwds):
         super(YAMLObjectMetaclass, cls).__init__(name, bases, kwds)
         if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
-            cls.yaml_constructor_class.add_constructor(cls.yaml_tag, cls.from_yaml)
+            cls.yaml_constructor.add_constructor(cls.yaml_tag, cls.from_yaml)
 
 class YAMLObject(object):
 
     __metaclass__ = YAMLObjectMetaclass
 
-    yaml_constructor_class = Constructor
+    yaml_constructor = Constructor
 
     yaml_tag = None
 
