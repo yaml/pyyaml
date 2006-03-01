@@ -95,7 +95,7 @@ class Scanner:
         #       (in block context),
         # - after '{', '[', ',' (in the flow context),
         # - after '?', ':', '-' (in the block context).
-        # In the block context, this flag also signify if a block collection
+        # In the block context, this flag also signifies if a block collection
         # may start at the current position.
         self.allow_simple_key = True
 
@@ -1398,7 +1398,7 @@ class Scanner:
         ch = self.reader.peek()
         if ch in u'\r\n\x85':
             if self.reader.prefix(2) == u'\r\n':
-                self.forward(2)
+                self.reader.forward(2)
             else:
                 self.reader.forward()
             return u'\n'
