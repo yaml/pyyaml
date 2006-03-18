@@ -1,12 +1,12 @@
 
 import test_appliance
 
-from yaml.reader import Marker
+from yaml.reader import Mark
 
-class TestMarker(test_appliance.TestAppliance):
+class TestMark(test_appliance.TestAppliance):
 
-    def _testMarkers(self, test_name, markers_filename):
-        inputs = file(markers_filename, 'rb').read().split('---\n')[1:]
+    def _testMarks(self, test_name, marks_filename):
+        inputs = file(marks_filename, 'rb').read().split('---\n')[1:]
         for input in inputs:
             index = 0
             line = 0
@@ -18,8 +18,8 @@ class TestMarker(test_appliance.TestAppliance):
                 else:
                     column += 1
                 index += 1
-            marker = Marker(test_name, line, column, unicode(input), index)
-            snippet = marker.get_snippet(indent=2, max_length=79)
+            mark = Mark(test_name, line, column, unicode(input), index)
+            snippet = mark.get_snippet(indent=2, max_length=79)
             #print "INPUT:"
             #print input
             #print "SNIPPET:"
@@ -30,5 +30,5 @@ class TestMarker(test_appliance.TestAppliance):
             self.failUnless(len(data) < 82)
             self.failUnlessEqual(data[len(pointer)-1], '*')
 
-TestMarker.add_tests('testMarkers', '.markers')
+TestMark.add_tests('testMarks', '.marks')
 

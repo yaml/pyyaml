@@ -3,7 +3,7 @@
 #
 # We define two classes here.
 #
-#   Marker(source, line, column)
+#   Mark(source, line, column)
 # It's just a record and its only use is producing nice error messages.
 # Parser does not use it for any other purposes.
 #
@@ -17,7 +17,7 @@
 
 __all__ = ['Reader', 'ReaderError']
 
-from error import YAMLError, Marker
+from error import YAMLError, Mark
 
 import codecs, re
 
@@ -142,12 +142,12 @@ class Reader:
             elif ch != u'\uFEFF':
                 self.column += 1
 
-    def get_marker(self):
+    def get_mark(self):
         if self.stream is None:
-            return Marker(self.name, self.line, self.column,
+            return Mark(self.name, self.line, self.column,
                     self.buffer, self.pointer)
         else:
-            return Marker(self.name, self.line, self.column, None, None)
+            return Mark(self.name, self.line, self.column, None, None)
 
     def determine_encoding(self):
         while not self.eof and len(self.raw_buffer) < 2:

@@ -1,7 +1,7 @@
 
-__all__ = ['Marker', 'YAMLError', 'MarkedYAMLError']
+__all__ = ['Mark', 'YAMLError', 'MarkedYAMLError']
 
-class Marker:
+class Mark:
 
     def __init__(self, name, line, column, buffer, pointer):
         self.name = name
@@ -46,33 +46,33 @@ class YAMLError(Exception):
 
 class MarkedYAMLError(YAMLError):
 
-    def __init__(self, context=None, context_marker=None,
-            problem=None, problem_marker=None):
+    def __init__(self, context=None, context_mark=None,
+            problem=None, problem_mark=None):
         self.context = context
-        self.context_marker = context_marker
+        self.context_mark = context_mark
         self.problem = problem
-        self.problem_marker = problem_marker
+        self.problem_mark = problem_mark
 
     def __str__(self):
         lines = []
-        #for (place, marker) in [(self.context, self.context_marker),
-        #                        (self.problem, self.problem_marker)]:
+        #for (place, mark) in [(self.context, self.context_mark),
+        #                        (self.problem, self.problem_mark)]:
         #    if place is not None:
         #        lines.append(place)
-        #        if marker is not None:
-        #            lines.append(str(marker))
+        #        if mark is not None:
+        #            lines.append(str(mark))
         if self.context is not None:
             lines.append(self.context)
-        if self.context_marker is not None  \
-            and (self.problem is None or self.problem_marker is None
-                    or self.context_marker.name != self.problem_marker.name
-                    or self.context_marker.line != self.problem_marker.line
-                    or self.context_marker.column != self.problem_marker.column):
-            lines.append(str(self.context_marker))
+        if self.context_mark is not None  \
+            and (self.problem is None or self.problem_mark is None
+                    or self.context_mark.name != self.problem_mark.name
+                    or self.context_mark.line != self.problem_mark.line
+                    or self.context_mark.column != self.problem_mark.column):
+            lines.append(str(self.context_mark))
         if self.problem is not None:
             lines.append(self.problem)
-        if self.problem_marker is not None:
-            lines.append(str(self.problem_marker))
+        if self.problem_mark is not None:
+            lines.append(str(self.problem_mark))
         return '\n'.join(lines)
 
 

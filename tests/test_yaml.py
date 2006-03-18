@@ -1,7 +1,7 @@
 
 import unittest
 
-from test_marker import *
+from test_mark import *
 from test_reader import *
 from test_canonical import *
 from test_tokens import *

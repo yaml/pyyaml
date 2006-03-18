@@ -41,21 +41,21 @@ class Composer:
             anchor = event.anchor
             if anchor not in self.all_anchors:
                 raise ComposerError(None, None, "found undefined alias %r"
-                        % anchor.encode('utf-8'), event.start_marker)
+                        % anchor.encode('utf-8'), event.start_mark)
             if anchor not in self.complete_anchors:
                 collection_event = self.all_anchors[anchor]
                 raise ComposerError("while composing a collection",
-                        collection_event.start_marker,
+                        collection_event.start_mark,
                         "found recursive anchor %r" % anchor.encode('utf-8'),
-                        event.start_marker)
+                        event.start_mark)
             return self.complete_anchors[anchor]
         event = self.parser.peek()
         anchor = event.anchor
         if anchor is not None:
             if anchor in self.all_anchors:
                 raise ComposerError("found duplicate anchor %r; first occurence"
-                        % anchor.encode('utf-8'), self.all_anchors[anchor].start_marker,
-                        "second occurence", event.start_marker)
+                        % anchor.encode('utf-8'), self.all_anchors[anchor].start_mark,
+                        "second occurence", event.start_mark)
             self.all_anchors[anchor] = event
         if self.parser.check(ScalarEvent):
             node = self.compose_scalar_node()
@@ -70,7 +70,7 @@ class Composer:
     def compose_scalar_node(self):
         event = self.parser.get()
         return ScalarNode(event.tag, event.value,
-                event.start_marker, event.end_marker)
+                event.start_mark, event.end_mark)
 
     def compose_sequence_node(self):
         start_event = self.parser.get()
@@ -79,7 +79,7 @@ class Composer:
             value.append(self.compose_node())
         end_event = self.parser.get()
         return SequenceNode(start_event.tag, value,
-                start_event.start_marker, end_event.end_marker)
+                start_event.start_mark, end_event.end_mark)
 
     def compose_mapping_node(self):
         start_event = self.parser.get()
@@ -89,10 +89,10 @@ class Composer:
             item_key = self.compose_node()
             item_value = self.compose_node()
             if item_key in value:
-                raise ComposerError("while composing a mapping", start_event.start_marker,
-                        "found duplicate key", key_event.start_marker)
+                raise ComposerError("while composing a mapping", start_event.start_mark,
+                        "found duplicate key", key_event.start_mark)
             value[item_key] = item_value
         end_event = self.parser.get()
         return MappingNode(start_event.tag, value,
-                start_event.start_marker, end_event.end_marker)
+                start_event.start_mark, end_event.end_mark)
 
