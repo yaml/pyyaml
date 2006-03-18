@@ -70,28 +70,28 @@ class BaseConstructor:
                         return self.construct_scalar(node.value[key_node])
             raise ConstructorError(None, None,
                     "expected a scalar node, but found %s" % node.id,
-                    node.start_marker)
+                    node.start_mark)
         return node.value
 
     def construct_sequence(self, node):
         if not isinstance(node, SequenceNode):
             raise ConstructorError(None, None,
                     "expected a sequence node, but found %s" % node.id,
-                    node.start_marker)
+                    node.start_mark)
         return [self.construct_object(child) for child in node.value]
 
     def construct_mapping(self, node):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
-                    node.start_marker)
+                    node.start_mark)
         mapping = {}
         merge = None
         for key_node in node.value:
             if key_node.tag == u'tag:yaml.org,2002:merge':
                 if merge is not None:
-                    raise ConstructorError("while constructing a mapping", node.start_marker,
-                            "found duplicate merge key", key_node.start_marker)
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "found duplicate merge key", key_node.start_mark)
                 value_node = node.value[key_node]
                 if isinstance(value_node, MappingNode):
                     merge = [self.construct_mapping(value_node)]
@@ -100,19 +100,19 @@ class BaseConstructor:
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
-                                    node.start_marker,
+                                    node.start_mark,
                                     "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_marker)
+                                    % subnode.id, subnode.start_mark)
                         merge.append(self.construct_mapping(subnode))
                     merge.reverse()
                 else:
-                    raise ConstructorError("while constructing a mapping", node.start_marker,
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
-                            % value_node.id, value_node.start_marker)
+                            % value_node.id, value_node.start_mark)
             elif key_node.tag == u'tag:yaml.org,2002:value':
                 if '=' in mapping:
-                    raise ConstructorError("while construction a mapping", node.start_marker,
-                            "found duplicate value key", key_node.start_marker)
+                    raise ConstructorError("while construction a mapping", node.start_mark,
+                            "found duplicate value key", key_node.start_mark)
                 value = self.construct_object(node.value[key_node])
                 mapping['='] = value
             else:
@@ -120,11 +120,11 @@ class BaseConstructor:
                 try:
                     duplicate_key = key in mapping
                 except TypeError, exc:
-                    raise ConstructorError("while constructing a mapping", node.start_marker,
-                            "found unacceptable key (%s)" % exc, key_node.start_marker)
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "found unacceptable key (%s)" % exc, key_node.start_mark)
                 if duplicate_key:
-                    raise ConstructorError("while constructing a mapping", node.start_marker,
-                            "found duplicate key", key_node.start_marker)
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "found duplicate key", key_node.start_mark)
                 value = self.construct_object(node.value[key_node])
                 mapping[key] = value
         if merge is not None:
@@ -138,7 +138,7 @@ class BaseConstructor:
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
-                    node.start_marker)
+                    node.start_mark)
         pairs = []
         for key_node in node.value:
             key = self.construct_object(key_node)
@@ -234,7 +234,7 @@ class Constructor(BaseConstructor):
             return str(value).decode('base64')
         except (binascii.Error, UnicodeEncodeError), exc:
             raise ConstructorError(None, None,
-                    "failed to decode base64 data: %s" % exc, node.start_marker) 
+                    "failed to decode base64 data: %s" % exc, node.start_mark) 
 
     timestamp_regexp = re.compile(
             ur'''^(?P<year>[0-9][0-9][0-9][0-9])
@@ -271,18 +271,18 @@ class Constructor(BaseConstructor):
         # Note: we do not check for duplicate keys, because it's too
         # CPU-expensive.
         if not isinstance(node, SequenceNode):
-            raise ConstructorError("while constructing an ordered map", node.start_marker,
-                    "expected a sequence, but found %s" % node.id, node.start_marker)
+            raise ConstructorError("while constructing an ordered map", node.start_mark,
+                    "expected a sequence, but found %s" % node.id, node.start_mark)
         omap = []
         for subnode in node.value:
             if not isinstance(subnode, MappingNode):
-                raise ConstructorError("while constructing an ordered map", node.start_marker,
+                raise ConstructorError("while constructing an ordered map", node.start_mark,
                         "expected a mapping of length 1, but found %s" % subnode.id,
-                        subnode.start_marker)
+                        subnode.start_mark)
             if len(subnode.value) != 1:
-                raise ConstructorError("while constructing an ordered map", node.start_marker,
+                raise ConstructorError("while constructing an ordered map", node.start_mark,
                         "expected a single mapping item, but found %d items" % len(subnode.value),
-                        subnode.start_marker)
+                        subnode.start_mark)
             key_node = subnode.value.keys()[0]
             key = self.construct_object(key_node)
             value = self.construct_object(subnode.value[key_node])
@@ -292,18 +292,18 @@ class Constructor(BaseConstructor):
     def construct_yaml_pairs(self, node):
         # Note: the same code as `construct_yaml_omap`.
         if not isinstance(node, SequenceNode):
-            raise ConstructorError("while constructing pairs", node.start_marker,
-                    "expected a sequence, but found %s" % node.id, node.start_marker)
+            raise ConstructorError("while constructing pairs", node.start_mark,
+                    "expected a sequence, but found %s" % node.id, node.start_mark)
         pairs = []
         for subnode in node.value:
             if not isinstance(subnode, MappingNode):
-                raise ConstructorError("while constructing pairs", node.start_marker,
+                raise ConstructorError("while constructing pairs", node.start_mark,
                         "expected a mapping of length 1, but found %s" % subnode.id,
-                        subnode.start_marker)
+                        subnode.start_mark)
             if len(subnode.value) != 1:
-                raise ConstructorError("while constructing pairs", node.start_marker,
+                raise ConstructorError("while constructing pairs", node.start_mark,
                         "expected a single mapping item, but found %d items" % len(subnode.value),
-                        subnode.start_marker)
+                        subnode.start_mark)
             key_node = subnode.value.keys()[0]
             key = self.construct_object(key_node)
             value = self.construct_object(subnode.value[key_node])
@@ -330,7 +330,7 @@ class Constructor(BaseConstructor):
     def construct_undefined(self, node):
         raise ConstructorError(None, None,
                 "could not determine a constructor for the tag %r" % node.tag.encode('utf-8'),
-                node.start_marker)
+                node.start_mark)
 
 Constructor.add_constructor(
         u'tag:yaml.org,2002:null',
@@ -402,7 +402,7 @@ class YAMLObject(object):
     def from_yaml(cls, constructor, node):
         raise ConstructorError(None, None,
                 "found undefined constructor for the tag %r"
-                % node.tag.encode('utf-8'), node.start_marker)
+                % node.tag.encode('utf-8'), node.start_mark)
     from_yaml = classmethod(from_yaml)
 
     def to_yaml(self):

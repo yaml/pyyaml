@@ -1,10 +1,10 @@
 
 class Node:
-    def __init__(self, tag, value, start_marker, end_marker):
+    def __init__(self, tag, value, start_mark, end_mark):
         self.tag = tag
         self.value = value
-        self.start_marker = start_marker
-        self.end_marker = end_marker
+        self.start_mark = start_mark
+        self.end_mark = end_mark
     def __repr__(self):
         value = self.value
         if isinstance(value, list):
