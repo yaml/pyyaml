@@ -47,6 +47,7 @@ class CanonicalScanner:
     def scan(self):
         #print self.data[self.index:]
         tokens = []
+        tokens.append(StreamStartToken(None, None))
         while True:
             self.find_token()
             ch = self.data[self.index]
@@ -206,13 +207,16 @@ class CanonicalParser:
         self.scanner = CanonicalScanner(data)
         self.events = []
 
-    # stream: document* END
+    # stream: STREAM-START document* STREAM-END
     def parse_stream(self):
+        self.consume_token(StreamStartToken)
+        self.events.append(StreamStartEvent(None, None))
         while not self.test_token(StreamEndToken):
             if self.test_token(DirectiveToken, DocumentStartToken):
                 self.parse_document()
             else:
                 raise Error("document is expected, got "+repr(self.tokens[self.index]))
+        self.consume_token(StreamEndToken)
         self.events.append(StreamEndEvent(None, None))
 
     # document: DIRECTIVE? DOCUMENT-START node
@@ -221,7 +225,9 @@ class CanonicalParser:
         if self.test_token(DirectiveToken):
             self.consume_token(DirectiveToken)
         self.consume_token(DocumentStartToken)
+        self.events.append(DocumentStartEvent(None, None))
         self.parse_node()
+        self.events.append(DocumentEndEvent(None, None))
 
     # node: ALIAS | ANCHOR? TAG? (SCALAR|sequence|mapping)
     def parse_node(self):

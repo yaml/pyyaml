@@ -2,7 +2,7 @@
 # YAML can be parsed by an LL(1) parser!
 #
 # We use the following production rules:
-# stream            ::= implicit_document? explicit_document* STREAM-END
+# stream            ::= STREAM-START implicit_document? explicit_document* STREAM-END
 # explicit_document ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END?
 # implicit_document ::= block_node DOCUMENT-END?
 # block_node    ::= ALIAS | properties? block_content
@@ -42,7 +42,7 @@
 # or line breaks.
 
 # FIRST sets:
-# stream: FIRST(block_node) + { DIRECTIVE DOCUMENT-START }
+# stream: { STREAM-START }
 # explicit_document: { DIRECTIVE DOCUMENT-START }
 # implicit_document: FIRST(block_node)
 # block_node: { ALIAS TAG ANCHOR SCALAR BLOCK-SEQUENCE-START BLOCK-MAPPING-START FLOW-SEQUENCE-START FLOW-MAPPING-START }
@@ -126,17 +126,32 @@ class Parser:
         return self.event_generator
 
     def parse_stream(self):
-        # implicit_document? explicit_document* STREAM-END
+        # STREAM-START implicit_document? explicit_document* STREAM-END
+
+        # Parse start of stream.
+        token = self.scanner.get()
+        yield StreamStartEvent(token.start_mark, token.end_mark)
 
         # Parse implicit document.
         if not self.scanner.check(DirectiveToken, DocumentStartToken,
                 StreamEndToken):
             self.tag_handles = self.DEFAULT_TAGS
+            token = self.scanner.peek()
+            start_mark = end_mark = token.start_mark
+            yield DocumentStartEvent(start_mark, end_mark)
             for event in self.parse_block_node():
                 yield event
+            token = self.scanner.peek()
+            start_mark = end_mark = token.start_mark
+            while self.scanner.check(DocumentEndToken):
+                token = self.scanner.get()
+                end_mark = token.end_mark
+            yield DocumentEndEvent(start_mark, end_mark)
 
         # Parse explicit documents.
         while not self.scanner.check(StreamEndToken):
+            token = self.scanner.peek()
+            start_mark = token.start_mark
             self.process_directives()
             if not self.scanner.check(DocumentStartToken):
                 raise ParserError(None, None,
@@ -144,14 +159,20 @@ class Parser:
                         % self.scanner.peek().id,
                         self.scanner.peek().start_mark)
             token = self.scanner.get()
+            end_mark = token.end_mark
+            yield DocumentStartEvent(start_mark, end_mark)
             if self.scanner.check(DirectiveToken,
                     DocumentStartToken, DocumentEndToken, StreamEndToken):
                 yield self.process_empty_scalar(token.end_mark)
             else:
                 for event in self.parse_block_node():
                     yield event
+            token = self.scanner.peek()
+            start_mark = end_mark = token.start_mark
             while self.scanner.check(DocumentEndToken):
-                self.scanner.get()
+                token = self.scanner.get()
+                end_mark = token.end_mark
+            yield DocumentEndEvent(start_mark, end_mark)
 
         # Parse end of stream.
         token = self.scanner.get()

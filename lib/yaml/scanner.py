@@ -1,9 +1,10 @@
 
 # Scanner produces tokens of the following types:
+# STREAM-START
+# STREAM-END
 # DIRECTIVE(name, value)
 # DOCUMENT-START
 # DOCUMENT-END
-# STREAM-END
 # BLOCK-SEQUENCE-START
 # BLOCK-MAPPING-START
 # BLOCK-END
@@ -67,6 +68,9 @@ class Scanner:
 
         # List of processed tokens that are not yet emitted.
         self.tokens = []
+
+        # Add the STREAM-START token.
+        self.fetch_stream_start()
 
         # Number of tokens that were emitted through the `get_token` method.
         self.tokens_taken = 0
@@ -368,6 +372,17 @@ class Scanner:
 
     # Fetchers.
 
+    def fetch_stream_start(self):
+        # We always add STREAM-START as the first token and STREAM-END as the
+        # last token.
+
+        # Read the token.
+        mark = self.reader.get_mark()
+        
+        # Add STREAM-END.
+        self.tokens.append(StreamStartToken(mark, mark))
+        
+
     def fetch_stream_end(self):
 
         # Set the current intendation to -1.
@@ -380,7 +395,7 @@ class Scanner:
         # Read the token.
         mark = self.reader.get_mark()
         
-        # Add END.
+        # Add STREAM-END.
         self.tokens.append(StreamEndToken(mark, mark))
 
         # The reader is ended.

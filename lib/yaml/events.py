@@ -44,6 +44,15 @@ class MappingEvent(CollectionEvent):
 class CollectionEndEvent(Event):
     pass
 
+class DocumentStartEvent(Event):
+    pass
+
+class DocumentEndEvent(Event):
+    pass
+
+class StreamStartEvent(Event):
+    pass
+
 class StreamEndEvent(Event):
     pass
 

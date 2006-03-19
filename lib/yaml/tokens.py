@@ -28,6 +28,9 @@ class DocumentStartToken(Token):
 class DocumentEndToken(Token):
     id = '<document end>'
 
+class StreamStartToken(Token):
+    id = '<stream start>'
+
 class StreamEndToken(Token):
     id = '<stream end>'
 
