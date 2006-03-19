@@ -144,10 +144,11 @@ class Reader:
 
     def get_mark(self):
         if self.stream is None:
-            return Mark(self.name, self.line, self.column,
+            return Mark(self.name, self.index, self.line, self.column,
                     self.buffer, self.pointer)
         else:
-            return Mark(self.name, self.line, self.column, None, None)
+            return Mark(self.name, self.index, self.line, self.column,
+                    None, None)
 
     def determine_encoding(self):
         while not self.eof and len(self.raw_buffer) < 2:
