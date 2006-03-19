@@ -336,16 +336,21 @@ class Scanner:
 
     def unwind_indent(self, column):
 
-        # In flow context, tokens should respect indentation.
-        # Actually the condition should be `self.indent >= column` according to
-        # the spec. But this condition will prohibit intuitively correct
-        # constructions such as
-        # key : {
-        # }
-        if self.flow_level and self.indent > column:
-            raise ScannerError(None, None,
-                    "invalid intendation or unclosed '[' or '{'",
-                    self.reader.get_mark())
+        ## In flow context, tokens should respect indentation.
+        ## Actually the condition should be `self.indent >= column` according to
+        ## the spec. But this condition will prohibit intuitively correct
+        ## constructions such as
+        ## key : {
+        ## }
+        #if self.flow_level and self.indent > column:
+        #    raise ScannerError(None, None,
+        #            "invalid intendation or unclosed '[' or '{'",
+        #            self.reader.get_mark())
+
+        # In the flow context, indentation is ignored. We make the scanner less
+        # restrictive then specification requires.
+        if self.flow_level:
+            return
 
         # In block context, we may need to issue the BLOCK-END tokens.
         while self.indent > column:
@@ -1119,17 +1124,19 @@ class Scanner:
 
     def scan_flow_scalar(self, double):
         # See the specification for details.
+        # Note that we loose indentation rules for quoted scalars. Quoted
+        # scalars don't need to adhere indentation because " and ' clearly
+        # mark the beginning and the end of them. Therefore we are less
+        # restrictive then the specification requires. We only need to check
+        # that document separators are not included in scalars.
         chunks = []
         start_mark = self.reader.get_mark()
-        indent = self.indent+1
-        if indent == 0:
-            indent = 1
         quote = self.reader.peek()
         self.reader.forward()
-        chunks.extend(self.scan_flow_scalar_non_spaces(double, indent, start_mark))
+        chunks.extend(self.scan_flow_scalar_non_spaces(double, start_mark))
         while self.reader.peek() != quote:
-            chunks.extend(self.scan_flow_scalar_spaces(double, indent, start_mark))
-            chunks.extend(self.scan_flow_scalar_non_spaces(double, indent, start_mark))
+            chunks.extend(self.scan_flow_scalar_spaces(double, start_mark))
+            chunks.extend(self.scan_flow_scalar_non_spaces(double, start_mark))
         self.reader.forward()
         end_mark = self.reader.get_mark()
         return ScalarToken(u''.join(chunks), False, start_mark, end_mark)
@@ -1160,7 +1167,7 @@ class Scanner:
         u'U':   8,
     }
 
-    def scan_flow_scalar_non_spaces(self, double, indent, start_mark):
+    def scan_flow_scalar_non_spaces(self, double, start_mark):
         # See the specification for details.
         chunks = []
         while True:
@@ -1196,14 +1203,14 @@ class Scanner:
                     self.reader.forward(length)
                 elif ch in u'\r\n\x85\u2028\u2029':
                     self.scan_line_break()
-                    chunks.extend(self.scan_flow_scalar_breaks(double, indent, start_mark))
+                    chunks.extend(self.scan_flow_scalar_breaks(double, start_mark))
                 else:
                     raise ScannerError("while scanning a double-quoted scalar", start_mark,
                             "found unknown escape character %r" % ch.encode('utf-8'), self.reader.get_mark())
             else:
                 return chunks
 
-    def scan_flow_scalar_spaces(self, double, indent, start_mark):
+    def scan_flow_scalar_spaces(self, double, start_mark):
         # See the specification for details.
         chunks = []
         length = 0
@@ -1217,7 +1224,7 @@ class Scanner:
                     "found unexpected end of stream", self.reader.get_mark())
         elif ch in u'\r\n\x85\u2028\u2029':
             line_break = self.scan_line_break()
-            breaks = self.scan_flow_scalar_breaks(double, indent, start_mark)
+            breaks = self.scan_flow_scalar_breaks(double, start_mark)
             if line_break != u'\n':
                 chunks.append(line_break)
             elif not breaks:
@@ -1227,21 +1234,17 @@ class Scanner:
             chunks.append(whitespaces)
         return chunks
 
-    def scan_flow_scalar_breaks(self, double, indent, start_mark):
+    def scan_flow_scalar_breaks(self, double, start_mark):
         # See the specification for details.
         chunks = []
         while True:
-            while self.reader.column < indent and self.reader.peek() == u' ':
-                self.reader.forward()
-            if self.reader.column < indent  \
-                    and self.reader.peek() not in u'\0\r\n\x85\u2028\u2029':
-                s = 's'
-                if indent == 1:
-                    s = ''
+            # Instead of checking indentation, we check for document
+            # separators.
+            prefix = self.reader.prefix(3)
+            if (prefix == u'---' or prefix == u'...')   \
+                    and self.reader.peek(3) in u'\0 \t\r\n\x85\u2028\u2029':
                 raise ScannerError("while scanning a quoted scalar", start_mark,
-                        "expected %d space%s indentation, but found %r"
-                        % (indent, s, self.reader.peek().encode('utf-8')),
-                        self.reader.get_mark())
+                        "found unexpected document separator", self.reader.get_mark())
             while self.reader.peek() in u' \t':
                 self.reader.forward()
             if self.reader.peek() in u'\r\n\x85\u2028\u2029':
@@ -1252,14 +1255,17 @@ class Scanner:
     def scan_plain(self):
         # See the specification for details.
         # We add an additional restriction for the flow context:
-        #   plain scalars in the flow context cannot contain ':' and '?'.
+        #   plain scalars in the flow context cannot contain ',', ':' and '?'.
         # We also keep track of the `allow_simple_key` flag here.
+        # Indentation rules are loosed for the flow context.
         chunks = []
         start_mark = self.reader.get_mark()
         end_mark = start_mark
         indent = self.indent+1
-        if indent == 0:
-            indent = 1
+        # We allow zero indentation for scalars, but then we need to check for
+        # document separators at the beginning of the line.
+        #if indent == 0:
+        #    indent = 1
         spaces = []
         while True:
             length = 0
@@ -1280,13 +1286,13 @@ class Scanner:
             chunks.append(self.reader.prefix(length))
             self.reader.forward(length)
             end_mark = self.reader.get_mark()
-            spaces = self.scan_plain_spaces(indent)
+            spaces = self.scan_plain_spaces(indent, start_mark)
             if not spaces or self.reader.peek() == u'#' \
-                    or self.reader.column < indent:
+                    or (not self.flow_level and self.reader.column < indent):
                 break
         return ScalarToken(u''.join(chunks), True, start_mark, end_mark)
 
-    def scan_plain_spaces(self, indent):
+    def scan_plain_spaces(self, indent, start_mark):
         # See the specification for details.
         # The specification is really confusing about tabs in plain scalars.
         # We just forbid them completely. Do not use tabs in YAML!
@@ -1300,12 +1306,20 @@ class Scanner:
         if ch in u'\r\n\x85\u2028\u2029':
             line_break = self.scan_line_break()
             self.allow_simple_key = True
+            prefix = self.reader.prefix(3)
+            if (prefix == u'---' or prefix == u'...')   \
+                    and self.reader.peek(3) in u'\0 \t\r\n\x85\u2028\u2029':
+                return
             breaks = []
             while self.reader.peek() in u' \r\n\x85\u2028\u2029':
                 if self.reader.peek() == ' ':
                     self.reader.forward()
                 else:
                     breaks.append(self.scan_line_break())
+                    prefix = self.reader.prefix(3)
+                    if (prefix == u'---' or prefix == u'...')   \
+                            and self.reader.peek(3) in u'\0 \t\r\n\x85\u2028\u2029':
+                        return
             if line_break != u'\n':
                 chunks.append(line_break)
             elif not breaks:
