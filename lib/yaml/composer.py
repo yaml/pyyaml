@@ -15,6 +15,9 @@ class Composer:
         self.all_anchors = {}
         self.complete_anchors = {}
 
+        # Drop the STREAM-START event.
+        self.parser.get()
+
     def check(self):
         # If there are more documents available?
         return not self.parser.check(StreamEndEvent)
@@ -30,7 +33,16 @@ class Composer:
             yield self.compose_document()
 
     def compose_document(self):
+
+        # Drop the DOCUMENT-START event.
+        self.parser.get()
+
+        # Compose the root node.
         node = self.compose_node()
+
+        # Drop the DOCUMENT-END event.
+        self.parser.get()
+
         self.all_anchors = {}
         self.complete_anchors = {}
         return node
