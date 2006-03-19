@@ -18,7 +18,7 @@ class TestMark(test_appliance.TestAppliance):
                 else:
                     column += 1
                 index += 1
-            mark = Mark(test_name, line, column, unicode(input), index)
+            mark = Mark(test_name, index, line, column, unicode(input), index)
             snippet = mark.get_snippet(indent=2, max_length=79)
             #print "INPUT:"
             #print input
