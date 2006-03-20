@@ -1,6 +1,6 @@
 
 class Token:
-    def __init__(self, start_mark, end_mark):
+    def __init__(self, start_mark=None, end_mark=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
     def __repr__(self):
@@ -16,7 +16,7 @@ class Token:
 
 class DirectiveToken(Token):
     id = '<directive>'
-    def __init__(self, name, value, start_mark, end_mark):
+    def __init__(self, name, value, start_mark=None, end_mark=None):
         self.name = name
         self.value = value
         self.start_mark = start_mark
@@ -69,28 +69,28 @@ class FlowEntryToken(Token):
 
 class AliasToken(Token):
     id = '<alias>'
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value, start_mark=None, end_mark=None):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
 
 class AnchorToken(Token):
     id = '<anchor>'
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value, start_mark=None, end_mark=None):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
 
 class TagToken(Token):
     id = '<tag>'
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value, start_mark=None, end_mark=None):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
 
 class ScalarToken(Token):
     id = '<scalar>'
-    def __init__(self, value, plain, start_mark, end_mark):
+    def __init__(self, value, plain, start_mark=None, end_mark=None):
         self.value = value
         self.plain = plain
         self.start_mark = start_mark
