@@ -12,7 +12,10 @@ class TestStructure(test_appliance.TestAppliance):
             parser = Parser(Scanner(Reader(file(data_filename, 'rb'))))
             node1 = []
             while not parser.check(StreamEndEvent):
-                node1.append(self._convert(parser))
+                if not parser.check(StreamStartEvent, DocumentStartEvent, DocumentEndEvent):
+                    node1.append(self._convert(parser))
+                else:
+                    parser.get()
             parser.get()
             if len(node1) == 1:
                 node1 = node1[0]

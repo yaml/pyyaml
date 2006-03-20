@@ -54,7 +54,7 @@ class TestTokens(test_appliance.TestAppliance):
             scanner = Scanner(Reader(file(data_filename, 'rb')))
             tokens1 = []
             for token in scanner:
-                if not isinstance(token, StreamEndToken):
+                if not isinstance(token, (StreamStartToken, StreamEndToken)):
                     tokens1.append(token)
             tokens1 = [self.replaces[t.__class__] for t in tokens1]
             self.failUnlessEqual(tokens1, tokens2)
@@ -77,7 +77,7 @@ class TestScanner(test_appliance.TestAppliance):
                 scanner = Scanner(Reader(file(filename, 'rb')))
                 tokens = []
                 for token in scanner:
-                    if not isinstance(token, StreamEndToken):
+                    if not isinstance(token, (StreamStartToken, StreamEndToken)):
                         tokens.append(token.__class__.__name__)
             except:
                 print
