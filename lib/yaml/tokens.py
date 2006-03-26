@@ -24,21 +24,41 @@ class DirectiveToken(Token):
 
 class DocumentStartToken(Token):
     id = '<document start>'
+    def __init__(self, name, value, start_mark=None, end_mark=None):
+        self.name = name
+        self.value = value
+        self.start_mark = start_mark
+        self.end_mark = end_mark
 
 class DocumentEndToken(Token):
     id = '<document end>'
 
 class StreamStartToken(Token):
     id = '<stream start>'
+    def __init__(self, start_mark=None, end_mark=None,
+            encoding=None):
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.encoding = encoding
 
 class StreamEndToken(Token):
     id = '<stream end>'
 
 class BlockSequenceStartToken(Token):
     id = '<block sequence start>'
+    def __init__(self, start_mark=None, end_mark=None,
+            inline=None):
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.inline = inline
 
 class BlockMappingStartToken(Token):
     id = '<block mapping start>'
+    def __init__(self, start_mark=None, end_mark=None,
+            inline=None):
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.inline = inline
 
 class BlockEndToken(Token):
     id = '<block end>'
@@ -90,9 +110,11 @@ class TagToken(Token):
 
 class ScalarToken(Token):
     id = '<scalar>'
-    def __init__(self, value, plain, start_mark=None, end_mark=None):
+    def __init__(self, value, plain, start_mark=None, end_mark=None,
+            style=None):
         self.value = value
         self.plain = plain
         self.start_mark = start_mark
         self.end_mark = end_mark
+        self.style = style
 

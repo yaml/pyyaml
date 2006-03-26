@@ -35,13 +35,15 @@ class ScannerError(MarkedYAMLError):
 class SimpleKey:
     # See below simple keys treatment.
 
-    def __init__(self, token_number, required, index, line, column, mark):
+    def __init__(self, token_number, required, index, line, column, mark=None,
+            inline=None):
         self.token_number = token_number
         self.required = required
         self.index = index
         self.line = line
         self.column = column
         self.mark = mark
+        self.inline = inline
 
 class Scanner:
 
@@ -80,6 +82,10 @@ class Scanner:
 
         # Past indentation levels.
         self.indents = []
+
+        # Used for providing style information to the parser.
+        self.current_line = self.previous_line = self.reader.line
+        self.current_column = self.previus_column = self.reader.column
 
         # Variables related to simple keys treatment.
 
@@ -321,8 +327,9 @@ class Scanner:
             line = self.reader.line
             column = self.reader.column
             mark = self.reader.get_mark()
+            inline = (self.current_line == self.previous_line)
             key = SimpleKey(token_number, required,
-                    index, line, column, mark)
+                    index, line, column, mark, inline)
             self.possible_simple_keys[self.flow_level] = key
 
     def remove_possible_simple_key(self):
@@ -380,8 +387,8 @@ class Scanner:
         mark = self.reader.get_mark()
         
         # Add STREAM-END.
-        self.tokens.append(StreamStartToken(mark, mark))
-        
+        self.tokens.append(StreamStartToken(mark, mark,
+            encoding=self.reader.encoding))
 
     def fetch_stream_end(self):
 
@@ -509,7 +516,8 @@ class Scanner:
             # We may need to add BLOCK-SEQUENCE-START.
             if self.add_indent(self.reader.column):
                 mark = self.reader.get_mark()
-                self.tokens.append(BlockSequenceStartToken(mark, mark))
+                inline = (self.current_line == self.previous_line)
+                self.tokens.append(BlockSequenceStartToken(mark, mark, inline))
 
         # It's an error for the block entry to occur in the flow context,
         # but we let the parser detect this.
@@ -542,7 +550,8 @@ class Scanner:
             # We may need to add BLOCK-MAPPING-START.
             if self.add_indent(self.reader.column):
                 mark = self.reader.get_mark()
-                self.tokens.append(BlockMappingStartToken(mark, mark))
+                inline = (self.current_line == self.previous_line)
+                self.tokens.append(BlockMappingStartToken(mark, mark, inline))
 
         # Simple keys are allowed after '?' in the block context.
         self.allow_simple_key = not self.flow_level
@@ -572,7 +581,8 @@ class Scanner:
             if not self.flow_level:
                 if self.add_indent(key.column):
                     self.tokens.insert(key.token_number-self.tokens_taken,
-                            BlockMappingStartToken(key.mark, key.mark))
+                            BlockMappingStartToken(key.mark, key.mark,
+                                key.inline))
 
             # There cannot be two simple keys one after another.
             self.allow_simple_key = False
@@ -790,6 +800,11 @@ class Scanner:
                     self.allow_simple_key = True
             else:
                 found = True
+
+        self.previous_line = self.current_line
+        self.previous_column = self.current_column
+        self.current_line = self.reader.line
+        self.current_column = self.reader.column
 
     def scan_directive(self):
         # See the specification for details.
@@ -1053,7 +1068,12 @@ class Scanner:
             chunks.extend(breaks)
 
         # We are done.
-        return ScalarToken(u''.join(chunks), False, start_mark, end_mark)
+        if folded:
+            style = '>'
+        else:
+            style = '|'
+        return ScalarToken(u''.join(chunks), False, start_mark, end_mark,
+                style)
 
     def scan_block_scalar_indicators(self, start_mark):
         # See the specification for details.
@@ -1154,7 +1174,12 @@ class Scanner:
             chunks.extend(self.scan_flow_scalar_non_spaces(double, start_mark))
         self.reader.forward()
         end_mark = self.reader.get_mark()
-        return ScalarToken(u''.join(chunks), False, start_mark, end_mark)
+        if double:
+            style = '"'
+        else:
+            style = '\''
+        return ScalarToken(u''.join(chunks), False, start_mark, end_mark,
+                style)
 
     ESCAPE_REPLACEMENTS = {
         u'0':   u'\0',
@@ -1305,7 +1330,7 @@ class Scanner:
             if not spaces or self.reader.peek() == u'#' \
                     or (not self.flow_level and self.reader.column < indent):
                 break
-        return ScalarToken(u''.join(chunks), True, start_mark, end_mark)
+        return ScalarToken(u''.join(chunks), True, start_mark, end_mark, '')
 
     def scan_plain_spaces(self, indent, start_mark):
         # See the specification for details.

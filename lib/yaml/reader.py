@@ -100,6 +100,7 @@ class Reader:
         self.pointer = 0
         self.raw_buffer = None
         self.raw_decode = None
+        self.encoding = None
         self.index = 0
         self.line = 0
         self.column = 0
@@ -156,10 +157,13 @@ class Reader:
         if not isinstance(self.raw_buffer, unicode):
             if self.raw_buffer.startswith(codecs.BOM_UTF16_LE):
                 self.raw_decode = utf_16_le_decode
+                self.encoding = 'utf-16-le'
             elif self.raw_buffer.startswith(codecs.BOM_UTF16_BE):
                 self.raw_decode = utf_16_be_decode
+                self.encoding = 'utf-16-be'
             else:
                 self.raw_decode = utf_8_decode
+                self.encoding = 'utf-8'
         self.update(1)
 
     NON_PRINTABLE = re.compile(u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]')

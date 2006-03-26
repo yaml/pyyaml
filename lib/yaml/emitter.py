@@ -175,6 +175,6 @@ class Emitter:
         self.soft_space = True
 
     def write_indent(self):
-        self.writer.write("\n"+" "*(self.level*4))
+        self.writer.write("\n"+" "*(self.level*2))
         self.soft_space = False
 
