@@ -1,0 +1,81 @@
+- !StreamStart
+
+- !DocumentStart
+- !Sequence
+- !CollectionEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !Sequence { tag: '!mytag' }
+- !CollectionEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !Sequence
+- !Sequence
+- !CollectionEnd
+- !Sequence { tag: '!mytag' }
+- !CollectionEnd
+- !Sequence
+- !Scalar
+- !Scalar { value: 'data' }
+- !Scalar { tag: '!mytag', value: 'data' }
+- !CollectionEnd
+- !Sequence
+- !Sequence
+- !Sequence
+- !Scalar
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !Sequence
+- !Sequence { tag: '!mytag' }
+- !Sequence
+- !Scalar { value: 'data' }
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !Sequence
+- !Mapping
+- !Scalar { value: 'key1' }
+- !Sequence
+- !Scalar { value: 'data1' }
+- !Scalar { value: 'data2' }
+- !CollectionEnd
+- !Scalar { value: 'key2' }
+- !Sequence { tag: '!mytag1' }
+- !Scalar { value: 'data3' }
+- !Sequence
+- !Scalar { value: 'data4' }
+- !Scalar { value: 'data5' }
+- !CollectionEnd
+- !Sequence { tag: '!mytag2' }
+- !Scalar { value: 'data6' }
+- !Scalar { value: 'data7' }
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !Sequence
+- !Sequence { flow: true }
+- !Sequence
+- !CollectionEnd
+- !Scalar
+- !Scalar { value: 'data' }
+- !Scalar { tag: '!mytag', value: 'data' }
+- !Sequence { tag: '!mytag' }
+- !Scalar { value: 'data' }
+- !Scalar { value: 'data' }
+- !CollectionEnd
+- !CollectionEnd
+- !CollectionEnd
+- !DocumentEnd
+
+- !StreamEnd
