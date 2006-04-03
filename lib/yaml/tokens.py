@@ -30,6 +30,11 @@ class DocumentEndToken(Token):
 
 class StreamStartToken(Token):
     id = '<stream start>'
+    def __init__(self, start_mark=None, end_mark=None,
+            encoding=None):
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.encoding = encoding
 
 class StreamEndToken(Token):
     id = '<stream end>'
@@ -90,9 +95,10 @@ class TagToken(Token):
 
 class ScalarToken(Token):
     id = '<scalar>'
-    def __init__(self, value, plain, start_mark, end_mark):
+    def __init__(self, value, implicit, start_mark, end_mark, style=None):
         self.value = value
-        self.plain = plain
+        self.implicit = implicit
         self.start_mark = start_mark
         self.end_mark = end_mark
+        self.style = style
 

@@ -243,10 +243,10 @@ class CanonicalParser:
             if self.test_token(ScalarToken):
                 self.events.append(ScalarEvent(anchor, tag, self.get_value(), None, None))
             elif self.test_token(FlowSequenceStartToken):
-                self.events.append(SequenceEvent(anchor, tag, None, None))
+                self.events.append(SequenceStartEvent(anchor, tag, None, None))
                 self.parse_sequence()
             elif self.test_token(FlowMappingStartToken):
-                self.events.append(MappingEvent(anchor, tag, None, None))
+                self.events.append(MappingStartEvent(anchor, tag, None, None))
                 self.parse_mapping()
             else:
                 raise Error("SCALAR, '[', or '{' is expected, got "+repr(self.tokens[self.index]))
@@ -261,7 +261,7 @@ class CanonicalParser:
                 if not self.test_token(FlowSequenceEndToken):
                     self.parse_node()
         self.consume_token(FlowSequenceEndToken)
-        self.events.append(CollectionEndEvent(None, None))
+        self.events.append(SequenceEndEvent(None, None))
 
     # mapping: MAPPING-START (map_entry (ENTRY map_entry)*)? ENTRY? MAPPING-END
     def parse_mapping(self):
@@ -273,7 +273,7 @@ class CanonicalParser:
                 if not self.test_token(FlowMappingEndToken):
                     self.parse_map_entry()
         self.consume_token(FlowMappingEndToken)
-        self.events.append(CollectionEndEvent(None, None))
+        self.events.append(MappingEndEvent(None, None))
 
     # map_entry: KEY node VALUE node
     def parse_map_entry(self):

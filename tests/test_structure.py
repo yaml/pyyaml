@@ -35,17 +35,17 @@ class TestStructure(test_appliance.TestAppliance):
                 return True
             else:
                 return None
-        elif parser.check(SequenceEvent):
+        elif parser.check(SequenceStartEvent):
             parser.get()
             sequence = []
-            while not parser.check(CollectionEndEvent):
+            while not parser.check(SequenceEndEvent):
                 sequence.append(self._convert(parser))
             parser.get()
             return sequence
-        elif parser.check(MappingEvent):
+        elif parser.check(MappingStartEvent):
             parser.get()
             mapping = []
-            while not parser.check(CollectionEndEvent):
+            while not parser.check(MappingEndEvent):
                 key = self._convert(parser)
                 value = self._convert(parser)
                 mapping.append((key, value))
@@ -92,7 +92,7 @@ class TestParser(test_appliance.TestAppliance):
                 #self.failUnlessEqual(event1.anchor, event2.anchor)
                 #self.failUnlessEqual(event1.tag, event2.tag)
                 self.failUnlessEqual(event1.value, event2.value)
-            if isinstance(event1, CollectionEvent):
+            if isinstance(event1, CollectionStartEvent):
                 #self.failUnlessEqual(event1.anchor, event2.anchor)
                 #self.failUnlessEqual(event1.tag, event2.tag)
                 pass
@@ -213,7 +213,7 @@ class TestParserOnCanonical(test_appliance.TestAppliance):
                 self.failUnlessEqual(event1.anchor, event2.anchor)
                 self.failUnlessEqual(event1.tag, event2.tag)
                 self.failUnlessEqual(event1.value, event2.value)
-            if isinstance(event1, CollectionEvent):
+            if isinstance(event1, CollectionStartEvent):
                 self.failUnlessEqual(event1.anchor, event2.anchor)
                 self.failUnlessEqual(event1.tag, event2.tag)
 

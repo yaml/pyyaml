@@ -1,0 +1,11 @@
+- !StreamStart
+- !DocumentStart
+- !Scalar { implicit: true }
+- !DocumentEnd
+- !DocumentStart
+- !Scalar { implicit: true }
+- !DocumentEnd
+- !DocumentStart
+- !Scalar { implicit: true }
+- !DocumentEnd
+- !StreamEnd
