@@ -71,9 +71,9 @@ class Composer:
             self.all_anchors[anchor] = event
         if self.parser.check(ScalarEvent):
             node = self.compose_scalar_node()
-        elif self.parser.check(SequenceEvent):
+        elif self.parser.check(SequenceStartEvent):
             node = self.compose_sequence_node()
-        elif self.parser.check(MappingEvent):
+        elif self.parser.check(MappingStartEvent):
             node = self.compose_mapping_node()
         if anchor is not None:
             self.complete_anchors[anchor] = node
@@ -87,7 +87,7 @@ class Composer:
     def compose_sequence_node(self):
         start_event = self.parser.get()
         value = []
-        while not self.parser.check(CollectionEndEvent):
+        while not self.parser.check(SequenceEndEvent):
             value.append(self.compose_node())
         end_event = self.parser.get()
         return SequenceNode(start_event.tag, value,
@@ -96,7 +96,7 @@ class Composer:
     def compose_mapping_node(self):
         start_event = self.parser.get()
         value = {}
-        while not self.parser.check(CollectionEndEvent):
+        while not self.parser.check(MappingEndEvent):
             key_event = self.parser.peek()
             item_key = self.compose_node()
             item_value = self.compose_node()

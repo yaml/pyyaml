@@ -379,8 +379,9 @@ class Scanner:
         # Read the token.
         mark = self.reader.get_mark()
         
-        # Add STREAM-END.
-        self.tokens.append(StreamStartToken(mark, mark))
+        # Add STREAM-START.
+        self.tokens.append(StreamStartToken(mark, mark,
+            encoding=self.reader.encoding))
         
 
     def fetch_stream_end(self):
@@ -638,12 +639,12 @@ class Scanner:
         self.tokens.append(self.scan_tag())
 
     def fetch_literal(self):
-        self.fetch_block_scalar(folded=False)
+        self.fetch_block_scalar(style='|')
 
     def fetch_folded(self):
-        self.fetch_block_scalar(folded=True)
+        self.fetch_block_scalar(style='>')
 
-    def fetch_block_scalar(self, folded):
+    def fetch_block_scalar(self, style):
 
         # A simple key may follow a block scalar.
         self.allow_simple_key = True
@@ -652,15 +653,15 @@ class Scanner:
         self.remove_possible_simple_key()
 
         # Scan and add SCALAR.
-        self.tokens.append(self.scan_block_scalar(folded))
+        self.tokens.append(self.scan_block_scalar(style))
 
     def fetch_single(self):
-        self.fetch_flow_scalar(double=False)
+        self.fetch_flow_scalar(style='\'')
 
     def fetch_double(self):
-        self.fetch_flow_scalar(double=True)
+        self.fetch_flow_scalar(style='"')
 
-    def fetch_flow_scalar(self, double):
+    def fetch_flow_scalar(self, style):
 
         # A flow scalar could be a simple key.
         self.save_possible_simple_key()
@@ -669,7 +670,7 @@ class Scanner:
         self.allow_simple_key = False
 
         # Scan and add SCALAR.
-        self.tokens.append(self.scan_flow_scalar(double))
+        self.tokens.append(self.scan_flow_scalar(style))
 
     def fetch_plain(self):
 
@@ -986,8 +987,13 @@ class Scanner:
         end_mark = self.reader.get_mark()
         return TagToken(value, start_mark, end_mark)
 
-    def scan_block_scalar(self, folded):
+    def scan_block_scalar(self, style):
         # See the specification for details.
+
+        if style == '>':
+            folded = True
+        else:
+            folded = False
 
         chunks = []
         start_mark = self.reader.get_mark()
@@ -1021,6 +1027,7 @@ class Scanner:
             line_break = self.scan_line_break()
             breaks, end_mark = self.scan_block_scalar_breaks(indent)
             if self.reader.column == indent and self.reader.peek() != u'\0':
+
                 # Unfortunately, folding rules are ambiguous.
                 #
                 # This is the folding according to the specification:
@@ -1053,7 +1060,8 @@ class Scanner:
             chunks.extend(breaks)
 
         # We are done.
-        return ScalarToken(u''.join(chunks), False, start_mark, end_mark)
+        return ScalarToken(u''.join(chunks), False, start_mark, end_mark,
+                style)
 
     def scan_block_scalar_indicators(self, start_mark):
         # See the specification for details.
@@ -1137,13 +1145,17 @@ class Scanner:
                 self.reader.forward()
         return chunks, end_mark
 
-    def scan_flow_scalar(self, double):
+    def scan_flow_scalar(self, style):
         # See the specification for details.
         # Note that we loose indentation rules for quoted scalars. Quoted
         # scalars don't need to adhere indentation because " and ' clearly
         # mark the beginning and the end of them. Therefore we are less
         # restrictive then the specification requires. We only need to check
         # that document separators are not included in scalars.
+        if style == '"':
+            double = True
+        else:
+            double = False
         chunks = []
         start_mark = self.reader.get_mark()
         quote = self.reader.peek()
@@ -1154,7 +1166,8 @@ class Scanner:
             chunks.extend(self.scan_flow_scalar_non_spaces(double, start_mark))
         self.reader.forward()
         end_mark = self.reader.get_mark()
-        return ScalarToken(u''.join(chunks), False, start_mark, end_mark)
+        return ScalarToken(u''.join(chunks), False, start_mark, end_mark,
+                style)
 
     ESCAPE_REPLACEMENTS = {
         u'0':   u'\0',

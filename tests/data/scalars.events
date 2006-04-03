@@ -1,0 +1,24 @@
+- !StreamStart
+
+- !DocumentStart
+- !MappingStart
+- !Scalar { implicit: true, value: 'empty scalar' }
+- !Scalar { implicit: true, value: '' }
+- !Scalar { implicit: true, value: 'implicit scalar' }
+- !Scalar { implicit: true, value: 'data' }
+- !Scalar { implicit: true, value: 'quoted scalar' }
+- !Scalar { value: 'data', style: '"' }
+- !Scalar { implicit: true, value: 'block scalar' }
+- !Scalar { value: 'data', style: '|' }
+- !Scalar { implicit: true, value: 'empty scalar with tag' }
+- !Scalar { implicit: true, tag: '!mytag', value: '' }
+- !Scalar { implicit: true, value: 'implicit scalar with tag' }
+- !Scalar { implicit: true, tag: '!mytag', value: 'data' }
+- !Scalar { implicit: true, value: 'quoted scalar with tag' }
+- !Scalar { value: 'data', style: '"', tag: '!mytag' }
+- !Scalar { implicit: true, value: 'block scalar with tag' }
+- !Scalar { value: 'data', style: '|', tag: '!mytag' }
+- !MappingEnd
+- !DocumentEnd
+
+- !StreamEnd
