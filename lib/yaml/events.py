@@ -34,10 +34,12 @@ class CollectionEndEvent(Event):
 
 class StreamStartEvent(Event):
     def __init__(self, start_mark=None, end_mark=None,
-            encoding=None, canonical=None, indent=None, width=None):
+            encoding=None, line_break=None, canonical=None,
+            indent=None, width=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.encoding = encoding
+        self.line_break = line_break
         self.canonical = canonical
         self.indent = indent
         self.width = width
