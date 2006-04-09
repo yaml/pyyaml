@@ -753,7 +753,7 @@ class Scanner:
         ch = self.reader.peek()
         return ch not in u'\0 \t\r\n\x85\u2028\u2029-?:,[]{}#&*!|>\'\"%@`'  \
                 or (self.reader.peek(1) not in u'\0 \t\r\n\x85\u2028\u2029'
-                        and (ch == '-' or (not self.flow_level and ch in u'?:')))
+                        and (ch == u'-' or (not self.flow_level and ch in u'?:')))
 
     # Scanners.
 

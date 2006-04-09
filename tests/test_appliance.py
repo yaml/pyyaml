@@ -237,7 +237,7 @@ class CanonicalParser:
             anchor = None
             if self.test_token(AnchorToken):
                 anchor = self.get_value()
-            tag = u'!'
+            tag = None
             if self.test_token(TagToken):
                 tag = self.get_value()
             if self.test_token(ScalarToken):

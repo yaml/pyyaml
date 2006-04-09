@@ -140,18 +140,18 @@ class Parser:
             token = self.scanner.peek()
             start_mark = end_mark = token.start_mark
             yield DocumentStartEvent(start_mark, end_mark,
-                    implicit=True)
+                    explicit=False)
             for event in self.parse_block_node():
                 yield event
             token = self.scanner.peek()
             start_mark = end_mark = token.start_mark
-            implicit = True
+            explicit = False
             while self.scanner.check(DocumentEndToken):
                 token = self.scanner.get()
                 end_mark = token.end_mark
-                implicit = True
+                explicit = True
             yield DocumentEndEvent(start_mark, end_mark,
-                    implicit=implicit)
+                    explicit=explicit)
 
         # Parse explicit documents.
         while not self.scanner.check(StreamEndToken):
@@ -166,7 +166,7 @@ class Parser:
             token = self.scanner.get()
             end_mark = token.end_mark
             yield DocumentStartEvent(start_mark, end_mark,
-                    implicit=False, version=version, tags=tags)
+                    explicit=True, version=version, tags=tags)
             if self.scanner.check(DirectiveToken,
                     DocumentStartToken, DocumentEndToken, StreamEndToken):
                 yield self.process_empty_scalar(token.end_mark)
@@ -175,13 +175,13 @@ class Parser:
                     yield event
             token = self.scanner.peek()
             start_mark = end_mark = token.start_mark
-            implicit=True
+            explicit = False
             while self.scanner.check(DocumentEndToken):
                 token = self.scanner.get()
                 end_mark = token.end_mark
-                implicit=False
+                explicit=True
             yield DocumentEndEvent(start_mark, end_mark,
-                    implicit=implicit)
+                    explicit=explicit)
 
         # Parse end of stream.
         token = self.scanner.get()
@@ -273,10 +273,10 @@ class Parser:
                     tag = self.tag_handles[handle]+suffix
                 else:
                     tag = suffix
-            if tag is None:
-                if not (self.scanner.check(ScalarToken) and
-                        self.scanner.peek().implicit):
-                    tag = u'!'
+            #if tag is None:
+            #    if not (self.scanner.check(ScalarToken) and
+            #            self.scanner.peek().implicit):
+            #        tag = u'!'
             if start_mark is None:
                 start_mark = end_mark = self.scanner.peek().start_mark
             event = None
@@ -289,9 +289,10 @@ class Parser:
                 if self.scanner.check(ScalarToken):
                     token = self.scanner.get()
                     end_mark = token.end_mark
+                    implicit = (tag is None and token.implicit)
                     event = ScalarEvent(anchor, tag, token.value,
                             start_mark, end_mark,
-                            implicit=token.implicit, style=token.style)
+                            implicit=implicit, style=token.style)
                 elif self.scanner.check(FlowSequenceStartToken):
                     end_mark = self.scanner.peek().end_mark
                     event = SequenceStartEvent(anchor, tag, start_mark, end_mark,
@@ -410,7 +411,7 @@ class Parser:
         while not self.scanner.check(FlowSequenceEndToken):
             if self.scanner.check(KeyToken):
                 token = self.scanner.get()
-                yield MappingStartEvent(None, u'!',
+                yield MappingStartEvent(None, None, # u'!',
                         token.start_mark, token.end_mark,
                         flow_style=True)
                 if not self.scanner.check(ValueToken,

@@ -49,19 +49,19 @@ class StreamEndEvent(Event):
 
 class DocumentStartEvent(Event):
     def __init__(self, start_mark=None, end_mark=None,
-            implicit=None, version=None, tags=None):
+            explicit=None, version=None, tags=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
-        self.implicit = implicit
+        self.explicit = explicit
         self.version = version
         self.tags = tags
 
 class DocumentEndEvent(Event):
     def __init__(self, start_mark=None, end_mark=None,
-            implicit=None):
+            explicit=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
-        self.implicit = implicit
+        self.explicit = explicit
 
 class AliasEvent(NodeEvent):
     pass
