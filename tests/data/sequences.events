@@ -64,7 +64,7 @@
 
 - !DocumentStart
 - !SequenceStart
-- !SequenceStart { flow: true }
+- !SequenceStart { flow_style: true }
 - !SequenceStart
 - !SequenceEnd
 - !Scalar

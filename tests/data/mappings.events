@@ -24,7 +24,7 @@
 - !MappingEnd
 - !MappingEnd
 - !Scalar { implicit: true, value: 'flow mapping' }
-- !MappingStart { flow: true }
+- !MappingStart { flow_style: true }
 - !Scalar { implicit: true, value: 'key' }
 - !Scalar { implicit: true, value: 'value' }
 - !MappingStart

@@ -23,6 +23,12 @@ class Node:
 
 class ScalarNode(Node):
     id = 'scalar'
+    def __init__(self, tag, value, implicit, start_mark, end_mark):
+        self.tag = tag
+        self.value = value
+        self.implicit = implicit
+        self.start_mark = start_mark
+        self.end_mark = end_mark
 
 class CollectionNode(Node):
     pass

@@ -56,7 +56,7 @@ class BaseResolver:
                 self.resolve_node(path+[node, key], node.value[key])
 
     def resolve_scalar(self, path, node):
-        if node.tag is None:
+        if node.tag is None and node.implicit:
             node.tag = self.detect_scalar(node.value)
         if node.tag is None or node.tag == u'!':
             node.tag = self.DEFAULT_SCALAR_TAG

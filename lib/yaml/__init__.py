@@ -6,6 +6,7 @@ from parser import *
 from composer import *
 from resolver import *
 from constructor import *
+from emitter import *
 
 from tokens import *
 from events import *

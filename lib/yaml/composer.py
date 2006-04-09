@@ -81,7 +81,7 @@ class Composer:
 
     def compose_scalar_node(self):
         event = self.parser.get()
-        return ScalarNode(event.tag, event.value,
+        return ScalarNode(event.tag, event.value, event.implicit,
                 event.start_mark, event.end_mark)
 
     def compose_sequence_node(self):
