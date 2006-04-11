@@ -82,7 +82,7 @@ class Composer:
     def compose_scalar_node(self):
         event = self.parser.get()
         return ScalarNode(event.tag, event.value, event.implicit,
-                event.start_mark, event.end_mark)
+                event.start_mark, event.end_mark, style=event.style)
 
     def compose_sequence_node(self):
         start_event = self.parser.get()
@@ -91,7 +91,8 @@ class Composer:
             value.append(self.compose_node())
         end_event = self.parser.get()
         return SequenceNode(start_event.tag, value,
-                start_event.start_mark, end_event.end_mark)
+                start_event.start_mark, end_event.end_mark,
+                flow_style=start_event.flow_style)
 
     def compose_mapping_node(self):
         start_event = self.parser.get()
@@ -106,5 +107,6 @@ class Composer:
             value[item_key] = item_value
         end_event = self.parser.get()
         return MappingNode(start_event.tag, value,
-                start_event.start_mark, end_event.end_mark)
+                start_event.start_mark, end_event.end_mark,
+                flow_style=start_event.flow_style)
 

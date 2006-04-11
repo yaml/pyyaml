@@ -18,6 +18,10 @@
 - !Scalar { value: 'data', style: '"', tag: '!mytag' }
 - !Scalar { implicit: true, value: 'block scalar with tag' }
 - !Scalar { value: 'data', style: '|', tag: '!mytag' }
+- !Scalar { implicit: true, value: 'single character' }
+- !Scalar { value: 'a', implicit: true }
+- !Scalar { implicit: true, value: 'single digit' }
+- !Scalar { value: '1', implicit: true }
 - !MappingEnd
 - !DocumentEnd
 

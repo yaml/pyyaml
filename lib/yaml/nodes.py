@@ -23,15 +23,23 @@ class Node:
 
 class ScalarNode(Node):
     id = 'scalar'
-    def __init__(self, tag, value, implicit, start_mark, end_mark):
+    def __init__(self, tag, value, implicit,
+            start_mark=None, end_mark=None, style=None):
         self.tag = tag
         self.value = value
         self.implicit = implicit
         self.start_mark = start_mark
         self.end_mark = end_mark
+        self.style = style
 
 class CollectionNode(Node):
-    pass
+    def __init__(self, tag, value,
+            start_mark=None, end_mark=None, flow_style=None):
+        self.tag = tag
+        self.value = value
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.flow_style = flow_style
 
 class SequenceNode(CollectionNode):
     id = 'sequence'
