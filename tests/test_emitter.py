@@ -75,7 +75,7 @@ EventsConstructor.add_constructor(None, EventsConstructor.construct_event)
 class TestEmitterEvents(test_appliance.TestAppliance):
 
     def _testEmitterEvents(self, test_name, events_filename):
-        events = list(load_document(file(events_filename, 'rb'), Constructor=EventsConstructor))
+        events = list(load(file(events_filename, 'rb'), Constructor=EventsConstructor))
         #self._dump(events_filename, events)
         writer = StringIO.StringIO()
         emitter = Emitter(writer)

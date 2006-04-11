@@ -35,7 +35,7 @@ class CollectionEndEvent(Event):
 class StreamStartEvent(Event):
     def __init__(self, start_mark=None, end_mark=None,
             encoding=None, line_break=None, canonical=None,
-            indent=None, width=None):
+            indent=None, width=None, allow_unicode=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.encoding = encoding
@@ -43,6 +43,7 @@ class StreamStartEvent(Event):
         self.canonical = canonical
         self.indent = indent
         self.width = width
+        self.allow_unicode = allow_unicode
 
 class StreamEndEvent(Event):
     pass

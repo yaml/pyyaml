@@ -1,6 +1,6 @@
 
-__all__ = ['BaseConstructor', 'Constructor', 'ConstructorError',
-    'YAMLObject', 'YAMLObjectMetaclass']
+__all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
+    'ConstructorError']
 
 from error import *
 from nodes import *
@@ -154,7 +154,7 @@ class BaseConstructor:
 
     yaml_constructors = {}
 
-class Constructor(BaseConstructor):
+class SafeConstructor(BaseConstructor):
 
     def construct_yaml_null(self, node):
         self.construct_scalar(node)
@@ -332,79 +332,58 @@ class Constructor(BaseConstructor):
                 "could not determine a constructor for the tag %r" % node.tag.encode('utf-8'),
                 node.start_mark)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:null',
-        Constructor.construct_yaml_null)
+        SafeConstructor.construct_yaml_null)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:bool',
-        Constructor.construct_yaml_bool)
+        SafeConstructor.construct_yaml_bool)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:int',
-        Constructor.construct_yaml_int)
+        SafeConstructor.construct_yaml_int)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:float',
-        Constructor.construct_yaml_float)
+        SafeConstructor.construct_yaml_float)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:binary',
-        Constructor.construct_yaml_binary)
+        SafeConstructor.construct_yaml_binary)
 
 if datetime_available:
-    Constructor.add_constructor(
+    SafeConstructor.add_constructor(
             u'tag:yaml.org,2002:timestamp',
-            Constructor.construct_yaml_timestamp)
+            SafeConstructor.construct_yaml_timestamp)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:omap',
-        Constructor.construct_yaml_omap)
+        SafeConstructor.construct_yaml_omap)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:pairs',
-        Constructor.construct_yaml_pairs)
+        SafeConstructor.construct_yaml_pairs)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:set',
-        Constructor.construct_yaml_set)
+        SafeConstructor.construct_yaml_set)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:str',
-        Constructor.construct_yaml_str)
+        SafeConstructor.construct_yaml_str)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:seq',
-        Constructor.construct_yaml_seq)
+        SafeConstructor.construct_yaml_seq)
 
-Constructor.add_constructor(
+SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:map',
-        Constructor.construct_yaml_map)
+        SafeConstructor.construct_yaml_map)
 
-Constructor.add_constructor(None,
-        Constructor.construct_undefined)
+SafeConstructor.add_constructor(None,
+        SafeConstructor.construct_undefined)
 
-class YAMLObjectMetaclass(type):
-
-    def __init__(cls, name, bases, kwds):
-        super(YAMLObjectMetaclass, cls).__init__(name, bases, kwds)
-        if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
-            cls.yaml_constructor.add_constructor(cls.yaml_tag, cls.from_yaml)
-
-class YAMLObject(object):
-
-    __metaclass__ = YAMLObjectMetaclass
-
-    yaml_constructor = Constructor
-
-    yaml_tag = None
-
-    def from_yaml(cls, constructor, node):
-        raise ConstructorError(None, None,
-                "found undefined constructor for the tag %r"
-                % node.tag.encode('utf-8'), node.start_mark)
-    from_yaml = classmethod(from_yaml)
-
-    def to_yaml(self):
-        assert False    # needs dumper
+class Constructor(SafeConstructor):
+    pass
 

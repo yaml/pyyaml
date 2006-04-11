@@ -76,6 +76,7 @@ class Emitter:
 
         # Formatting details.
         self.canonical = False
+        self.allow_unicode = False
         self.best_line_break = u'\n'
         self.best_indent = 2
         self.best_width = 80
@@ -140,6 +141,7 @@ class Emitter:
         if isinstance(self.event, StreamStartEvent):
             self.encoding = self.event.encoding
             self.canonical = self.event.canonical
+            self.allow_unicode = self.event.allow_unicode
             if self.event.indent and self.event.indent > 1:
                 self.best_indent = self.event.indent
             if self.event.width and self.event.width > self.best_indent:
@@ -621,7 +623,7 @@ class Emitter:
                     contains_flow_indicator = True
                     if followed_by_space or last:
                         contains_block_indicator = True
-                if ch == u'-' and followed_by_space or last:
+                if ch == u'-' and (followed_by_space or last):
                     contains_flow_indicator = True
                     contains_block_indicator = True
             else:
@@ -631,7 +633,7 @@ class Emitter:
                     contains_flow_indicator = True
                     if followed_by_space or last:
                         contains_block_indicator = True
-                if ch == u'#' and preceeded_by_space:
+                if ch == u'#' and (preceeded_by_space or first):
                     contains_flow_indicator = True
                     contains_block_indicator = True
             if ch in u'\n\x85\u2028\u2029':
@@ -640,9 +642,6 @@ class Emitter:
                 if ch < u'\x80':
                     contains_special_characters = True
                 else:
-                    contains_special_characters = True
-                    # TODO: We need an option to allow unescaped unicode
-                    # characters.
                     contains_unicode_characters = True
             if ch == u' ':
                 if not spaces and not breaks:
@@ -691,6 +690,8 @@ class Emitter:
             preceeded_by_space = (ch in u'\0 \t\r\n\x85\u2028\u2029')
             followed_by_space = (index+1 < len(scalar) and
                     scalar[index+1] in u'\0 \t\r\n\x85\u2028\u2029')
+        if contains_unicode_characters and not self.allow_unicode:
+            contains_special_characters = True
         allow_flow_plain = not (contains_flow_indicator or contains_special_characters
             or contains_leading_spaces or contains_leading_breaks
             or contains_trailing_spaces or contains_trailing_breaks
@@ -853,7 +854,10 @@ class Emitter:
             ch = None
             if end < len(text):
                 ch = text[end]
-            if ch is None or not (u'\x20' <= ch <= u'\x7E') or ch in u'"\\':
+            if ch is None or ch in u'"\\'   \
+                    or not (u'\x20' <= ch <= u'\x7E'
+                            or (self.allow_unicode and ch > u'\x7F'
+                                and ch not in u'\x85\u2028\u2029')):
                 if start < end:
                     data = text[start:end]
                     self.column += len(data)
