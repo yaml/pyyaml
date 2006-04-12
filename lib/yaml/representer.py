@@ -119,14 +119,19 @@ class SafeRepresenter(Detector, BaseRepresenter):
                 u'null')
 
     def represent_str(self, native):
+        encoding = None
         try:
-            native.encode('ascii')
-            ascii = True
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            ascii = False
-        if ascii:
+            unicode(native, 'ascii')
+            encoding = 'ascii'
+        except UnicodeDecodeError:
+            try:
+                unicode(native, 'utf-8')
+                encoding = 'utf-8'
+            except UnicodeDecodeError:
+                pass
+        if encoding:
             return self.represent_scalar(u'tag:yaml.org,2002:str',
-                    unicode(native, 'ascii'))
+                    unicode(native, encoding))
         else:
             return self.represent_scalar(u'tag:yaml.org,2002:binary',
                     unicode(native.encode('base64')), style='|')
