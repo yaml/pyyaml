@@ -67,7 +67,7 @@ def emit(events, writer=None, Emitter=Emitter):
 
 def dump_all(natives, writer=None, Emitter=Emitter,
         Serializer=Serializer, Representer=Representer,
-        encoding=None, line_break=None, canonical=None,
+        encoding='utf-8', line_break=None, canonical=None,
         indent=None, width=None, allow_unicode=None):
     if writer is None:
         try:
@@ -91,7 +91,7 @@ def dump_all(natives, writer=None, Emitter=Emitter,
 
 def safe_dump_all(natives, writer=None, Emitter=Emitter,
         Serializer=Serializer, Representer=SafeRepresenter,
-        encoding=None, line_break=None, canonical=None,
+        encoding='utf-8', line_break=None, canonical=None,
         indent=None, width=None, allow_unicode=None):
     return dump_all(natives, writer, Emitter, Serializer, Representer,
             encoding, line_break, canonical, indent, width, allow_unicode)

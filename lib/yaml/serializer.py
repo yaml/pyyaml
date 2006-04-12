@@ -19,7 +19,7 @@ class Serializer:
         self.anchors = {}
         self.last_anchor_id = 0
         self.closed = None
-        self.open(encoding, line_break, canonical, indent, width)
+        self.open(encoding, line_break, canonical, indent, width, allow_unicode)
 
     def open(self, encoding=None, line_break=None, canonical=None,
             indent=None, width=None, allow_unicode=None):
