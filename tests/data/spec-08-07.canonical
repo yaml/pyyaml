@@ -3,5 +3,6 @@
 !!seq [
   !<tag:yaml.org,2002:str> "12",
   !<tag:yaml.org,2002:int> "12",
-  !<tag:yaml.org,2002:str> "12",
+#  !<tag:yaml.org,2002:str> "12",
+  !<tag:yaml.org,2002:int> "12",
 ]

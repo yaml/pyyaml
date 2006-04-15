@@ -5,7 +5,14 @@ import re
 
 class BaseDetector:
 
+    DEFAULT_SCALAR_TAG = u'tag:yaml.org,2002:str'
+    DEFAULT_SEQUENCE_TAG = u'tag:yaml.org,2002:seq'
+    DEFAULT_MAPPING_TAG = u'tag:yaml.org,2002:map'
+
     yaml_detectors = {}
+
+    def __init__(self):
+        pass
 
     def add_detector(cls, tag, regexp, first):
         if not 'yaml_detectors' in cls.__dict__:

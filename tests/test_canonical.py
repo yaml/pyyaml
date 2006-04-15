@@ -5,15 +5,13 @@ class TestCanonicalAppliance(test_appliance.TestAppliance):
 
     def _testCanonicalScanner(self, test_name, canonical_filename):
         data = file(canonical_filename, 'rb').read()
-        scanner = test_appliance.CanonicalScanner(data)
-        tokens = scanner.scan()
+        tokens = list(test_appliance.canonical_scan(data))
         #for token in tokens:
         #    print token
 
     def _testCanonicalParser(self, test_name, canonical_filename):
         data = file(canonical_filename, 'rb').read()
-        parser = test_appliance.CanonicalParser(data)
-        events = parser.parse()
+        event = list(test_appliance.canonical_parse(data))
         #for event in events:
         #    print event
 

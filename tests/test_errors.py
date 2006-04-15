@@ -15,13 +15,7 @@ class TestErrors(test_appliance.TestAppliance):
 
     def _load(self, filename):
         try:
-            reader = Reader(file(filename, 'rb'))
-            scanner = Scanner(reader)
-            parser = Parser(scanner)
-            composer = Composer(parser)
-            resolver = Resolver(composer)
-            constructor = Constructor(resolver)
-            return list(constructor)
+            return list(load_all(file(filename, 'rb')))
         except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:
@@ -33,13 +27,7 @@ class TestErrors(test_appliance.TestAppliance):
 
     def _load_string(self, filename):
         try:
-            reader = Reader(file(filename, 'rb').read())
-            scanner = Scanner(reader)
-            parser = Parser(scanner)
-            composer = Composer(parser)
-            resolver = Resolver(composer)
-            constructor = Constructor(resolver)
-            return list(constructor)
+            return list(load_all(file(filename, 'rb').read()))
         except YAMLError, exc:
         #except ScannerError, exc:
         #except ParserError, exc:

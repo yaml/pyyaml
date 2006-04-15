@@ -2,6 +2,14 @@
 
 import yaml, codecs, sys, optparse
 
+
+
+yaml.add_resolver(u'!Config', [])
+yaml.add_resolver(u'!TokensConfig', [u'tokens'])
+yaml.add_resolver(u'!EventsConfig', [u'events'])
+yaml.add_resolver(u'!StartEndConfig', [u'tokens', None])
+yaml.add_resolver(u'!StartEndConfig', [u'events', None])
+
 class YAMLHighlight:
 
     def __init__(self, config):

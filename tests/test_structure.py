@@ -9,14 +9,14 @@ class TestStructure(test_appliance.TestAppliance):
         node1 = None
         node2 = eval(file(structure_filename, 'rb').read())
         try:
-            parser = Parser(Scanner(Reader(file(data_filename, 'rb'))))
+            loader = Loader(file(data_filename, 'rb'))
             node1 = []
-            while not parser.check(StreamEndEvent):
-                if not parser.check(StreamStartEvent, DocumentStartEvent, DocumentEndEvent):
-                    node1.append(self._convert(parser))
+            while not loader.check_event(StreamEndEvent):
+                if not loader.check_event(StreamStartEvent, DocumentStartEvent, DocumentEndEvent):
+                    node1.append(self._convert(loader))
                 else:
-                    parser.get()
-            parser.get()
+                    loader.get_event()
+            loader.get_event()
             if len(node1) == 1:
                 node1 = node1[0]
             self.failUnlessEqual(node1, node2)
@@ -28,34 +28,34 @@ class TestStructure(test_appliance.TestAppliance):
             print "NODE2:", node2
             raise
 
-    def _convert(self, parser):
-        if parser.check(ScalarEvent):
-            event = parser.get()
+    def _convert(self, loader):
+        if loader.check_event(ScalarEvent):
+            event = loader.get_event()
             if event.tag or event.anchor or event.value:
                 return True
             else:
                 return None
-        elif parser.check(SequenceStartEvent):
-            parser.get()
+        elif loader.check_event(SequenceStartEvent):
+            loader.get_event()
             sequence = []
-            while not parser.check(SequenceEndEvent):
-                sequence.append(self._convert(parser))
-            parser.get()
+            while not loader.check_event(SequenceEndEvent):
+                sequence.append(self._convert(loader))
+            loader.get_event()
             return sequence
-        elif parser.check(MappingStartEvent):
-            parser.get()
+        elif loader.check_event(MappingStartEvent):
+            loader.get_event()
             mapping = []
-            while not parser.check(MappingEndEvent):
-                key = self._convert(parser)
-                value = self._convert(parser)
+            while not loader.check_event(MappingEndEvent):
+                key = self._convert(loader)
+                value = self._convert(loader)
                 mapping.append((key, value))
-            parser.get()
+            loader.get_event()
             return mapping
-        elif parser.check(AliasEvent):
-            parser.get()
+        elif loader.check_event(AliasEvent):
+            loader.get_event()
             return '*'
         else:
-            parser.get()
+            loader.get_event()
             return '?'
 
 TestStructure.add_tests('testStructure', '.data', '.structure')
@@ -66,10 +66,8 @@ class TestParser(test_appliance.TestAppliance):
         events1 = None
         events2 = None
         try:
-            parser = Parser(Scanner(Reader(file(data_filename, 'rb'))))
-            events1 = list(iter(parser))
-            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
-            events2 = canonical.parse()
+            events1 = list(parse(file(data_filename, 'rb')))
+            events2 = list(test_appliance.canonical_parse(file(canonical_filename, 'rb')))
             self._compare(events1, events2)
         except:
             print
@@ -105,12 +103,8 @@ class TestResolver(test_appliance.TestAppliance):
         nodes1 = None
         nodes2 = None
         try:
-            resolver1 = Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb'))))))
-            nodes1 = list(iter(resolver1))
-            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
-            canonical.parse()
-            resolver2 = Resolver(Composer(canonical))
-            nodes2 = list(iter(resolver2))
+            nodes1 = list(compose_all(file(data_filename, 'rb')))
+            nodes2 = list(test_appliance.canonical_compose_all(file(canonical_filename, 'rb')))
             self.failUnlessEqual(len(nodes1), len(nodes2))
             for node1, node2 in zip(nodes1, nodes2):
                 self._compare(node1, node2)
@@ -147,7 +141,7 @@ class TestResolver(test_appliance.TestAppliance):
 
 TestResolver.add_tests('testResolver', '.data', '.canonical')
 
-class MyConstructor(Constructor):
+class MyConstructor:
 
     def construct_sequence(self, node):
         return tuple(Constructor.construct_sequence(self, node))
@@ -157,29 +151,34 @@ class MyConstructor(Constructor):
         pairs.sort()
         return pairs
 
-MyConstructor.add_constructor(None, MyConstructor.construct_scalar)
+    def construct_undefined(self, node):
+        return self.construct_scalar(node)
+
+class MyLoader(MyConstructor, Loader):
+    pass
+MyLoader.add_constructor(None, MyLoader.construct_undefined)
+
+class MyCanonicalLoader(MyConstructor, test_appliance.CanonicalLoader):
+    pass
+MyCanonicalLoader.add_constructor(None, MyCanonicalLoader.construct_undefined)
 
 class TestConstructor(test_appliance.TestAppliance):
 
     def _testConstructor(self, test_name, data_filename, canonical_filename):
-        natives1 = None
-        natives2 = None
+        data1 = None
+        data2 = None
         try:
-            constructor1 = MyConstructor(Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb')))))))
-            natives1 = list(iter(constructor1))
-            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
-            canonical.parse()
-            constructor2 = MyConstructor(Resolver(Composer(canonical)))
-            natives2 = list(iter(constructor2))
-            self.failUnlessEqual(natives1, natives2)
+            data1 = list(load_all(file(data_filename, 'rb'), Loader=MyLoader))
+            data2 = list(load_all(file(canonical_filename, 'rb'), Loader=MyCanonicalLoader))
+            self.failUnlessEqual(data1, data2)
         except:
             print
             print "DATA1:"
             print file(data_filename, 'rb').read()
             print "DATA2:"
             print file(canonical_filename, 'rb').read()
-            print "NATIVES1:", natives1
-            print "NATIVES2:", natives2
+            print "NATIVES1:", data1
+            print "NATIVES2:", data2
             raise
 
 TestConstructor.add_tests('testConstructor', '.data', '.canonical')
@@ -190,10 +189,8 @@ class TestParserOnCanonical(test_appliance.TestAppliance):
         events1 = None
         events2 = None
         try:
-            parser = Parser(Scanner(Reader(file(canonical_filename, 'rb'))))
-            events1 = list(iter(parser))
-            canonical = test_appliance.CanonicalParser(file(canonical_filename, 'rb').read())
-            events2 = canonical.parse()
+            events1 = list(parse(file(canonical_filename, 'rb')))
+            events2 = list(test_appliance.canonical_parse(file(canonical_filename, 'rb')))
             self._compare(events1, events2)
         except:
             print

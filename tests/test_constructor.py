@@ -11,7 +11,7 @@ except NameError:
 
 from yaml import *
 
-class MyConstructor(Constructor):
+class MyLoader(Loader):
     pass
 
 class MyTestClass1:
@@ -28,11 +28,11 @@ def construct1(constructor, node):
     mapping = constructor.construct_mapping(node)
     return MyTestClass1(**mapping)
 
-MyConstructor.add_constructor("!tag1", construct1)
+MyLoader.add_constructor("!tag1", construct1)
 
 class MyTestClass2(MyTestClass1, YAMLObject):
 
-    yaml_constructor = MyConstructor
+    yaml_loader = MyLoader
     yaml_tag = "!tag2"
 
     def from_yaml(cls, constructor, node):
@@ -53,28 +53,41 @@ class MyTestClass3(MyTestClass2):
         return cls(**mapping)
     from_yaml = classmethod(from_yaml)
 
+class YAMLObject1(YAMLObject):
+    yaml_loader = MyLoader
+    yaml_tag = '!foo'
+
+    def __init__(self, my_parameter=None, my_another_parameter=None):
+        self.my_parameter = my_parameter
+        self.my_another_parameter = my_another_parameter
+
+    def __eq__(self, other):
+        if isinstance(other, YAMLObject1):
+            return self.__class__, self.__dict__ == other.__class__, other.__dict__
+        else:
+            return False
+
 class TestTypes(test_appliance.TestAppliance):
 
     def _testTypes(self, test_name, data_filename, code_filename):
-        natives1 = None
-        natives2 = None
+        data1 = None
+        data2 = None
         try:
-            constructor1 = MyConstructor(Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb')))))))
-            natives1 = list(iter(constructor1))
-            if len(natives1) == 1:
-                natives1 = natives1[0]
-            natives2 = eval(file(code_filename, 'rb').read())
+            data1 = list(load_all(file(data_filename, 'rb'), Loader=MyLoader))
+            if len(data1) == 1:
+                data1 = data1[0]
+            data2 = eval(file(code_filename, 'rb').read())
             try:
-                self.failUnlessEqual(natives1, natives2)
+                self.failUnlessEqual(data1, data2)
             except AssertionError:
-                if isinstance(natives1, dict):
-                    natives1 = natives1.items()
-                    natives1.sort()
-                    natives1 = repr(natives1)
-                    natives2 = natives2.items()
-                    natives2.sort()
-                    natives2 = repr(natives2)
-                if natives1 != natives2:
+                if isinstance(data1, dict):
+                    data1 = data1.items()
+                    data1.sort()
+                    data1 = repr(data1)
+                    data2 = data2.items()
+                    data2.sort()
+                    data2 = repr(data2)
+                if data1 != data2:
                     raise
         except:
             print
@@ -82,8 +95,8 @@ class TestTypes(test_appliance.TestAppliance):
             print file(data_filename, 'rb').read()
             print "CODE:"
             print file(code_filename, 'rb').read()
-            print "NATIVES1:", natives1
-            print "NATIVES2:", natives2
+            print "NATIVES1:", data1
+            print "NATIVES2:", data2
             raise
 
 TestTypes.add_tests('testTypes', '.data', '.code')
