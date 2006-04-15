@@ -1,8 +1,7 @@
 
 import unittest, os
 
-from yaml.tokens import *
-from yaml.events import *
+from yaml import *
 
 class TestAppliance(unittest.TestCase):
 
@@ -43,52 +42,74 @@ class CanonicalScanner:
     def __init__(self, data):
         self.data = unicode(data, 'utf-8')+u'\0'
         self.index = 0
+        self.scan()
+
+    def check_token(self, *choices):
+        if self.tokens:
+            if not choices:
+                return True
+            for choice in choices:
+                if isinstance(self.tokens[0], choice):
+                    return True
+        return False
+
+    def peek_token(self):
+        if self.tokens:
+            return self.tokens[0]
+
+    def get_token(self, choice=None):
+        token = self.tokens.pop(0)
+        if choice and not isinstance(token, choice):
+            raise Error("unexpected token "+repr(token))
+        return token
+
+    def get_token_value(self):
+        token = self.get_token()
+        return token.value
 
     def scan(self):
-        #print self.data[self.index:]
-        tokens = []
-        tokens.append(StreamStartToken(None, None))
+        self.tokens = []
+        self.tokens.append(StreamStartToken(None, None))
         while True:
             self.find_token()
             ch = self.data[self.index]
             if ch == u'\0':
-                tokens.append(StreamEndToken(None, None))
+                self.tokens.append(StreamEndToken(None, None))
                 break
             elif ch == u'%':
-                tokens.append(self.scan_directive())
+                self.tokens.append(self.scan_directive())
             elif ch == u'-' and self.data[self.index:self.index+3] == u'---':
                 self.index += 3
-                tokens.append(DocumentStartToken(None, None))
+                self.tokens.append(DocumentStartToken(None, None))
             elif ch == u'[':
                 self.index += 1
-                tokens.append(FlowSequenceStartToken(None, None))
+                self.tokens.append(FlowSequenceStartToken(None, None))
             elif ch == u'{':
                 self.index += 1
-                tokens.append(FlowMappingStartToken(None, None))
+                self.tokens.append(FlowMappingStartToken(None, None))
             elif ch == u']':
                 self.index += 1
-                tokens.append(FlowSequenceEndToken(None, None))
+                self.tokens.append(FlowSequenceEndToken(None, None))
             elif ch == u'}':
                 self.index += 1
-                tokens.append(FlowMappingEndToken(None, None))
+                self.tokens.append(FlowMappingEndToken(None, None))
             elif ch == u'?':
                 self.index += 1
-                tokens.append(KeyToken(None, None))
+                self.tokens.append(KeyToken(None, None))
             elif ch == u':':
                 self.index += 1
-                tokens.append(ValueToken(None, None))
+                self.tokens.append(ValueToken(None, None))
             elif ch == u',':
                 self.index += 1
-                tokens.append(FlowEntryToken(None, None))
+                self.tokens.append(FlowEntryToken(None, None))
             elif ch == u'*' or ch == u'&':
-                tokens.append(self.scan_alias())
+                self.tokens.append(self.scan_alias())
             elif ch == u'!':
-                tokens.append(self.scan_tag())
+                self.tokens.append(self.scan_tag())
             elif ch == u'"':
-                tokens.append(self.scan_scalar())
+                self.tokens.append(self.scan_scalar())
             else:
                 raise Error("invalid token")
-        return tokens
 
     DIRECTIVE = u'%YAML 1.1'
 
@@ -203,49 +224,49 @@ class CanonicalScanner:
 
 class CanonicalParser:
 
-    def __init__(self, data):
-        self.scanner = CanonicalScanner(data)
+    def __init__(self):
         self.events = []
+        self.parse()
 
     # stream: STREAM-START document* STREAM-END
     def parse_stream(self):
-        self.consume_token(StreamStartToken)
+        self.get_token(StreamStartToken)
         self.events.append(StreamStartEvent(None, None))
-        while not self.test_token(StreamEndToken):
-            if self.test_token(DirectiveToken, DocumentStartToken):
+        while not self.check_token(StreamEndToken):
+            if self.check_token(DirectiveToken, DocumentStartToken):
                 self.parse_document()
             else:
                 raise Error("document is expected, got "+repr(self.tokens[self.index]))
-        self.consume_token(StreamEndToken)
+        self.get_token(StreamEndToken)
         self.events.append(StreamEndEvent(None, None))
 
     # document: DIRECTIVE? DOCUMENT-START node
     def parse_document(self):
         node = None
-        if self.test_token(DirectiveToken):
-            self.consume_token(DirectiveToken)
-        self.consume_token(DocumentStartToken)
+        if self.check_token(DirectiveToken):
+            self.get_token(DirectiveToken)
+        self.get_token(DocumentStartToken)
         self.events.append(DocumentStartEvent(None, None))
         self.parse_node()
         self.events.append(DocumentEndEvent(None, None))
 
     # node: ALIAS | ANCHOR? TAG? (SCALAR|sequence|mapping)
     def parse_node(self):
-        if self.test_token(AliasToken):
-            self.events.append(AliasEvent(self.get_value(), None, None))
+        if self.check_token(AliasToken):
+            self.events.append(AliasEvent(self.get_token_value(), None, None))
         else:
             anchor = None
-            if self.test_token(AnchorToken):
-                anchor = self.get_value()
+            if self.check_token(AnchorToken):
+                anchor = self.get_token_value()
             tag = None
-            if self.test_token(TagToken):
-                tag = self.get_value()
-            if self.test_token(ScalarToken):
-                self.events.append(ScalarEvent(anchor, tag, self.get_value(), None, None))
-            elif self.test_token(FlowSequenceStartToken):
+            if self.check_token(TagToken):
+                tag = self.get_token_value()
+            if self.check_token(ScalarToken):
+                self.events.append(ScalarEvent(anchor, tag, False, self.get_token_value(), None, None))
+            elif self.check_token(FlowSequenceStartToken):
                 self.events.append(SequenceStartEvent(anchor, tag, None, None))
                 self.parse_sequence()
-            elif self.test_token(FlowMappingStartToken):
+            elif self.check_token(FlowMappingStartToken):
                 self.events.append(MappingStartEvent(anchor, tag, None, None))
                 self.parse_mapping()
             else:
@@ -253,66 +274,79 @@ class CanonicalParser:
 
     # sequence: SEQUENCE-START (node (ENTRY node)*)? ENTRY? SEQUENCE-END
     def parse_sequence(self):
-        self.consume_token(FlowSequenceStartToken)
-        if not self.test_token(FlowSequenceEndToken):
+        self.get_token(FlowSequenceStartToken)
+        if not self.check_token(FlowSequenceEndToken):
             self.parse_node()
-            while not self.test_token(FlowSequenceEndToken):
-                self.consume_token(FlowEntryToken)
-                if not self.test_token(FlowSequenceEndToken):
+            while not self.check_token(FlowSequenceEndToken):
+                self.get_token(FlowEntryToken)
+                if not self.check_token(FlowSequenceEndToken):
                     self.parse_node()
-        self.consume_token(FlowSequenceEndToken)
+        self.get_token(FlowSequenceEndToken)
         self.events.append(SequenceEndEvent(None, None))
 
     # mapping: MAPPING-START (map_entry (ENTRY map_entry)*)? ENTRY? MAPPING-END
     def parse_mapping(self):
-        self.consume_token(FlowMappingStartToken)
-        if not self.test_token(FlowMappingEndToken):
+        self.get_token(FlowMappingStartToken)
+        if not self.check_token(FlowMappingEndToken):
             self.parse_map_entry()
-            while not self.test_token(FlowMappingEndToken):
-                self.consume_token(FlowEntryToken)
-                if not self.test_token(FlowMappingEndToken):
+            while not self.check_token(FlowMappingEndToken):
+                self.get_token(FlowEntryToken)
+                if not self.check_token(FlowMappingEndToken):
                     self.parse_map_entry()
-        self.consume_token(FlowMappingEndToken)
+        self.get_token(FlowMappingEndToken)
         self.events.append(MappingEndEvent(None, None))
 
     # map_entry: KEY node VALUE node
     def parse_map_entry(self):
-        self.consume_token(KeyToken)
+        self.get_token(KeyToken)
         self.parse_node()
-        self.consume_token(ValueToken)
+        self.get_token(ValueToken)
         self.parse_node()
-
-    def test_token(self, *choices):
-        for choice in choices:
-            if isinstance(self.tokens[self.index], choice):
-                return True
-        return False
-
-    def consume_token(self, cls):
-        if not isinstance(self.tokens[self.index], cls):
-            raise Error("unexpected token "+repr(self.tokens[self.index]))
-        self.index += 1
-
-    def get_value(self):
-        value = self.tokens[self.index].value
-        self.index += 1
-        return value
 
     def parse(self):
-        self.tokens = self.scanner.scan()
-        self.index = 0
         self.parse_stream()
-        return self.events
 
-    def get(self):
+    def get_event(self):
         return self.events.pop(0)
 
-    def check(self, *choices):
-        for choice in choices:
-            if isinstance(self.events[0], choice):
+    def check_event(self, *choices):
+        if self.events:
+            if not choices:
                 return True
+            for choice in choices:
+                if isinstance(self.events[0], choice):
+                    return True
         return False
 
-    def peek(self):
+    def peek_event(self):
         return self.events[0]
+
+class CanonicalLoader(CanonicalScanner, CanonicalParser, Composer, Constructor, Detector):
+
+    def __init__(self, stream):
+        if hasattr(stream, 'read'):
+            stream = stream.read()
+        CanonicalScanner.__init__(self, stream)
+        CanonicalParser.__init__(self)
+        Composer.__init__(self)
+        Constructor.__init__(self)
+        Detector.__init__(self)
+
+def canonical_scan(stream):
+    return scan(stream, Loader=CanonicalLoader)
+
+def canonical_parse(stream):
+    return parse(stream, Loader=CanonicalLoader)
+
+def canonical_compose(stream):
+    return compose(stream, Loader=CanonicalLoader)
+
+def canonical_compose_all(stream):
+    return compose_all(stream, Loader=CanonicalLoader)
+
+def canonical_load(stream):
+    return load(stream, Loader=CanonicalLoader)
+
+def canonical_load_all(stream):
+    return load_all(stream, Loader=CanonicalLoader)
 

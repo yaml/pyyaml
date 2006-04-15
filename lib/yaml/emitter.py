@@ -11,13 +11,16 @@ __all__ = ['Emitter', 'EmitterError']
 from error import YAMLError
 from events import *
 
+import re
+
 class EmitterError(YAMLError):
     pass
 
 class ScalarAnalysis:
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
-            allow_single_quoted, allow_double_quoted, allow_block):
+            allow_single_quoted, allow_double_quoted,
+            allow_block):
         self.scalar = scalar
         self.empty = empty
         self.multiline = multiline
@@ -34,12 +37,13 @@ class Emitter:
         u'tag:yaml.org,2002:' : u'!!',
     }
 
-    def __init__(self, writer):
+    def __init__(self, stream, canonical=None, indent=None, width=None,
+            allow_unicode=None, line_break=None):
 
-        # The writer should have the methods `write` and possibly `flush`.
-        self.writer = writer
+        # The stream should have the methods `write` and possibly `flush`.
+        self.stream = stream
 
-        # Encoding is provided by STREAM-START.
+        # Encoding can be overriden by STREAM-START.
         self.encoding = None
 
         # Emitter is a state machine with a stack of states to handle nested
@@ -75,18 +79,28 @@ class Emitter:
         self.indention = True
 
         # Formatting details.
-        self.canonical = False
-        self.allow_unicode = False
-        self.best_line_break = u'\n'
+        self.canonical = canonical
+        self.allow_unicode = allow_unicode
         self.best_indent = 2
+        if indent and 1 < indent < 10:
+            self.best_indent = indent
         self.best_width = 80
+        if width and width > self.best_indent*2:
+            self.best_width = width
+        self.best_line_break = u'\n'
+        if line_break in [u'\r', u'\n', u'\r\n']:
+            self.best_line_break = line_break
+
+        # Tag prefixes.
         self.tag_prefixes = None
 
-        # Analyses cache.
-        self.anchor_text = None
-        self.tag_text = None
-        self.scalar_analysis = None
-        self.scalar_style = None
+        # Prepared anchor and tag.
+        self.prepared_anchor = None
+        self.prepared_tag = None
+
+        # Scalar analysis and style.
+        self.analysis = None
+        self.style = None
 
     def emit(self, event):
         self.events.append(event)
@@ -139,15 +153,8 @@ class Emitter:
 
     def expect_stream_start(self):
         if isinstance(self.event, StreamStartEvent):
-            self.encoding = self.event.encoding
-            self.canonical = self.event.canonical
-            self.allow_unicode = self.event.allow_unicode
-            if self.event.indent and self.event.indent > 1:
-                self.best_indent = self.event.indent
-            if self.event.width and self.event.width > self.best_indent:
-                self.best_width = self.event.width
-            if self.event.line_break in [u'\r', u'\n', u'\r\n']:
-                self.best_line_break = self.event.line_break
+            if self.event.encoding:
+                self.encoding = self.event.encoding
             self.write_stream_start()
             self.state = self.expect_first_document_start
         else:
@@ -165,7 +172,7 @@ class Emitter:
     def expect_document_start(self, first=False):
         if isinstance(self.event, DocumentStartEvent):
             if self.event.version:
-                version_text = self.analyze_version(self.event.version)
+                version_text = self.prepare_version(self.event.version)
                 self.write_version_directive(version_text)
             self.tag_prefixes = self.DEFAULT_TAG_PREFIXES.copy()
             if self.event.tags:
@@ -174,8 +181,8 @@ class Emitter:
                 for handle in handles:
                     prefix = self.event.tags[handle]
                     self.tag_prefixes[prefix] = handle
-                    handle_text = self.analyze_tag_handle(handle)
-                    prefix_text = self.analyze_tag_prefix(prefix)
+                    handle_text = self.prepare_tag_handle(handle)
+                    prefix_text = self.prepare_tag_prefix(prefix)
                     self.write_tag_directive(handle_text, prefix_text)
             implicit = (first and not self.event.explicit and not self.canonical
                     and not self.event.version and not self.event.tags
@@ -199,6 +206,7 @@ class Emitter:
             if self.event.explicit:
                 self.write_indicator(u'...', True)
                 self.write_indent()
+            self.flush_stream()
             self.state = self.expect_document_start
         else:
             raise EmitterError("expected DocumentEndEvent, but got %s"
@@ -418,94 +426,106 @@ class Emitter:
     def check_simple_key(self):
         length = 0
         if isinstance(self.event, NodeEvent) and self.event.anchor is not None:
-            if self.anchor_text is None:
-                self.anchor_text = self.analyze_anchor(self.event.anchor)
-            length += len(self.anchor_text)
+            if self.prepared_anchor is None:
+                self.prepared_anchor = self.prepare_anchor(self.event.anchor)
+            length += len(self.prepared_anchor)
         if isinstance(self.event, (ScalarEvent, CollectionStartEvent))  \
                 and self.event.tag is not None:
-            if self.tag_text is None:
-                self.tag_text = self.analyze_tag(self.event.tag)
-            length += len(self.tag_text)
+            if self.prepared_tag is None:
+                self.prepared_tag = self.prepare_tag(self.event.tag)
+            length += len(self.prepared_tag)
         if isinstance(self.event, ScalarEvent):
-            if self.scalar_analysis is None:
-                self.scalar_analysis = self.analyze_scalar(self.event.value)
-            length += len(self.scalar_analysis.scalar)
+            if self.analysis is None:
+                self.analysis = self.analyze_scalar(self.event.value)
+            length += len(self.analysis.scalar)
         return (length < 128 and (isinstance(self.event, AliasEvent)
-            or (isinstance(self.event, ScalarEvent) and not self.scalar_analysis.multiline)
+            or (isinstance(self.event, ScalarEvent)
+                    and not self.analysis.empty and not self.analysis.multiline)
             or self.check_empty_sequence() or self.check_empty_mapping()))
 
     # Anchor, Tag, and Scalar processors.
 
     def process_anchor(self, indicator):
         if self.event.anchor is None:
+            self.prepared_anchor = None
             return
-        if self.anchor_text is None:
-            self.anchor_text = self.analyze_anchor(self.event.anchor)
-        if self.anchor_text:
-            self.write_indicator(indicator+self.anchor_text, True)
-        self.anchor_text = None
+        if self.prepared_anchor is None:
+            self.prepared_anchor = self.prepare_anchor(self.event.anchor)
+        if self.prepared_anchor:
+            self.write_indicator(indicator+self.prepared_anchor, True)
+        self.prepared_anchor = None
 
     def process_tag(self):
-        if self.event.tag is None:
+        tag = self.event.tag
+        if isinstance(self.event, ScalarEvent):
+            if self.style is None:
+                self.style = self.choose_scalar_style()
+            if self.style == '':
+                self.prepared_tag = None
+                return
+            if self.event.implicit and not tag:
+                tag = u'!'
+                self.prepared_tag = None
+        if not tag:
+            self.prepared_tag = None
             return
-        if isinstance(self.event, ScalarEvent) and self.best_scalar_style() == '':
-            return
-        if self.tag_text is None:
-            self.tag_text = self.analyze_tag(self.event.tag)
-        if self.tag_text:
-            self.write_indicator(self.tag_text, True)
-        self.tag_text = None
+        if self.prepared_tag is None:
+            self.prepared_tag = self.prepare_tag(tag)
+        if self.prepared_tag:
+            self.write_indicator(self.prepared_tag, True)
+        self.prepared_tag = None
 
-    def best_scalar_style(self):
-        if self.scalar_analysis is None:
-            self.scalar_analysis = self.analyze_scalar(self.event.value)
-        if self.canonical:
+    def choose_scalar_style(self):
+        if self.analysis is None:
+            self.analysis = self.analyze_scalar(self.event.value)
+        if self.event.style == '"' or self.canonical:
             return '"'
-        if (self.event.implicit and not self.event.style
-                and ((self.flow_level and self.scalar_analysis.allow_flow_plain)
-                    or (not self.flow_level and self.scalar_analysis.allow_block_plain))
-                and (len(self.scalar_analysis.scalar) > 0
-                    or (not self.flow_level and not self.simple_key_context))):
-            return ''
-        elif self.event.style == '\'' and self.scalar_analysis.allow_single_quoted:
-            return '\''
-        elif self.event.style in ['|', '>'] and not self.flow_level and self.scalar_analysis.allow_block:
-            return self.event.style
-        else:
-            return '"'
-        return style
+        if not self.event.style and self.event.implicit:
+            if (not (self.simple_key_context and
+                    (self.analysis.empty or self.analysis.multiline))
+                and (self.flow_level and self.analysis.allow_flow_plain
+                    or (not self.flow_level and self.analysis.allow_block_plain))):
+                return ''
+        if self.event.style and self.event.style in '|>':
+            if not self.flow_level and self.analysis.allow_block:
+                return self.event.style
+        if not self.event.style or self.event.style == '\'':
+            if (self.analysis.allow_single_quoted and
+                    not (self.simple_key_context and self.analysis.multiline)):
+                return '\''
+        return '"'
 
     def process_scalar(self):
-        if self.scalar_analysis is None:
-            self.scalar_analysis = self.analyze_scalar(self.event.value)
-        style = self.best_scalar_style()
-        if self.scalar_analysis.multiline and not self.simple_key_context   \
-                and style not in ['|', '>']:
-            self.write_indent()
-        if style == '"':
-            self.write_double_quoted(self.scalar_analysis.scalar,
-                    split=(not self.simple_key_context))
-        elif style == '\'':
-            self.write_single_quoted(self.scalar_analysis.scalar,
-                    split=(not self.simple_key_context))
-        elif style == '>':
-            self.write_folded(self.scalar_analysis.scalar)
-        elif style == '|':
-            self.write_literal(self.scalar_analysis.scalar)
+        if self.analysis is None:
+            self.analysis = self.analyze_scalar(self.event.value)
+        if self.style is None:
+            self.style = self.choose_scalar_style()
+        split = (not self.simple_key_context)
+        #if self.analysis.multiline and split    \
+        #        and (not self.style or self.style in '\'\"'):
+        #    self.write_indent()
+        if self.style == '"':
+            self.write_double_quoted(self.analysis.scalar, split)
+        elif self.style == '\'':
+            self.write_single_quoted(self.analysis.scalar, split)
+        elif self.style == '>':
+            self.write_folded(self.analysis.scalar)
+        elif self.style == '|':
+            self.write_literal(self.analysis.scalar)
         else:
-            self.write_plain(self.scalar_analysis.scalar,
-                    split=(not self.simple_key_context))
-        self.scalar_analysis = None
+            self.write_plain(self.analysis.scalar, split)
+        self.analysis = None
+        self.style = None
 
     # Analyzers.
 
-    def analyze_version(self, version):
+    def prepare_version(self, version):
         major, minor = version
         if major != 1:
             raise EmitterError("unsupported YAML version: %d.%d" % (major, minor))
         return u'%d.%d' % (major, minor)
 
-    def analyze_tag_handle(self, handle):
+    def prepare_tag_handle(self, handle):
         if not handle:
             raise EmitterError("tag handle must not be empty")
         if handle[0] != u'!' or handle[-1] != u'!':
@@ -518,7 +538,7 @@ class Emitter:
                         % (ch.encode('utf-8'), handle.encode('utf-8')))
         return handle
 
-    def analyze_tag_prefix(self, prefix):
+    def prepare_tag_prefix(self, prefix):
         if not prefix:
             raise EmitterError("tag prefix must not be empty")
         chunks = []
@@ -541,9 +561,11 @@ class Emitter:
             chunks.append(prefix[start:end])
         return u''.join(chunks)
 
-    def analyze_tag(self, tag):
+    def prepare_tag(self, tag):
         if not tag:
             raise EmitterError("tag must not be empty")
+        if tag == u'!':
+            return tag
         handle = None
         suffix = tag
         for prefix in self.tag_prefixes:
@@ -574,7 +596,7 @@ class Emitter:
         else:
             return u'!<%s>' % suffix_text
 
-    def analyze_anchor(self, anchor):
+    def prepare_anchor(self, anchor):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
@@ -584,143 +606,221 @@ class Emitter:
                         % (ch.encode('utf-8'), text.encode('utf-8')))
         return anchor
 
-    def analyze_scalar(self, scalar):   # It begs for refactoring.
+    def analyze_scalar(self, scalar):
+
+        # Empty scalar is a special case.
         if not scalar:
             return ScalarAnalysis(scalar=scalar, empty=True, multiline=False,
                     allow_flow_plain=False, allow_block_plain=True,
                     allow_single_quoted=True, allow_double_quoted=True,
                     allow_block=False)
-        contains_block_indicator = False
-        contains_flow_indicator = False
-        contains_line_breaks = False
-        contains_unicode_characters = False
-        contains_special_characters = False
-        contains_inline_spaces = False          # non-space space+ non-space
-        contains_inline_breaks = False          # non-space break+ non-space
-        contains_leading_spaces = False         # ^ space+ (non-space | $)
-        contains_leading_breaks = False         # ^ break+ (non-space | $)
-        contains_trailing_spaces = False        # non-space space+ $
-        contains_trailing_breaks = False        # non-space break+ $
-        contains_inline_breaks_spaces = False   # non-space break+ space+ non-space
-        contains_mixed_breaks_spaces = False    # anything else
+
+        # Indicators and special characters.
+        block_indicators = False
+        flow_indicators = False
+        line_breaks = False
+        special_characters = False
+
+        # Whitespaces.
+        inline_spaces = False          # non-space space+ non-space
+        inline_breaks = False          # non-space break+ non-space
+        leading_spaces = False         # ^ space+ (non-space | $)
+        leading_breaks = False         # ^ break+ (non-space | $)
+        trailing_spaces = False        # (^ | non-space) space+ $
+        trailing_breaks = False        # (^ | non-space) break+ $
+        inline_breaks_spaces = False   # non-space break+ space+ non-space
+        mixed_breaks_spaces = False    # anything else
+
+        # Check document indicators.
         if scalar.startswith(u'---') or scalar.startswith(u'...'):
-            contains_block_indicator = True
-            contains_flow_indicator = True
-        first = True
-        last = (len(scalar) == 1)
-        preceeded_by_space = False
-        followed_by_space = (len(scalar) > 1 and
+            block_indicators = True
+            flow_indicators = True
+
+        # First character or preceded by a whitespace.
+        preceeded_by_space = True
+
+        # Last character or followed by a whitespace.
+        followed_by_space = (len(scalar) == 1 or
                 scalar[1] in u'\0 \t\r\n\x85\u2028\u2029')
-        spaces = breaks = mixed = leading = False
+
+        # The current series of whitespaces contain plain spaces.
+        spaces = False
+
+        # The current series of whitespaces contain line breaks.
+        breaks = False
+
+        # The current series of whitespaces contain a space followed by a
+        # break.
+        mixed = False
+
+        # The current series of whitespaces start at the beginning of the
+        # scalar.
+        leading = False
+
         index = 0
         while index < len(scalar):
             ch = scalar[index]
-            if first:
+
+            # Check for indicators.
+
+            if index == 0:
+                # Leading indicators are special characters.
                 if ch in u'#,[]{}#&*!|>\'\"%@`': 
-                    contains_flow_indicator = True
-                    contains_block_indicator = True
+                    flow_indicators = True
+                    block_indicators = True
                 if ch in u'?:':
-                    contains_flow_indicator = True
-                    if followed_by_space or last:
-                        contains_block_indicator = True
-                if ch == u'-' and (followed_by_space or last):
-                    contains_flow_indicator = True
-                    contains_block_indicator = True
+                    flow_indicators = True
+                    if followed_by_space:
+                        block_indicators = True
+                if ch == u'-' and followed_by_space:
+                    flow_indicators = True
+                    block_indicators = True
             else:
+                # Some indicators cannot appear within a scalar as well.
                 if ch in u',?[]{}':
-                    contains_flow_indicator = True
+                    flow_indicators = True
                 if ch == u':':
-                    contains_flow_indicator = True
-                    if followed_by_space or last:
-                        contains_block_indicator = True
-                if ch == u'#' and (preceeded_by_space or first):
-                    contains_flow_indicator = True
-                    contains_block_indicator = True
+                    flow_indicators = True
+                    if followed_by_space:
+                        block_indicators = True
+                if ch == u'#' and preceeded_by_space:
+                    flow_indicators = True
+                    block_indicators = True
+
+            # Check for line breaks, special, and unicode characters.
+
             if ch in u'\n\x85\u2028\u2029':
-                contains_line_breaks = True
+                line_breaks = True
             if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
-                if ch < u'\x80':
-                    contains_special_characters = True
+                if ch < u'\x80' or ch == u'\uFEFF': # '\uFEFF' is BOM.
+                    special_characters = True
                 else:
-                    contains_unicode_characters = True
-            if ch == u' ':
-                if not spaces and not breaks:
-                    leading = first
-                spaces = True
-            elif ch in u'\n\x85\u2028\u2029':
-                if not spaces and not breaks:
-                    leading = first
-                breaks = True
-                if spaces:
-                    mixed = True
-            if ch not in u' \n\x85\u2028\u2029':
+                    unicode_characters = True
+                    if not self.allow_unicode:
+                        special_characters = True
+
+            # Spaces, line breaks, and how they are mixed. State machine.
+
+            # Start or continue series of whitespaces.
+            if ch in u' \n\x85\u2028\u2029':
+                if spaces and breaks:
+                    if ch != u' ':      # break+ (space+ break+)    => mixed
+                        mixed = True
+                elif spaces:
+                    if ch != u' ':      # (space+ break+)   => mixed
+                        breaks = True
+                        mixed = True
+                elif breaks:
+                    if ch == u' ':      # break+ space+
+                        spaces = True
+                else:
+                    leading = (index == 0)
+                    if ch == u' ':      # space+
+                        spaces = True
+                    else:               # break+
+                        breaks = True
+
+            # Series of whitespaces ended with a non-space.
+            elif spaces or breaks:
                 if leading:
                     if spaces and breaks:
-                        contains_mixed_breaks_spaces = True
+                        mixed_breaks_spaces = True
                     elif spaces:
-                        contains_leading_spaces = True
+                        leading_spaces = True
                     elif breaks:
-                        contains_leading_breaks = True
+                        leading_breaks = True
                 else:
                     if mixed:
-                        contains_mixed_break_spaces = True
+                        mixed_breaks_spaces = True
                     elif spaces and breaks:
-                        contains_inline_breaks_spaces = True
+                        inline_breaks_spaces = True
                     elif spaces:
-                        contains_inline_spaces = True
+                        inline_spaces = True
                     elif breaks:
-                        contains_inline_breaks = True
+                        inline_breaks = True
                 spaces = breaks = mixed = leading = False
-            elif last:
+
+            # Series of whitespaces reach the end.
+            if (spaces or breaks) and (index == len(scalar)-1):
                 if spaces and breaks:
-                    contains_mixed_break_spaces = True
+                    mixed_breaks_spaces = True
                 elif spaces:
+                    trailing_spaces = True
                     if leading:
-                        contains_leading_spaces = True
-                    else:
-                        contains_trailing_spaces = True
+                        leading_spaces = True
                 elif breaks:
+                    trailing_breaks = True
                     if leading:
-                        contains_leading_breaks = True
-                    else:
-                        contains_trailing_breaks = True
+                        leading_breaks = True
+                spaces = breaks = mixed = leading = False
+
+            # Prepare for the next character.
             index += 1
-            first = False
-            last = (index+1 == len(scalar))
             preceeded_by_space = (ch in u'\0 \t\r\n\x85\u2028\u2029')
-            followed_by_space = (index+1 < len(scalar) and
+            followed_by_space = (index+1 >= len(scalar) or
                     scalar[index+1] in u'\0 \t\r\n\x85\u2028\u2029')
-        if contains_unicode_characters and not self.allow_unicode:
-            contains_special_characters = True
-        allow_flow_plain = not (contains_flow_indicator or contains_special_characters
-            or contains_leading_spaces or contains_leading_breaks
-            or contains_trailing_spaces or contains_trailing_breaks
-            or contains_inline_breaks_spaces or contains_mixed_breaks_spaces)
-        allow_block_plain = not (contains_block_indicator or contains_special_characters
-            or contains_leading_spaces or contains_leading_breaks
-            or contains_trailing_spaces or contains_trailing_breaks
-            or contains_inline_breaks_spaces or contains_mixed_breaks_spaces)
-        allow_single_quoted = not (contains_special_characters
-            or contains_inline_breaks_spaces or contains_mixed_breaks_spaces)
+
+        # Let's decide what styles are allowed.
+        allow_flow_plain = True
+        allow_block_plain = True
+        allow_single_quoted = True
         allow_double_quoted = True
-        allow_block = not (contains_special_characters
-            or contains_leading_spaces or contains_leading_breaks
-            or contains_trailing_spaces or contains_mixed_breaks_spaces)
-        return ScalarAnalysis(scalar=scalar, empty=False, multiline=contains_line_breaks,
-                allow_flow_plain=allow_flow_plain, allow_block_plain=allow_block_plain,
-                allow_single_quoted=allow_single_quoted, allow_double_quoted=allow_double_quoted,
+        allow_block = True
+
+        # Leading and trailing whitespace are bad for plain scalars. We also
+        # do not want to mess with leading whitespaces for block scalars.
+        if leading_spaces or leading_breaks or trailing_spaces:
+            allow_flow_plain = allow_block_plain = allow_block = False
+
+        # Trailing breaks are fine for block scalars, but unacceptable for
+        # plain scalars.
+        if trailing_breaks:
+            allow_flow_plain = allow_block_plain = False
+
+        # The combination of (space+ break+) is only acceptable for block
+        # scalars.
+        if inline_breaks_spaces:
+            allow_flow_plain = allow_block_plain = allow_single_quoted = False
+
+        # Mixed spaces and breaks, as well as special character are only
+        # allowed for double quoted scalars.
+        if mixed_breaks_spaces or special_characters:
+            allow_flow_plain = allow_block_plain =  \
+            allow_single_quoted = allow_block = False
+
+        # We don't emit multiline plain scalars.
+        if line_breaks:
+            allow_flow_plain = allow_block_plain = False
+
+        # Flow indicators are forbidden for flow plain scalars.
+        if flow_indicators:
+            allow_flow_plain = False
+
+        # Block indicators are forbidden for block plain scalars.
+        if block_indicators:
+            allow_block_plain = False
+
+        return ScalarAnalysis(scalar=scalar,
+                empty=False, multiline=line_breaks,
+                allow_flow_plain=allow_flow_plain,
+                allow_block_plain=allow_block_plain,
+                allow_single_quoted=allow_single_quoted,
+                allow_double_quoted=allow_double_quoted,
                 allow_block=allow_block)
 
     # Writers.
 
+    def flush_stream(self):
+        if hasattr(self.stream, 'flush'):
+            self.stream.flush()
+
     def write_stream_start(self):
         # Write BOM if needed.
         if self.encoding and self.encoding.startswith('utf-16'):
-            self.writer.write(u'\xFF\xFE'.encode(self.encoding))
+            self.stream.write(u'\xFF\xFE'.encode(self.encoding))
 
     def write_stream_end(self):
-        if hasattr(self.writer, 'flush'):
-            self.writer.flush()
+        self.flush_stream()
 
     def write_indicator(self, indicator, need_whitespace,
             whitespace=False, indention=False):
@@ -733,7 +833,7 @@ class Emitter:
         self.column += len(data)
         if self.encoding:
             data = data.encode(self.encoding)
-        self.writer.write(data)
+        self.stream.write(data)
 
     def write_indent(self):
         indent = self.indent or 0
@@ -746,7 +846,7 @@ class Emitter:
             self.column = indent
             if self.encoding:
                 data = data.encode(self.encoding)
-            self.writer.write(data)
+            self.stream.write(data)
 
     def write_line_break(self, data=None):
         if data is None:
@@ -757,23 +857,23 @@ class Emitter:
         self.column = 0
         if self.encoding:
             data = data.encode(self.encoding)
-        self.writer.write(data)
+        self.stream.write(data)
 
     def write_version_directive(self, version_text):
         data = u'%%YAML %s' % version_text
         if self.encoding:
             data = data.encode(self.encoding)
-        self.writer.write(data)
+        self.stream.write(data)
         self.write_line_break()
 
     def write_tag_directive(self, handle_text, prefix_text):
         data = u'%%TAG %s %s' % (handle_text, prefix_text)
         if self.encoding:
             data = data.encode(self.encoding)
-        self.writer.write(data)
+        self.stream.write(data)
         self.write_line_break()
 
-    # Scalar writers.
+    # Scalar streams.
 
     def write_single_quoted(self, text, split=True):
         self.write_indicator(u'\'', True)
@@ -794,7 +894,7 @@ class Emitter:
                         self.column += len(data)
                         if self.encoding:
                             data = data.encode(self.encoding)
-                        self.writer.write(data)
+                        self.stream.write(data)
                     start = end
             elif breaks:
                 if ch is None or ch not in u'\n\x85\u2028\u2029':
@@ -814,14 +914,14 @@ class Emitter:
                         self.column += len(data)
                         if self.encoding:
                             data = data.encode(self.encoding)
-                        self.writer.write(data)
+                        self.stream.write(data)
                         start = end
                     if ch == u'\'':
                         data = u'\'\''
                         self.column += 2
                         if self.encoding:
                             data = data.encode(self.encoding)
-                        self.writer.write(data)
+                        self.stream.write(data)
                         start = end + 1
             if ch is not None:
                 spaces = (ch == u' ')
@@ -863,7 +963,7 @@ class Emitter:
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
                     start = end
                 if ch is not None:
                     if ch in self.ESCAPE_REPLACEMENTS:
@@ -877,7 +977,7 @@ class Emitter:
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
                     start = end+1
             if 0 < end < len(text)-1 and (ch == u' ' or start >= end)   \
                     and self.column+(end-start) > self.best_width and split:
@@ -887,7 +987,7 @@ class Emitter:
                 self.column += len(data)
                 if self.encoding:
                     data = data.encode(self.encoding)
-                self.writer.write(data)
+                self.stream.write(data)
                 self.write_indent()
                 self.whitespace = False
                 self.indention = False
@@ -896,7 +996,7 @@ class Emitter:
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
             end += 1
         self.write_indicator(u'"', False)
 
@@ -947,14 +1047,14 @@ class Emitter:
                         self.column += len(data)
                         if self.encoding:
                             data = data.encode(self.encoding)
-                        self.writer.write(data)
+                        self.stream.write(data)
                     start = end
             else:
                 if ch is None or ch in u' \n\x85\u2028\u2029':
                     data = text[start:end]
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
                     if ch is None:
                         self.write_line_break()
                     start = end
@@ -988,7 +1088,7 @@ class Emitter:
                     data = text[start:end]
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
                     if ch is None:
                         self.write_line_break()
                     start = end
@@ -1004,7 +1104,7 @@ class Emitter:
             self.column += len(data)
             if self.encoding:
                 data = data.encode(self.encoding)
-            self.writer.write(data)
+            self.stream.write(data)
         self.writespace = False
         self.indention = False
         spaces = False
@@ -1025,7 +1125,7 @@ class Emitter:
                         self.column += len(data)
                         if self.encoding:
                             data = data.encode(self.encoding)
-                        self.writer.write(data)
+                        self.stream.write(data)
                     start = end
             elif breaks:
                 if ch not in u'\n\x85\u2028\u2029':
@@ -1046,7 +1146,7 @@ class Emitter:
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.writer.write(data)
+                    self.stream.write(data)
                     start = end
             if ch is not None:
                 spaces = (ch == u' ')

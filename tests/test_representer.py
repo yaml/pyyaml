@@ -12,9 +12,9 @@ except NameError:
 
 from yaml import *
 
-class MyConstructor(Constructor):
+class MyLoader(Loader):
     pass
-class MyRepresenter(Representer):
+class MyDumper(Dumper):
     pass
 
 class MyTestClass1(object):
@@ -38,7 +38,8 @@ def represent1(representer, native):
 
 class MyTestClass2(MyTestClass1, YAMLObject):
 
-    yaml_constructor = MyConstructor
+    yaml_loader = MyLoader
+    yaml_dumper = MyDumper
     yaml_tag = "!tag2"
 
     def from_yaml(cls, constructor, node):
@@ -67,36 +68,52 @@ class MyTestClass3(MyTestClass2):
         return representer.represent_mapping(cls.yaml_tag, native.__dict__)
     to_yaml = classmethod(to_yaml)
 
-MyConstructor.add_constructor("!tag1", construct1)
-MyRepresenter.add_representer(MyTestClass1, represent1)
+MyLoader.add_constructor("!tag1", construct1)
+MyDumper.add_representer(MyTestClass1, represent1)
+
+class YAMLObject1(YAMLObject):
+    yaml_loader = MyLoader
+    yaml_dumper = MyDumper
+    yaml_tag = '!foo'
+    yaml_flow_style = True
+
+    def __init__(self, my_parameter=None, my_another_parameter=None):
+        self.my_parameter = my_parameter
+        self.my_another_parameter = my_another_parameter
+
+    def __eq__(self, other):
+        if isinstance(other, YAMLObject1):
+            return self.__class__, self.__dict__ == other.__class__, other.__dict__
+        else:
+            return False
 
 class TestTypeRepresenter(test_appliance.TestAppliance):
 
     def _testTypes(self, test_name, data_filename, code_filename):
-        natives1 = eval(file(code_filename, 'rb').read())
-        natives2 = None
+        data1 = eval(file(code_filename, 'rb').read())
+        data2 = None
         output = None
         try:
-            output = dump(natives1, Representer=MyRepresenter)
-            natives2 = load(output, Constructor=MyConstructor)
+            output = dump(data1, Dumper=MyDumper)
+            data2 = load(output, Loader=MyLoader)
             try:
-                self.failUnlessEqual(natives1, natives2)
+                self.failUnlessEqual(data1, data2)
             except AssertionError:
-                if isinstance(natives1, dict):
-                    natives1 = natives1.items()
-                    natives1.sort()
-                    natives1 = repr(natives1)
-                    natives2 = natives2.items()
-                    natives2.sort()
-                    natives2 = repr(natives2)
-                if natives1 != natives2:
+                if isinstance(data1, dict):
+                    data1 = data1.items()
+                    data1.sort()
+                    data1 = repr(data1)
+                    data2 = data2.items()
+                    data2.sort()
+                    data2 = repr(data2)
+                if data1 != data2:
                     raise
         except:
             print
             print "OUTPUT:"
             print output
-            print "NATIVES1:", natives1
-            print "NATIVES2:", natives2
+            print "NATIVES1:", data1
+            print "NATIVES2:", data2
             raise
 
 TestTypeRepresenter.add_tests('testTypes', '.data', '.code')

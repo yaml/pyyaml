@@ -1,12 +1,7 @@
 
 import test_appliance
 
-from yaml.reader import Reader
-from yaml.scanner import Scanner
-from yaml.parser import *
-from yaml.composer import *
-from yaml.resolver import *
-from yaml.nodes import *
+from yaml import *
 
 class TestDetector(test_appliance.TestAppliance):
 
@@ -15,8 +10,7 @@ class TestDetector(test_appliance.TestAppliance):
         correct_tag = None
         try:
             correct_tag = file(detect_filename, 'rb').read().strip()
-            resolver = Resolver(Composer(Parser(Scanner(Reader(file(data_filename, 'rb'))))))
-            node = list(iter(resolver))[0]
+            node = compose(file(data_filename, 'rb'))
             self.failUnless(isinstance(node, SequenceNode))
             for scalar in node.value:
                 self.failUnless(isinstance(scalar, ScalarNode))
@@ -32,5 +26,4 @@ class TestDetector(test_appliance.TestAppliance):
             raise
 
 TestDetector.add_tests('testDetector', '.data', '.detect')
-
 

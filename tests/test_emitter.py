@@ -16,15 +16,11 @@ class TestEmitter(test_appliance.TestAppliance):
         self._testEmitter(test_name, canonical_filename, True)
 
     def _testEmitter(self, test_name, filename, canonical=None):
-        events = list(iter(Parser(Scanner(Reader(file(filename, 'rb'))))))
-        if canonical is not None:
-            events[0].canonical = canonical
-        #self._dump(filename, events)
-        writer = StringIO.StringIO()
-        emitter = Emitter(writer)
-        for event in events:
-            emitter.emit(event)
-        data = writer.getvalue()
+        events = list(parse(file(filename, 'rb')))
+        #self._dump(filename, events, canonical)
+        stream = StringIO.StringIO()
+        emit(events, stream, canonical=canonical)
+        data = stream.getvalue()
         new_events = list(parse(data))
         for event, new_event in zip(events, new_events):
             self.failUnlessEqual(event.__class__, new_event.__class__)
@@ -38,22 +34,19 @@ class TestEmitter(test_appliance.TestAppliance):
                     self.failUnlessEqual(event.tag, new_event.tag)
                 self.failUnlessEqual(event.value, new_event.value)
 
-    def _dump(self, filename, events):
-        writer = sys.stdout
-        emitter = Emitter(writer)
+    def _dump(self, filename, events, canonical):
         print "="*30
         print "ORIGINAL DOCUMENT:"
         print file(filename, 'rb').read()
         print '-'*30
         print "EMITTED DOCUMENT:"
-        for event in events:
-            emitter.emit(event)
+        emit(events, sys.stdout, canonical=canonical)
         
 TestEmitter.add_tests('testEmitterOnData', '.canonical', '.data')
-#TestEmitter.add_tests('testEmitterOnCanonicalNormally', '.canonical')
-#TestEmitter.add_tests('testEmitterOnCanonicalCanonically', '.canonical')
+TestEmitter.add_tests('testEmitterOnCanonicalNormally', '.canonical')
+TestEmitter.add_tests('testEmitterOnCanonicalCanonically', '.canonical')
 
-class EventsConstructor(Constructor):
+class EventsLoader(Loader):
 
     def construct_event(self, node):
         if isinstance(node, ScalarNode):
@@ -66,22 +59,21 @@ class EventsConstructor(Constructor):
         if class_name in ['ScalarEvent', 'SequenceStartEvent', 'MappingStartEvent']:
             mapping.setdefault('tag', None)
         if class_name == 'ScalarEvent':
+            mapping.setdefault('implicit', False)
             mapping.setdefault('value', '')
         value = getattr(yaml, class_name)(**mapping)
         return value
 
-EventsConstructor.add_constructor(None, EventsConstructor.construct_event)
+EventsLoader.add_constructor(None, EventsLoader.construct_event)
 
 class TestEmitterEvents(test_appliance.TestAppliance):
 
     def _testEmitterEvents(self, test_name, events_filename):
-        events = list(load(file(events_filename, 'rb'), Constructor=EventsConstructor))
+        events = list(load(file(events_filename, 'rb'), Loader=EventsLoader))
         #self._dump(events_filename, events)
-        writer = StringIO.StringIO()
-        emitter = Emitter(writer)
-        for event in events:
-            emitter.emit(event)
-        data = writer.getvalue()
+        stream = StringIO.StringIO()
+        emit(events, stream)
+        data = stream.getvalue()
         new_events = list(parse(data))
         self.failUnlessEqual(len(events), len(new_events))
         for event, new_event in zip(events, new_events):
@@ -96,15 +88,12 @@ class TestEmitterEvents(test_appliance.TestAppliance):
                 self.failUnlessEqual(event.value, new_event.value)
 
     def _dump(self, events_filename, events):
-        writer = sys.stdout
-        emitter = Emitter(writer)
         print "="*30
         print "EVENTS:"
         print file(events_filename, 'rb').read()
         print '-'*30
         print "OUTPUT:"
-        for event in events:
-            emitter.emit(event)
+        emit(events, sys.stdout)
         
 TestEmitterEvents.add_tests('testEmitterEvents', '.events')
 

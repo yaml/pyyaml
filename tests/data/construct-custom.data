@@ -21,3 +21,6 @@
   =: 1
   'y': 2
   z: 3
+- !foo
+  my-parameter: foo
+  my-another-parameter: [1,2,3]

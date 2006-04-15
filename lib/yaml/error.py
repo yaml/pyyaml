@@ -48,20 +48,15 @@ class YAMLError(Exception):
 class MarkedYAMLError(YAMLError):
 
     def __init__(self, context=None, context_mark=None,
-            problem=None, problem_mark=None):
+            problem=None, problem_mark=None, note=None):
         self.context = context
         self.context_mark = context_mark
         self.problem = problem
         self.problem_mark = problem_mark
+        self.note = note
 
     def __str__(self):
         lines = []
-        #for (place, mark) in [(self.context, self.context_mark),
-        #                        (self.problem, self.problem_mark)]:
-        #    if place is not None:
-        #        lines.append(place)
-        #        if mark is not None:
-        #            lines.append(str(mark))
         if self.context is not None:
             lines.append(self.context)
         if self.context_mark is not None  \
@@ -74,7 +69,7 @@ class MarkedYAMLError(YAMLError):
             lines.append(self.problem)
         if self.problem_mark is not None:
             lines.append(str(self.problem_mark))
+        if self.note is not None:
+            lines.append(self.note)
         return '\n'.join(lines)
-
-
 

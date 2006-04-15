@@ -33,17 +33,10 @@ class CollectionEndEvent(Event):
 # Implementations.
 
 class StreamStartEvent(Event):
-    def __init__(self, start_mark=None, end_mark=None,
-            encoding=None, line_break=None, canonical=None,
-            indent=None, width=None, allow_unicode=None):
+    def __init__(self, start_mark=None, end_mark=None, encoding=None):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.encoding = encoding
-        self.line_break = line_break
-        self.canonical = canonical
-        self.indent = indent
-        self.width = width
-        self.allow_unicode = allow_unicode
 
 class StreamEndEvent(Event):
     pass
@@ -68,14 +61,14 @@ class AliasEvent(NodeEvent):
     pass
 
 class ScalarEvent(NodeEvent):
-    def __init__(self, anchor, tag, value, start_mark=None, end_mark=None,
-            implicit=None, style=None):
+    def __init__(self, anchor, tag, implicit, value,
+            start_mark=None, end_mark=None, style=None):
         self.anchor = anchor
         self.tag = tag
+        self.implicit = implicit
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
-        self.implicit = implicit
         self.style = style
 
 class SequenceStartEvent(CollectionStartEvent):

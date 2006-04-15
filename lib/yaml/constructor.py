@@ -4,6 +4,7 @@ __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
 
 from error import *
 from nodes import *
+from composer import *
 
 try:
     import datetime
@@ -21,46 +22,62 @@ import binascii, re
 class ConstructorError(MarkedYAMLError):
     pass
 
-class BaseConstructor:
+class BaseConstructor(Composer):
 
-    def __init__(self, resolver):
-        self.resolver = resolver
+    yaml_constructors = {}
+    yaml_multi_constructors = {}
+
+    def __init__(self):
         self.constructed_objects = {}
 
-    def check(self):
+    def check_data(self):
         # If there are more documents available?
-        return self.resolver.check()
+        return self.check_node()
 
-    def get(self):
+    def get_data(self):
         # Construct and return the next document.
-        if self.resolver.check():
-            return self.construct_document(self.resolver.get())
+        if self.check_node():
+            return self.construct_document(self.get_node())
 
     def __iter__(self):
         # Iterator protocol.
-        while self.resolver.check():
-            yield self.construct_document(self.resolver.get())
+        while self.check_node():
+            yield self.construct_document(self.get_node())
 
     def construct_document(self, node):
-        native = self.construct_object(node)
+        data = self.construct_object(node)
         self.constructed_objects = {}
-        return native
+        return data
 
     def construct_object(self, node):
         if node in self.constructed_objects:
             return self.constructed_objects[node]
+        constructor = None
         if node.tag in self.yaml_constructors:
-            native = self.yaml_constructors[node.tag](self, node)
-        elif None in self.yaml_constructors:
-            native = self.yaml_constructors[None](self, node)
-        elif isinstance(node, ScalarNode):
-            native = self.construct_scalar(node)
-        elif isinstance(node, SequenceNode):
-            native = self.construct_sequence(node)
-        elif isinstance(node, MappingNode):
-            native = self.construct_mapping(node)
-        self.constructed_objects[node] = native
-        return native
+            constructor = lambda node: self.yaml_constructors[node.tag](self, node)
+        else:
+            for tag_prefix in self.yaml_multi_constructors:
+                if node.tag.startswith(tag_prefix):
+                    tag_suffix = node.tag[len(tag_prefix):]
+                    constructor = lambda node:  \
+                            self.yaml_multi_constructors[tag_prefix](self, tag_suffix, node)
+                break
+            else:
+                if None in self.yaml_multi_constructors:
+                    constructor = lambda node:  \
+                            self.yaml_multi_constructors[None](self, node.tag, node)
+                elif None in self.yaml_constructors:
+                    constructor = lambda node:  \
+                            self.yaml_constructors[None](self, node)
+                elif isinstance(node, ScalarNode):
+                    constructor = self.construct_scalar
+                elif isinstance(node, SequenceNode):
+                    constructor = self.construct_sequence
+                elif isinstance(node, MappingNode):
+                    constructor = self.construct_mapping
+        data = constructor(node)
+        self.constructed_objects[node] = data
+        return data
 
     def construct_scalar(self, node):
         if not isinstance(node, ScalarNode):
@@ -152,7 +169,11 @@ class BaseConstructor:
         cls.yaml_constructors[tag] = constructor
     add_constructor = classmethod(add_constructor)
 
-    yaml_constructors = {}
+    def add_multi_constructor(cls, tag_prefix, multi_constructor):
+        if not 'yaml_multi_constructors' in cls.__dict__:
+            cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
+        cls.yaml_multi_constructors[tag_prefix] = multi_constructor
+    add_multi_constructor = classmethod(add_multi_constructor)
 
 class SafeConstructor(BaseConstructor):
 
@@ -326,6 +347,18 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_map(self, node):
         return self.construct_mapping(node)
+
+    def construct_yaml_object(self, node, cls):
+        mapping = self.construct_mapping(node)
+        state = {}
+        for key in mapping:
+            state[key.replace('-', '_')] = mapping[key]
+        data = cls.__new__(cls)
+        if hasattr(data, '__setstate__'):
+            data.__setstate__(mapping)
+        else:
+            data.__dict__.update(mapping)
+        return data
 
     def construct_undefined(self, node):
         raise ConstructorError(None, None,

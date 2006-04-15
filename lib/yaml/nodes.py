@@ -23,11 +23,10 @@ class Node:
 
 class ScalarNode(Node):
     id = 'scalar'
-    def __init__(self, tag, value, implicit,
+    def __init__(self, tag, value,
             start_mark=None, end_mark=None, style=None):
         self.tag = tag
         self.value = value
-        self.implicit = implicit
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.style = style
