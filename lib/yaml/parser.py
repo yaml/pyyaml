@@ -266,42 +266,48 @@ class Parser:
                 start_mark = end_mark = self.peek_token().start_mark
             event = None
             collection_events = None
+            implicit = (tag is None or tag == u'!')
             if indentless_sequence and self.check_token(BlockEntryToken):
                 end_mark = self.peek_token().end_mark
-                event = SequenceStartEvent(anchor, tag, start_mark, end_mark)
+                event = SequenceStartEvent(anchor, tag, implicit,
+                        start_mark, end_mark)
                 collection_events = self.parse_indentless_sequence()
             else:
                 if self.check_token(ScalarToken):
                     token = self.get_token()
                     end_mark = token.end_mark
-                    implicit = ((tag is None or tag == u'!') and token.implicit)
+                    if (token.plain and tag is None) or tag == u'!':
+                        implicit = (True, False)
+                    elif tag is None:
+                        implicit = (False, True)
+                    else:
+                        implicit = (False, False)
                     event = ScalarEvent(anchor, tag, implicit, token.value,
                             start_mark, end_mark, style=token.style)
                 elif self.check_token(FlowSequenceStartToken):
                     end_mark = self.peek_token().end_mark
-                    event = SequenceStartEvent(anchor, tag, start_mark, end_mark,
-                            flow_style=True)
+                    event = SequenceStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=True)
                     collection_events = self.parse_flow_sequence()
                 elif self.check_token(FlowMappingStartToken):
                     end_mark = self.peek_token().end_mark
-                    event = MappingStartEvent(anchor, tag, start_mark, end_mark,
-                            flow_style=True)
+                    event = MappingStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=True)
                     collection_events = self.parse_flow_mapping()
                 elif block and self.check_token(BlockSequenceStartToken):
                     end_mark = self.peek_token().start_mark
-                    event = SequenceStartEvent(anchor, tag, start_mark, end_mark,
-                            flow_style=False)
+                    event = SequenceStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=False)
                     collection_events = self.parse_block_sequence()
                 elif block and self.check_token(BlockMappingStartToken):
                     end_mark = self.peek_token().start_mark
-                    event = MappingStartEvent(anchor, tag, start_mark, end_mark,
-                            flow_style=False)
+                    event = MappingStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=False)
                     collection_events = self.parse_block_mapping()
                 elif anchor is not None or tag is not None:
                     # Empty scalars are allowed even if a tag or an anchor is
                     # specified.
-                    implicit = (tag is None or tag == u'!')
-                    event = ScalarEvent(anchor, tag, implicit, u'',
+                    event = ScalarEvent(anchor, tag, (implicit, False), u'',
                             start_mark, end_mark)
                 else:
                     if block:
@@ -396,7 +402,7 @@ class Parser:
         while not self.check_token(FlowSequenceEndToken):
             if self.check_token(KeyToken):
                 token = self.get_token()
-                yield MappingStartEvent(None, None, # u'!',
+                yield MappingStartEvent(None, None, True,
                         token.start_mark, token.end_mark,
                         flow_style=True)
                 if not self.check_token(ValueToken,
@@ -474,5 +480,5 @@ class Parser:
         yield MappingEndEvent(token.start_mark, token.end_mark)
 
     def process_empty_scalar(self, mark):
-        return ScalarEvent(None, None, True, u'', mark, mark)
+        return ScalarEvent(None, None, (True, False), u'', mark, mark)
 

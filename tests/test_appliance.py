@@ -262,7 +262,7 @@ class CanonicalParser:
             if self.check_token(TagToken):
                 tag = self.get_token_value()
             if self.check_token(ScalarToken):
-                self.events.append(ScalarEvent(anchor, tag, False, self.get_token_value(), None, None))
+                self.events.append(ScalarEvent(anchor, tag, (False, False), self.get_token_value(), None, None))
             elif self.check_token(FlowSequenceStartToken):
                 self.events.append(SequenceStartEvent(anchor, tag, None, None))
                 self.parse_sequence()
@@ -321,7 +321,7 @@ class CanonicalParser:
     def peek_event(self):
         return self.events[0]
 
-class CanonicalLoader(CanonicalScanner, CanonicalParser, Composer, Constructor, Detector):
+class CanonicalLoader(CanonicalScanner, CanonicalParser, Composer, Constructor, Resolver):
 
     def __init__(self, stream):
         if hasattr(stream, 'read'):
@@ -330,7 +330,7 @@ class CanonicalLoader(CanonicalScanner, CanonicalParser, Composer, Constructor, 
         CanonicalParser.__init__(self)
         Composer.__init__(self)
         Constructor.__init__(self)
-        Detector.__init__(self)
+        Resolver.__init__(self)
 
 def canonical_scan(stream):
     return scan(stream, Loader=CanonicalLoader)

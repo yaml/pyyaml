@@ -11,7 +11,7 @@ from emitter import *
 from serializer import *
 from representer import *
 
-from detector import *
+from resolver import *
 
 from tokens import *
 from events import *
@@ -196,24 +196,26 @@ def safe_dump(data, stream=None, **kwds):
     """
     return dump_all([data], stream, Dumper=SafeDumper, **kwds)
 
-def add_detector(tag, regexp, first=None, Loader=Loader, Dumper=Dumper):
+def add_implicit_detector(tag, regexp, first=None,
+        Loader=Loader, Dumper=Dumper):
     """
     Add an implicit scalar detector.
     If an implicit scalar value matches the given regexp,
     the corresponding tag is assigned to the scalar.
     first is a sequence of possible initial characters or None.
     """
-    Loader.add_detector(tag, regexp, first)
-    Dumper.add_detector(tag, regexp, first)
+    Loader.add_implicit_resolver(tag, regexp, first)
+    Dumper.add_implicit_resolver(tag, regexp, first)
 
-def add_resolver(tag, path, Loader=Loader):
+def add_path_resolver(tag, path, kind=None, Loader=Loader, Dumper=Dumper):
     """
     Add a path based resolver for the given tag.
     A path is a list of keys that forms a path
     to a node in the representation tree.
     Keys can be string values, integers, or None.
     """
-    Loader.add_resolver(tag, path)
+    Loader.add_path_resolver(tag, path, kind)
+    Dumper.add_path_resolver(tag, path, kind)
 
 def add_constructor(tag, constructor, Loader=Loader):
     """
@@ -231,6 +233,15 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=Loader):
     and a node object and produces the corresponding Python object.
     """
     Loader.add_multi_constructor(tag_prefix, multi_constructor)
+
+def add_representer(data_type, representer, Dumper=Dumper):
+    """
+    Add a representer for the given type.
+    Representer is a function accepting a Dumper instance
+    and an instance of the given data type
+    and producing the corresponding representation node.
+    """
+    Dumper.add_representer(data_type, representer)
 
 class YAMLObjectMetaclass(type):
     """

@@ -4,7 +4,6 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 
 from error import *
 from nodes import *
-from detector import *
 
 try:
     import datetime
