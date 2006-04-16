@@ -95,9 +95,9 @@ class TagToken(Token):
 
 class ScalarToken(Token):
     id = '<scalar>'
-    def __init__(self, value, implicit, start_mark, end_mark, style=None):
+    def __init__(self, value, plain, start_mark, end_mark, style=None):
         self.value = value
-        self.implicit = implicit
+        self.plain = plain
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.style = style

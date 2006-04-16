@@ -51,7 +51,7 @@ class Serializer:
         self.emit(DocumentStartEvent(explicit=self.use_explicit_start,
             version=self.use_version, tags=self.use_tags))
         self.anchor_node(node)
-        self.serialize_node(node)
+        self.serialize_node(node, None, None)
         self.emit(DocumentEndEvent(explicit=self.use_explicit_end))
         self.serialized_nodes = {}
         self.anchors = {}
@@ -75,45 +75,42 @@ class Serializer:
         self.last_anchor_id += 1
         return self.ANCHOR_TEMPLATE % self.last_anchor_id
 
-    def serialize_node(self, node):
+    def serialize_node(self, node, parent, index):
         alias = self.anchors[node]
         if node in self.serialized_nodes:
             self.emit(AliasEvent(alias))
         else:
             self.serialized_nodes[node] = True
+            self.descend_resolver(parent, index)
             if isinstance(node, ScalarNode):
-                detected_tag = self.detect(node.value)
-                implicit = (node.tag == self.detect(node.value)
-                        or (node.tag == self.DEFAULT_SCALAR_TAG
-                            and detected_tag is None))
+                detected_tag = self.resolve(ScalarNode, node.value, (True, False))
+                default_tag = self.resolve(ScalarNode, node.value, (False, True))
+                implicit = (node.tag == detected_tag), (node.tag == default_tag)
                 self.emit(ScalarEvent(alias, node.tag, implicit, node.value,
                     style=node.style))
             elif isinstance(node, SequenceNode):
-                # TODO:
-                # 1) Check the current path in the Resolver.
-                # 2) Add the implicit flag to the SequenceStartEvent and
-                # MappingStartEvent.
-                tag = node.tag
-                if tag == self.DEFAULT_SEQUENCE_TAG and not self.canonical:
-                    tag = None
-                self.emit(SequenceStartEvent(alias, tag,
+                implicit = (node.tag
+                            == self.resolve(SequenceNode, node.value, True))
+                self.emit(SequenceStartEvent(alias, node.tag, implicit,
                     flow_style=node.flow_style))
+                index = 0
                 for item in node.value:
-                    self.serialize_node(item)
+                    self.serialize_node(item, node, index)
+                    index += 1
                 self.emit(SequenceEndEvent())
             elif isinstance(node, MappingNode):
-                tag = node.tag
-                if tag == self.DEFAULT_MAPPING_TAG and not self.canonical:
-                    tag = None
-                self.emit(MappingStartEvent(alias, tag,
+                implicit = (node.tag
+                            == self.resolve(MappingNode, node.value, True))
+                self.emit(MappingStartEvent(alias, node.tag, implicit,
                     flow_style=node.flow_style))
                 if hasattr(node.value, 'keys'):
                     for key in node.value.keys():
-                        self.serialize_node(key)
-                        self.serialize_node(node.value[key])
+                        self.serialize_node(key, node, None)
+                        self.serialize_node(node.value[key], node, key)
                 else:
                     for key, value in node.value:
-                        self.serialize_node(key)
-                        self.serialize_node(value)
+                        self.serialize_node(key, node, None)
+                        self.serialize_node(value, node, key)
                 self.emit(MappingEndEvent())
+            self.ascend_resolver()
 

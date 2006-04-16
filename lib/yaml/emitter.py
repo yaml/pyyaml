@@ -460,15 +460,20 @@ class Emitter:
         if isinstance(self.event, ScalarEvent):
             if self.style is None:
                 self.style = self.choose_scalar_style()
-            if self.style == '':
+            if ((not self.canonical or tag is None) and
+                ((self.style == '' and self.event.implicit[0])
+                        or (self.style != '' and self.event.implicit[1]))):
                 self.prepared_tag = None
                 return
-            if self.event.implicit and not tag:
+            if self.event.implicit[0] and not tag:
                 tag = u'!'
                 self.prepared_tag = None
+        else:
+            if (not self.canonical or tag is None) and self.event.implicit:
+                self.prepared_tag = None
+                return
         if not tag:
-            self.prepared_tag = None
-            return
+            raise EmitterError("tag is not specified")
         if self.prepared_tag is None:
             self.prepared_tag = self.prepare_tag(tag)
         if self.prepared_tag:
@@ -480,7 +485,7 @@ class Emitter:
             self.analysis = self.analyze_scalar(self.event.value)
         if self.event.style == '"' or self.canonical:
             return '"'
-        if not self.event.style and self.event.implicit:
+        if not self.event.style and self.event.implicit[0]:
             if (not (self.simple_key_context and
                     (self.analysis.empty or self.analysis.multiline))
                 and (self.flow_level and self.analysis.allow_flow_plain

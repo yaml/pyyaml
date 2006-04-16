@@ -4,9 +4,9 @@ __all__ = ['BaseDumper', 'SafeDumper', 'Dumper']
 from emitter import *
 from serializer import *
 from representer import *
-from detector import *
+from resolver import *
 
-class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseDetector):
+class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 
     def __init__(self, stream,
             canonical=None, indent=None, width=None,
@@ -20,9 +20,9 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseDetector):
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
         Representer.__init__(self)
-        Detector.__init__(self)
+        Resolver.__init__(self)
 
-class SafeDumper(Emitter, Serializer, SafeRepresenter, Detector):
+class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
             canonical=None, indent=None, width=None,
@@ -36,9 +36,9 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Detector):
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
         SafeRepresenter.__init__(self)
-        Detector.__init__(self)
+        Resolver.__init__(self)
 
-class Dumper(Emitter, Serializer, Representer, Detector):
+class Dumper(Emitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
             canonical=None, indent=None, width=None,
@@ -52,5 +52,5 @@ class Dumper(Emitter, Serializer, Representer, Detector):
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
         Representer.__init__(self)
-        Detector.__init__(self)
+        Resolver.__init__(self)
 

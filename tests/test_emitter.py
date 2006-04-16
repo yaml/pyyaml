@@ -30,7 +30,7 @@ class TestEmitter(test_appliance.TestAppliance):
                 self.failUnlessEqual(event.tag, new_event.tag)
             if isinstance(event, ScalarEvent):
                 #self.failUnlessEqual(event.implicit, new_event.implicit)
-                if not event.implicit and not new_event.implicit:
+                if True not in event.implicit+new_event.implicit:
                     self.failUnlessEqual(event.tag, new_event.tag)
                 self.failUnlessEqual(event.value, new_event.value)
 
@@ -58,8 +58,10 @@ class EventsLoader(Loader):
             mapping.setdefault('anchor', None)
         if class_name in ['ScalarEvent', 'SequenceStartEvent', 'MappingStartEvent']:
             mapping.setdefault('tag', None)
+        if class_name in ['SequenceStartEvent', 'MappingStartEvent']:
+            mapping.setdefault('implicit', True)
         if class_name == 'ScalarEvent':
-            mapping.setdefault('implicit', False)
+            mapping.setdefault('implicit', (False, True))
             mapping.setdefault('value', '')
         value = getattr(yaml, class_name)(**mapping)
         return value

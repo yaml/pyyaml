@@ -2,40 +2,40 @@
 
 - !DocumentStart
 - !MappingStart
-- !Scalar { implicit: true, value: 'key' }
-- !Scalar { implicit: true, value: 'value' }
-- !Scalar { implicit: true, value: 'empty mapping' }
+- !Scalar { implicit: [true,true], value: 'key' }
+- !Scalar { implicit: [true,true], value: 'value' }
+- !Scalar { implicit: [true,true], value: 'empty mapping' }
 - !MappingStart
 - !MappingEnd
-- !Scalar { implicit: true, value: 'empty mapping with tag' }
-- !MappingStart { tag: '!mytag' }
+- !Scalar { implicit: [true,true], value: 'empty mapping with tag' }
+- !MappingStart { tag: '!mytag', implicit: false }
 - !MappingEnd
-- !Scalar { implicit: true, value: 'block mapping' }
+- !Scalar { implicit: [true,true], value: 'block mapping' }
 - !MappingStart
 - !MappingStart
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
 - !MappingEnd
 - !MappingStart
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
 - !MappingEnd
 - !MappingEnd
-- !Scalar { implicit: true, value: 'flow mapping' }
+- !Scalar { implicit: [true,true], value: 'flow mapping' }
 - !MappingStart { flow_style: true }
-- !Scalar { implicit: true, value: 'key' }
-- !Scalar { implicit: true, value: 'value' }
+- !Scalar { implicit: [true,true], value: 'key' }
+- !Scalar { implicit: [true,true], value: 'value' }
 - !MappingStart
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
 - !MappingEnd
 - !MappingStart
-- !Scalar { implicit: true, value: 'complex' }
-- !Scalar { implicit: true, value: 'key' }
+- !Scalar { implicit: [true,true], value: 'complex' }
+- !Scalar { implicit: [true,true], value: 'key' }
 - !MappingEnd
 - !MappingEnd
 - !MappingEnd

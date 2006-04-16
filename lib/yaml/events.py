@@ -6,7 +6,7 @@ class Event:
         self.start_mark = start_mark
         self.end_mark = end_mark
     def __repr__(self):
-        attributes = [key for key in ['anchor', 'tag', 'value']
+        attributes = [key for key in ['anchor', 'tag', 'implicit', 'value']
                 if hasattr(self, key)]
         arguments = ', '.join(['%s=%r' % (key, getattr(self, key))
                 for key in attributes])
@@ -19,10 +19,11 @@ class NodeEvent(Event):
         self.end_mark = end_mark
 
 class CollectionStartEvent(NodeEvent):
-    def __init__(self, anchor, tag, start_mark=None, end_mark=None,
+    def __init__(self, anchor, tag, implicit, start_mark=None, end_mark=None,
             flow_style=None):
         self.anchor = anchor
         self.tag = tag
+        self.implicit = implicit
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.flow_style = flow_style

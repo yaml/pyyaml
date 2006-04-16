@@ -1,11 +1,11 @@
 - !StreamStart
 - !DocumentStart { explicit: false }
-- !Scalar { implicit: true, value: 'data' }
+- !Scalar { implicit: [true,false], value: 'data' }
 - !DocumentEnd
 - !DocumentStart
-- !Scalar { implicit: true }
+- !Scalar { implicit: [true,false] }
 - !DocumentEnd
 - !DocumentStart { version: [1,1], tags: { '!': '!foo', '!yaml!': 'tag:yaml.org,2002:', '!ugly!': '!!!!!!!' } }
-- !Scalar { implicit: true }
+- !Scalar { implicit: [true,false] }
 - !DocumentEnd
 - !StreamEnd

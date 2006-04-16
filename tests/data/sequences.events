@@ -6,7 +6,7 @@
 - !DocumentEnd
 
 - !DocumentStart
-- !SequenceStart { tag: '!mytag' }
+- !SequenceStart { tag: '!mytag', implicit: false }
 - !SequenceEnd
 - !DocumentEnd
 
@@ -14,12 +14,12 @@
 - !SequenceStart
 - !SequenceStart
 - !SequenceEnd
-- !SequenceStart { tag: '!mytag' }
+- !SequenceStart { tag: '!mytag', implicit: false }
 - !SequenceEnd
 - !SequenceStart
 - !Scalar
 - !Scalar { value: 'data' }
-- !Scalar { tag: '!mytag', value: 'data' }
+- !Scalar { tag: '!mytag', implicit: [false,false], value: 'data' }
 - !SequenceEnd
 - !SequenceStart
 - !SequenceStart
@@ -29,7 +29,7 @@
 - !SequenceEnd
 - !SequenceEnd
 - !SequenceStart
-- !SequenceStart { tag: '!mytag' }
+- !SequenceStart { tag: '!mytag', implicit: false }
 - !SequenceStart
 - !Scalar { value: 'data' }
 - !SequenceEnd
@@ -47,13 +47,13 @@
 - !Scalar { value: 'data2' }
 - !SequenceEnd
 - !Scalar { value: 'key2' }
-- !SequenceStart { tag: '!mytag1' }
+- !SequenceStart { tag: '!mytag1', implicit: false }
 - !Scalar { value: 'data3' }
 - !SequenceStart
 - !Scalar { value: 'data4' }
 - !Scalar { value: 'data5' }
 - !SequenceEnd
-- !SequenceStart { tag: '!mytag2' }
+- !SequenceStart { tag: '!mytag2', implicit: false }
 - !Scalar { value: 'data6' }
 - !Scalar { value: 'data7' }
 - !SequenceEnd
@@ -69,8 +69,8 @@
 - !SequenceEnd
 - !Scalar
 - !Scalar { value: 'data' }
-- !Scalar { tag: '!mytag', value: 'data' }
-- !SequenceStart { tag: '!mytag' }
+- !Scalar { tag: '!mytag', implicit: [false,false], value: 'data' }
+- !SequenceStart { tag: '!mytag', implicit: false }
 - !Scalar { value: 'data' }
 - !Scalar { value: 'data' }
 - !SequenceEnd
