@@ -701,7 +701,6 @@ class Scanner:
 
         # DOCUMENT-END:     ^ '...' (' '|'\n')
         if self.column == 0:
-            prefix = self.peek(4)
             if self.prefix(3) == u'...'  \
                     and self.peek(3) in u'\0 \t\r\n\x85\u2028\u2029':
                 return True
