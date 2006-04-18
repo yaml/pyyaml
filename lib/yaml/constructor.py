@@ -17,7 +17,7 @@ try:
 except NameError:
     from sets import Set as set
 
-import binascii, re
+import binascii, re, sys
 
 class ConstructorError(MarkedYAMLError):
     pass
@@ -61,7 +61,7 @@ class BaseConstructor(Composer):
                     tag_suffix = node.tag[len(tag_prefix):]
                     constructor = lambda node:  \
                             self.yaml_multi_constructors[tag_prefix](self, tag_suffix, node)
-                break
+                    break
             else:
                 if None in self.yaml_multi_constructors:
                     constructor = lambda node:  \
@@ -75,6 +75,8 @@ class BaseConstructor(Composer):
                     constructor = self.construct_sequence
                 elif isinstance(node, MappingNode):
                     constructor = self.construct_mapping
+                else:
+                    print node.tag
         data = constructor(node)
         self.constructed_objects[node] = data
         return data
@@ -349,15 +351,12 @@ class SafeConstructor(BaseConstructor):
         return self.construct_mapping(node)
 
     def construct_yaml_object(self, node, cls):
-        mapping = self.construct_mapping(node)
-        state = {}
-        for key in mapping:
-            state[key.replace('-', '_')] = mapping[key]
+        state = self.construct_mapping(node)
         data = cls.__new__(cls)
         if hasattr(data, '__setstate__'):
-            data.__setstate__(mapping)
+            data.__setstate__(state)
         else:
-            data.__dict__.update(mapping)
+            data.__dict__.update(state)
         return data
 
     def construct_undefined(self, node):
@@ -418,5 +417,119 @@ SafeConstructor.add_constructor(None,
         SafeConstructor.construct_undefined)
 
 class Constructor(SafeConstructor):
-    pass
+
+    def construct_python_str(self, node):
+        return self.construct_scalar(node).encode('utf-8')
+
+    def construct_python_unicode(self, node):
+        return self.construct_scalar(node)
+
+    def construct_python_long(self, node):
+        return long(self.construct_yaml_int(node))
+
+    def construct_python_complex(self, node):
+       return complex(self.construct_scalar(node))
+
+    def construct_python_tuple(self, node):
+        return tuple(self.construct_yaml_seq(node))
+
+    def find_python_module(self, name, mark):
+        if not name:
+            raise ConstructorError("while constructing a Python module", mark,
+                    "expected non-empty name appended to the tag", mark)
+        try:
+            __import__(name)
+        except ImportError, exc:
+            raise ConstructorError("while constructing a Python module", mark,
+                    "cannot find module %r (%s)" % (name.encode('utf-8'), exc), mark)
+        return sys.modules[name]
+
+    def find_python_name(self, name, mark):
+        if not name:
+            raise ConstructorError("while constructing a Python object", mark,
+                    "expected non-empty name appended to the tag", mark)
+        if u'.' in name:
+            module_name, object_name = name.rsplit('.', 1)
+        else:
+            module_name = '__builtin__'
+            object_name = name
+        try:
+            __import__(module_name)
+        except ImportError, exc:
+            raise ConstructorError("while constructing a Python object", mark,
+                    "cannot find module %r (%s)" % (module_name.encode('utf-8'), exc), mark)
+        module = sys.modules[module_name]
+        if not hasattr(module, object_name):
+            raise ConstructorError("while constructing a Python object", mark,
+                    "cannot find %r in the module %r" % (object_name.encode('utf-8'),
+                        module.__name__), mark)
+        return getattr(module, object_name)
+
+    def construct_python_name(self, suffix, node):
+        value = self.construct_scalar(node)
+        if value:
+            raise ConstructorError("while constructing a Python name", node.start_mark,
+                    "expected the empty value, but found %r" % value.encode('utf-8'),
+                    node.start_mark)
+        return self.find_python_name(suffix, node.start_mark)
+
+    def construct_python_module(self, suffix, node):
+        value = self.construct_scalar(node)
+        if value:
+            raise ConstructorError("while constructing a Python module", node.start_mark,
+                    "expected the empty value, but found %r" % value.encode('utf-8'),
+                    node.start_mark)
+        return self.find_python_module(suffix, node.start_mark)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/none',
+    Constructor.construct_yaml_null)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/bool',
+    Constructor.construct_yaml_bool)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/str',
+    Constructor.construct_python_str)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/unicode',
+    Constructor.construct_python_unicode)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/int',
+    Constructor.construct_yaml_int)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/long',
+    Constructor.construct_python_long)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/float',
+    Constructor.construct_yaml_float)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/complex',
+    Constructor.construct_python_complex)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/list',
+    Constructor.construct_yaml_seq)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/tuple',
+    Constructor.construct_python_tuple)
+
+Constructor.add_constructor(
+    u'tag:yaml.org,2002:python/dict',
+    Constructor.construct_yaml_map)
+
+Constructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/name:',
+    Constructor.construct_python_name)
+
+Constructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/module:',
+    Constructor.construct_python_module)
 
