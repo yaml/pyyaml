@@ -465,14 +465,14 @@ class Emitter:
                         or (self.style != '' and self.event.implicit[1]))):
                 self.prepared_tag = None
                 return
-            if self.event.implicit[0] and not tag:
+            if self.event.implicit[0] and tag is None:
                 tag = u'!'
                 self.prepared_tag = None
         else:
             if (not self.canonical or tag is None) and self.event.implicit:
                 self.prepared_tag = None
                 return
-        if not tag:
+        if tag is None:
             raise EmitterError("tag is not specified")
         if self.prepared_tag is None:
             self.prepared_tag = self.prepare_tag(tag)
@@ -608,7 +608,7 @@ class Emitter:
             if not (u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'    \
                     or ch in u'-_'):
                 raise EmitterError("invalid character %r in the anchor: %r"
-                        % (ch.encode('utf-8'), text.encode('utf-8')))
+                        % (ch.encode('utf-8'), anchor.encode('utf-8')))
         return anchor
 
     def analyze_scalar(self, scalar):

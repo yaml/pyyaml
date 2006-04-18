@@ -1,0 +1,2 @@
+dumper = Dumper(StringIO.StringIO())
+dumper.serialize(ScalarNode(tag='!foo', value='bar'))
