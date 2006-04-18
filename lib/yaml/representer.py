@@ -16,6 +16,8 @@ try:
 except NameError:
     from sets import Set as set
 
+import sys
+
 class RepresenterError(YAMLError):
     pass
 
@@ -31,6 +33,22 @@ class BaseRepresenter:
         self.serialize(node)
         self.represented_objects = {}
 
+    class C: pass
+    c = C()
+    def f(): pass
+    classobj_type = type(C)
+    instance_type = type(c)
+    function_type = type(f)
+    builtin_function_type = type(abs)
+    module_type = type(sys)
+    del C, c, f
+
+    def get_classobj_bases(self, cls):
+        bases = [cls]
+        for base in cls.__bases__:
+            bases.extend(self.get_classobj_bases(base))
+        return bases
+
     def represent_object(self, data):
         if self.ignore_aliases(data):
             alias_key = None
@@ -43,7 +61,10 @@ class BaseRepresenter:
                     raise RepresenterError("recursive objects are not allowed: %r" % data)
                 return node
             self.represented_objects[alias_key] = None
-        for data_type in type(data).__mro__:
+        data_types = type(data).__mro__
+        if type(data) is self.instance_type:
+            data_types = self.get_classobj_bases(data.__class__)+data_types
+        for data_type in data_types:
             if data_type in self.yaml_representers:
                 node = self.yaml_representers[data_type](self, data)
                 break
@@ -72,16 +93,17 @@ class BaseRepresenter:
         return SequenceNode(tag, value, flow_style=flow_style)
 
     def represent_mapping(self, tag, mapping, flow_style=None):
-        value = {}
         if hasattr(mapping, 'keys'):
+            value = {}
             for item_key in mapping.keys():
                 item_value = mapping[item_key]
                 value[self.represent_object(item_key)] =    \
                         self.represent_object(item_value)
         else:
+            value = []
             for item_key, item_value in mapping:
-                value[self.represent_object(item_key)] =    \
-                        self.represent_object(item_value)
+                value.append((self.represent_object(item_key),
+                        self.represent_object(item_value)))
         return MappingNode(tag, value, flow_style=flow_style)
 
     def ignore_aliases(self, data):
@@ -100,22 +122,20 @@ class SafeRepresenter(BaseRepresenter):
                 u'null')
 
     def represent_str(self, data):
-        encoding = None
+        tag = None
+        style = None
         try:
-            unicode(data, 'ascii')
-            encoding = 'ascii'
+            data = unicode(data, 'ascii')
+            tag = u'tag:yaml.org,2002:str'
         except UnicodeDecodeError:
             try:
-                unicode(data, 'utf-8')
-                encoding = 'utf-8'
+                data = unicode(data, 'utf-8')
+                tag = u'tag:yaml.org,2002:str'
             except UnicodeDecodeError:
-                pass
-        if encoding:
-            return self.represent_scalar(u'tag:yaml.org,2002:str',
-                    unicode(data, encoding))
-        else:
-            return self.represent_scalar(u'tag:yaml.org,2002:binary',
-                    unicode(data.encode('base64')), style='|')
+                data = data.encode('base64')
+                tag = u'tag:yaml.org,2002:binary'
+                style = '|'
+        return self.represent_scalar(tag, data, style=style)
 
     def represent_unicode(self, data):
         return self.represent_scalar(u'tag:yaml.org,2002:str', data)
@@ -144,15 +164,16 @@ class SafeRepresenter(BaseRepresenter):
         elif data == self.nan_value or data != data:
             value = u'.nan'
         else:
-            value = unicode(data)
+            value = unicode(repr(data))
         return self.represent_scalar(u'tag:yaml.org,2002:float', value)
 
     def represent_list(self, data):
-        pairs = (len(data) > 0)
-        for item in data:
-            if not isinstance(item, tuple) or len(item) != 2:
-                pairs = False
-                break
+        pairs = (len(data) > 0 and isinstance(data, list))
+        if pairs:
+            for item in data:
+                if not isinstance(item, tuple) or len(item) != 2:
+                    pairs = False
+                    break
         if not pairs:
             return self.represent_sequence(u'tag:yaml.org,2002:seq', data)
         value = []
@@ -189,14 +210,7 @@ class SafeRepresenter(BaseRepresenter):
             state = data.__getstate__()
         else:
             state = data.__dict__.copy()
-        mapping = state
-        if hasattr(state, 'keys'):
-            mapping = []
-            keys = state.keys()
-            keys.sort()
-            for key in keys:
-                mapping.append((key.replace('_', '-'), state[key]))
-        return self.represent_mapping(tag, mapping, flow_style=flow_style)
+        return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
         raise RepresenterError("cannot represent an object: %s" % data)
@@ -225,6 +239,9 @@ SafeRepresenter.add_representer(float,
 SafeRepresenter.add_representer(list,
         SafeRepresenter.represent_list)
 
+SafeRepresenter.add_representer(tuple,
+        SafeRepresenter.represent_list)
+
 SafeRepresenter.add_representer(dict,
         SafeRepresenter.represent_dict)
 
@@ -241,5 +258,83 @@ SafeRepresenter.add_representer(None,
         SafeRepresenter.represent_undefined)
 
 class Representer(SafeRepresenter):
-    pass
+    
+    def represent_str(self, data):
+        tag = None
+        style = None
+        try:
+            data = unicode(data, 'ascii')
+            tag = u'tag:yaml.org,2002:str'
+        except UnicodeDecodeError:
+            try:
+                data = unicode(data, 'utf-8')
+                tag = u'tag:yaml.org,2002:python/str'
+            except UnicodeDecodeError:
+                data = data.encode('base64')
+                tag = u'tag:yaml.org,2002:binary'
+                style = '|'
+        return self.represent_scalar(tag, data, style=style)
+
+    def represent_unicode(self, data):
+        tag = None
+        try:
+            data.encode('ascii')
+            tag = u'tag:yaml.org,2002:python/unicode'
+        except UnicodeEncodeError:
+            tag = u'tag:yaml.org,2002:str'
+        return self.represent_scalar(tag, data)
+
+    def represent_long(self, data):
+        tag = u'tag:yaml.org,2002:int'
+        if int(data) is not data:
+            tag = u'tag:yaml.org,2002:python/long'
+        return self.represent_scalar(tag, unicode(data))
+
+    def represent_complex(self, data):
+        if data.real != 0.0:
+            data = u'%r+%rj' % (data.real, data.imag)
+        else:
+            data = u'%rj' % data.imag
+        return self.represent_scalar(u'tag:yaml.org,2002:python/complex', data)
+
+    def represent_tuple(self, data):
+        return self.represent_sequence(u'tag:yaml.org,2002:python/tuple', data)
+
+    def represent_name(self, data):
+        name = u'%s.%s' % (data.__module__, data.__name__)
+        return self.represent_scalar(u'tag:yaml.org,2002:python/name:'+name, u'')
+
+    def represent_module(self, data):
+        return self.represent_scalar(
+                u'tag:yaml.org,2002:python/module:'+data.__name__, u'')
+
+Representer.add_representer(str,
+        Representer.represent_str)
+
+Representer.add_representer(unicode,
+        Representer.represent_unicode)
+
+Representer.add_representer(long,
+        Representer.represent_long)
+
+Representer.add_representer(complex,
+        Representer.represent_complex)
+
+Representer.add_representer(tuple,
+        Representer.represent_tuple)
+
+Representer.add_representer(type,
+        Representer.represent_name)
+
+Representer.add_representer(Representer.classobj_type,
+        Representer.represent_name)
+
+Representer.add_representer(Representer.function_type,
+        Representer.represent_name)
+
+Representer.add_representer(Representer.builtin_function_type,
+        Representer.represent_name)
+
+Representer.add_representer(Representer.module_type,
+        Representer.represent_module)
 

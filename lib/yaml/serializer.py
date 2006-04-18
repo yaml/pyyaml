@@ -67,9 +67,14 @@ class Serializer:
                 for item in node.value:
                     self.anchor_node(item)
             elif isinstance(node, MappingNode):
-                for key in node.value:
-                    self.anchor_node(key)
-                    self.anchor_node(node.value[key])
+                if hasattr(node.value, 'keys'):
+                    for key in node.value.keys():
+                        self.anchor_node(key)
+                        self.anchor_node(node.value[key])
+                else:
+                    for key, value in node.value:
+                        self.anchor_node(key)
+                        self.anchor_node(value)
 
     def generate_anchor(self, node):
         self.last_anchor_id += 1
