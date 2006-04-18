@@ -29,6 +29,7 @@ class BaseConstructor(Composer):
 
     def __init__(self):
         self.constructed_objects = {}
+        self.recursive_objects = {}
 
     def check_data(self):
         # If there are more documents available?
@@ -47,11 +48,16 @@ class BaseConstructor(Composer):
     def construct_document(self, node):
         data = self.construct_object(node)
         self.constructed_objects = {}
+        self.recursive_objects = {}
         return data
 
     def construct_object(self, node):
         if node in self.constructed_objects:
             return self.constructed_objects[node]
+        if node in self.recursive_objects:
+            raise ConstructorError(None, None,
+                    "found recursive node", node.start_mark)
+        self.recursive_objects[node] = None
         constructor = None
         if node.tag in self.yaml_constructors:
             constructor = lambda node: self.yaml_constructors[node.tag](self, node)
@@ -79,6 +85,7 @@ class BaseConstructor(Composer):
                     print node.tag
         data = constructor(node)
         self.constructed_objects[node] = data
+        del self.recursive_objects[node]
         return data
 
     def construct_scalar(self, node):
