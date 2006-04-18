@@ -5,11 +5,11 @@ from yaml import *
 
 class TestErrors(test_appliance.TestAppliance):
 
-    def _testErrors(self, test_name, invalid_filename):
+    def _testLoaderErrors(self, test_name, invalid_filename):
         #self._load(invalid_filename)
         self.failUnlessRaises(YAMLError, lambda: self._load(invalid_filename))
 
-    def _testStringErrors(self, test_name, invalid_filename):
+    def _testLoaderStringErrors(self, test_name, invalid_filename):
         #self._load_string(invalid_filename)
         self.failUnlessRaises(YAMLError, lambda: self._load_string(invalid_filename))
 
@@ -38,6 +38,6 @@ class TestErrors(test_appliance.TestAppliance):
             #print "%s:" % exc.__class__.__name__, exc
             raise
 
-TestErrors.add_tests('testErrors', '.error-message')
-TestErrors.add_tests('testStringErrors', '.error-message')
+TestErrors.add_tests('testLoaderErrors', '.loader-error')
+TestErrors.add_tests('testLoaderStringErrors', '.loader-error')
 
