@@ -11,8 +11,7 @@ class ComposerError(MarkedYAMLError):
 class Composer:
 
     def __init__(self):
-        self.all_anchors = {}
-        self.complete_anchors = {}
+        self.anchors = {}
 
     def check_node(self):
         # If there are more documents available?
@@ -43,7 +42,6 @@ class Composer:
         # Drop the DOCUMENT-END event.
         self.get_event()
 
-        self.all_anchors = {}
         self.complete_anchors = {}
         return node
 
@@ -51,45 +49,39 @@ class Composer:
         if self.check_event(AliasEvent):
             event = self.get_event()
             anchor = event.anchor
-            if anchor not in self.all_anchors:
+            if anchor not in self.anchors:
                 raise ComposerError(None, None, "found undefined alias %r"
                         % anchor.encode('utf-8'), event.start_mark)
-            if anchor not in self.complete_anchors:
-                collection_event = self.all_anchors[anchor]
-                raise ComposerError("while composing a collection",
-                        collection_event.start_mark,
-                        "found recursive anchor %r" % anchor.encode('utf-8'),
-                        event.start_mark)
-            return self.complete_anchors[anchor]
+            return self.anchors[anchor]
         event = self.peek_event()
         anchor = event.anchor
         if anchor is not None:
-            if anchor in self.all_anchors:
+            if anchor in self.anchors:
                 raise ComposerError("found duplicate anchor %r; first occurence"
-                        % anchor.encode('utf-8'), self.all_anchors[anchor].start_mark,
+                        % anchor.encode('utf-8'), self.anchors[anchor].start_mark,
                         "second occurence", event.start_mark)
-            self.all_anchors[anchor] = event
         self.descend_resolver(parent, index)
         if self.check_event(ScalarEvent):
-            node = self.compose_scalar_node()
+            node = self.compose_scalar_node(anchor)
         elif self.check_event(SequenceStartEvent):
-            node = self.compose_sequence_node()
+            node = self.compose_sequence_node(anchor)
         elif self.check_event(MappingStartEvent):
-            node = self.compose_mapping_node()
-        if anchor is not None:
-            self.complete_anchors[anchor] = node
+            node = self.compose_mapping_node(anchor)
         self.ascend_resolver()
         return node
 
-    def compose_scalar_node(self):
+    def compose_scalar_node(self, anchor):
         event = self.get_event()
         tag = event.tag
         if tag is None or tag == u'!':
             tag = self.resolve(ScalarNode, event.value, event.implicit)
-        return ScalarNode(tag, event.value,
+        node = ScalarNode(tag, event.value,
                 event.start_mark, event.end_mark, style=event.style)
+        if anchor is not None:
+            self.anchors[anchor] = node
+        return node
 
-    def compose_sequence_node(self):
+    def compose_sequence_node(self, anchor):
         start_event = self.get_event()
         tag = start_event.tag
         if tag is None or tag == u'!':
@@ -97,6 +89,8 @@ class Composer:
         node = SequenceNode(tag, [],
                 start_event.start_mark, None,
                 flow_style=start_event.flow_style)
+        if anchor is not None:
+            self.anchors[anchor] = node
         index = 0
         while not self.check_event(SequenceEndEvent):
             node.value.append(self.compose_node(node, index))
@@ -105,7 +99,7 @@ class Composer:
         node.end_mark = end_event.end_mark
         return node
 
-    def compose_mapping_node(self):
+    def compose_mapping_node(self, anchor):
         start_event = self.get_event()
         tag = start_event.tag
         if tag is None or tag == u'!':
@@ -113,6 +107,8 @@ class Composer:
         node = MappingNode(tag, {},
                 start_event.start_mark, None,
                 flow_style=start_event.flow_style)
+        if anchor is not None:
+            self.anchors[anchor] = node
         while not self.check_event(MappingEndEvent):
             key_event = self.peek_event()
             item_key = self.compose_node(node, None)

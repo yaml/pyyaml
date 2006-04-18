@@ -11,6 +11,7 @@ from test_resolver import *
 from test_constructor import *
 from test_emitter import *
 from test_representer import *
+from test_recursive import *
 from test_syck import *
 
 def main(module='__main__'):
