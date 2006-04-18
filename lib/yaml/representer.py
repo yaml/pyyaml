@@ -63,7 +63,7 @@ class BaseRepresenter:
             self.represented_objects[alias_key] = None
         data_types = type(data).__mro__
         if type(data) is self.instance_type:
-            data_types = self.get_classobj_bases(data.__class__)+data_types
+            data_types = self.get_classobj_bases(data.__class__)+list(data_types)
         for data_type in data_types:
             if data_type in self.yaml_representers:
                 node = self.yaml_representers[data_type](self, data)
@@ -291,10 +291,14 @@ class Representer(SafeRepresenter):
         return self.represent_scalar(tag, unicode(data))
 
     def represent_complex(self, data):
-        if data.real != 0.0:
+        if data.imag == 0.0:
+            data = u'%r' % data.real
+        elif data.real == 0.0:
+            data = u'%rj' % data.imag
+        elif data.imag > 0:
             data = u'%r+%rj' % (data.real, data.imag)
         else:
-            data = u'%rj' % data.imag
+            data = u'%r%rj' % (data.real, data.imag)
         return self.represent_scalar(u'tag:yaml.org,2002:python/complex', data)
 
     def represent_tuple(self, data):

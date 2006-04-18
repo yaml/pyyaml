@@ -959,10 +959,9 @@ class Emitter:
             ch = None
             if end < len(text):
                 ch = text[end]
-            if ch is None or ch in u'"\\'   \
+            if ch is None or ch in u'"\\\x85\u2028\u2029\uFEFF' \
                     or not (u'\x20' <= ch <= u'\x7E'
-                            or (self.allow_unicode and ch > u'\x7F'
-                                and ch not in u'\x85\u2028\u2029')):
+                            or (self.allow_unicode and ch > u'\x7F')):
                 if start < end:
                     data = text[start:end]
                     self.column += len(data)
@@ -996,7 +995,7 @@ class Emitter:
                 self.write_indent()
                 self.whitespace = False
                 self.indention = False
-                if ch == u' ':
+                if text[start] == u' ':
                     data = u'\\'
                     self.column += len(data)
                     if self.encoding:
