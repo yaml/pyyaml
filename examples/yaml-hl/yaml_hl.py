@@ -2,18 +2,16 @@
 
 import yaml, codecs, sys, optparse
 
-
-
-yaml.add_resolver(u'!Config', [])
-yaml.add_resolver(u'!TokensConfig', [u'tokens'])
-yaml.add_resolver(u'!EventsConfig', [u'events'])
-yaml.add_resolver(u'!StartEndConfig', [u'tokens', None])
-yaml.add_resolver(u'!StartEndConfig', [u'events', None])
+#yaml.add_resolver(u'!Config', [])
+#yaml.add_resolver(u'!TokensConfig', [u'tokens'])
+#yaml.add_resolver(u'!EventsConfig', [u'events'])
+#yaml.add_resolver(u'!StartEndConfig', [u'tokens', None])
+#yaml.add_resolver(u'!StartEndConfig', [u'events', None])
 
 class YAMLHighlight:
 
     def __init__(self, config):
-        parameters = yaml.load_document(config)
+        parameters = yaml.load(config)
         self.replaces = parameters['replaces']
         self.substitutions = {}
         for domain, items in [('Token', parameters['tokens']),
@@ -36,7 +34,7 @@ class YAMLHighlight:
                 input = unicode(input, 'utf-16-be')
             else:
                 input = unicode(input, 'utf-8')
-        tokens = yaml.parse(input, Parser=iter)
+        tokens = yaml.scan(input)
         events = yaml.parse(input)
         markers = []
         number = 0
