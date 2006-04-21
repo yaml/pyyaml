@@ -36,7 +36,7 @@ class TestErrors(test_appliance.TestAppliance):
     def _emit(self, events):
         try:
             emit(events)
-        except EmitterError, exc:
+        except YAMLError, exc:
             #print '.'*70
             #print "%s:" % exc.__class__.__name__, exc
             raise

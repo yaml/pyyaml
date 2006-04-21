@@ -2,6 +2,9 @@
 import unittest, os
 
 from yaml import *
+from yaml.composer import *
+from yaml.constructor import *
+from yaml.resolver import *
 
 class TestAppliance(unittest.TestCase):
 

@@ -141,10 +141,9 @@ class TestResolver(test_appliance.TestAppliance):
 
 TestResolver.add_tests('testResolver', '.data', '.canonical')
 
-class MyConstructor:
-
+class MyLoader(Loader):
     def construct_sequence(self, node):
-        return tuple(Constructor.construct_sequence(self, node))
+        return tuple(Loader.construct_sequence(self, node))
 
     def construct_mapping(self, node):
         pairs = self.construct_pairs(node)
@@ -154,12 +153,21 @@ class MyConstructor:
     def construct_undefined(self, node):
         return self.construct_scalar(node)
 
-class MyLoader(MyConstructor, Loader):
-    pass
 MyLoader.add_constructor(None, MyLoader.construct_undefined)
 
-class MyCanonicalLoader(MyConstructor, test_appliance.CanonicalLoader):
-    pass
+class MyCanonicalLoader(test_appliance.CanonicalLoader):
+
+    def construct_sequence(self, node):
+        return tuple(test_appliance.CanonicalLoader.construct_sequence(self, node))
+
+    def construct_mapping(self, node):
+        pairs = self.construct_pairs(node)
+        pairs.sort()
+        return pairs
+
+    def construct_undefined(self, node):
+        return self.construct_scalar(node)
+
 MyCanonicalLoader.add_constructor(None, MyCanonicalLoader.construct_undefined)
 
 class TestConstructor(test_appliance.TestAppliance):

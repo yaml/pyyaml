@@ -456,7 +456,11 @@ class Constructor(SafeConstructor):
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
         if u'.' in name:
-            module_name, object_name = name.rsplit('.', 1)
+            # Python 2.4 only
+            #module_name, object_name = name.rsplit('.', 1)
+            items = name.split('.')
+            object_name = items.pop()
+            module_name = '.'.join(items)
         else:
             module_name = '__builtin__'
             object_name = name

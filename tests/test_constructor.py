@@ -11,7 +11,7 @@ except NameError:
 
 from yaml import *
 
-import xml.parsers
+import yaml.tokens
 
 class MyLoader(Loader):
     pass
