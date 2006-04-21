@@ -2,4 +2,4 @@
 - !!python/name:yaml.Loader
 - !!python/name:yaml.dump
 - !!python/name:abs
-- !!python/module:xml.parsers
+- !!python/module:yaml.tokens
