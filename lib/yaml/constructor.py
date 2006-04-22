@@ -492,6 +492,86 @@ class Constructor(SafeConstructor):
                     node.start_mark)
         return self.find_python_module(suffix, node.start_mark)
 
+    class classobj: pass
+
+    def make_python_instance(self, suffix, node,
+            args=None, kwds=None, newobj=False):
+        if not args:
+            args = []
+        if not kwds:
+            kwds = {}
+        cls = self.find_python_name(suffix, node.start_mark)
+        if newobj and isinstance(cls, type(self.classobj))  \
+                and not args and not kwds:
+            instance = self.classobj()
+            instance.__class__ = cls
+            return instance
+        elif newobj and isinstance(cls, type):
+            return cls.__new__(cls, *args, **kwds)
+        else:
+            return cls(*args, **kwds)
+
+    def set_python_instance_state(self, instance, state):
+        if hasattr(instance, '__setstate__'):
+            instance.__setstate__(state)
+        else:
+            slotstate = {}
+            if isinstance(state, tuple) and len(state) == 2:
+                state, slotstate = state
+            if hasattr(instance, '__dict__'):
+                instance.__dict__.update(state)
+            elif state:
+                slotstate.update(state)
+            for key, value in slotstate.items():
+                setattr(object, key, value)
+
+    def construct_python_object(self, suffix, node):
+        # Format:
+        #   !!python/object:module.name { ... state ... }
+        instance = self.make_python_instance(suffix, node, newobj=True)
+        state = self.construct_mapping(node)
+        self.set_python_instance_state(instance, state)
+        return instance
+
+    def construct_python_object_apply(self, suffix, node, newobj=False):
+        # Format:
+        #   !!python/object/apply       # (or !!python/object/new)
+        #   args: [ ... arguments ... ]
+        #   kwds: { ... keywords ... }
+        #   state: ... state ...
+        #   listitems: [ ... listitems ... ]
+        #   dictitems: { ... dictitems ... }
+        # or short format:
+        #   !!python/object/apply [ ... arguments ... ]
+        # The difference between !!python/object/apply and !!python/object/new
+        # is how an object is created, check make_python_instance for details.
+        if isinstance(node, SequenceNode):
+            args = self.construct_sequence(node)
+            kwds = {}
+            state = {}
+            listitems = []
+            dictitems = {}
+        else:
+            value = self.construct_mapping(node)
+            args = value.get('args', [])
+            kwds = value.get('kwds', {})
+            state = value.get('state', {})
+            listitems = value.get('listitems', [])
+            dictitems = value.get('dictitems', {})
+        instance = self.make_python_instance(suffix, node, args, kwds, newobj)
+        if state:
+            self.set_python_instance_state(instance, state)
+        if listitems:
+            instance.extend(listitems)
+        if dictitems:
+            for key in dictitems:
+                instance[key] = dictitems[key]
+        return instance
+
+    def construct_python_object_new(self, suffix, node):
+        return self.construct_python_object_apply(suffix, node, newobj=True)
+
+
 Constructor.add_constructor(
     u'tag:yaml.org,2002:python/none',
     Constructor.construct_yaml_null)
@@ -543,4 +623,16 @@ Constructor.add_multi_constructor(
 Constructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/module:',
     Constructor.construct_python_module)
+
+Constructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object:',
+    Constructor.construct_python_object)
+
+Constructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object/apply:',
+    Constructor.construct_python_object_apply)
+
+Constructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object/new:',
+    Constructor.construct_python_object_new)
 

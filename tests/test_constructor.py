@@ -113,6 +113,133 @@ class YAMLObject2(YAMLObject):
         else:
             return False
 
+class AnObject(object):
+
+    def __new__(cls, foo=None, bar=None, baz=None):
+        self = object.__new__(cls)
+        self.foo = foo
+        self.bar = bar
+        self.baz = baz
+        return self
+
+    def __cmp__(self, other):
+        return cmp((type(self), self.foo, self.bar, self.baz),
+                (type(other), other.foo, other.bar, other.baz))
+
+    def __eq__(self, other):
+        return type(self) is type(other) and    \
+                (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
+
+class AnInstance:
+
+    def __init__(self, foo=None, bar=None, baz=None):
+        self.foo = foo
+        self.bar = bar
+        self.baz = baz
+
+    def __cmp__(self, other):
+        return cmp((type(self), self.foo, self.bar, self.baz),
+                (type(other), other.foo, other.bar, other.baz))
+
+    def __eq__(self, other):
+        return type(self) is type(other) and    \
+                (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
+
+class AState(AnInstance):
+
+    def __getstate__(self):
+        return {
+            '_foo': self.foo,
+            '_bar': self.bar,
+            '_baz': self.baz,
+        }
+
+    def __setstate__(self, state):
+        self.foo = state['_foo']
+        self.bar = state['_bar']
+        self.baz = state['_baz']
+
+class ACustomState(AnInstance):
+
+    def __getstate__(self):
+        return (self.foo, self.bar, self.baz)
+
+    def __setstate__(self, state):
+        self.foo, self.bar, self.baz = state
+
+class InitArgs(AnInstance):
+
+    def __getinitargs__(self):
+        return (self.foo, self.bar, self.baz)
+
+    def __getstate__(self):
+        return {}
+
+class InitArgsWithState(AnInstance):
+
+    def __getinitargs__(self):
+        return (self.foo, self.bar)
+
+    def __getstate__(self):
+        return self.baz
+
+    def __setstate__(self, state):
+        self.baz = state
+
+class NewArgs(AnObject):
+
+    def __getnewargs__(self):
+        return (self.foo, self.bar, self.baz)
+
+    def __getstate__(self):
+        return {}
+
+class NewArgsWithState(AnObject):
+
+    def __getnewargs__(self):
+        return (self.foo, self.bar)
+
+    def __getstate__(self):
+        return self.baz
+
+    def __setstate__(self, state):
+        self.baz = state
+
+class Reduce(AnObject):
+
+    def __reduce__(self):
+        return self.__class__, (self.foo, self.bar, self.baz)
+
+class ReduceWithState(AnObject):
+
+    def __reduce__(self):
+        return self.__class__, (self.foo, self.bar), self.baz
+
+    def __setstate__(self, state):
+        self.baz = state
+
+class MyInt(int):
+
+    def __eq__(self, other):
+        return type(self) is type(other) and int(self) == int(other)
+
+class MyList(list):
+
+    def __init__(self, n=1):
+        self.extend([None]*n)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and list(self) == list(other)
+
+class MyDict(dict):
+
+    def __init__(self, n=1):
+        for k in range(n):
+            self[k] = None
+
+    def __eq__(self, other):
+        return type(self) is type(other) and dict(self) == dict(other)
+
 class TestConstructorTypes(test_appliance.TestAppliance):
 
     def _testTypes(self, test_name, data_filename, code_filename):
