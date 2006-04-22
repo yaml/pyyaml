@@ -24,7 +24,14 @@ class TestRepresenterTypes(test_appliance.TestAppliance):
                     data2 = data2.items()
                     data2.sort()
                     data2 = repr(data2)
-                if data1 != data2:
+                    if data1 != data2:
+                        raise
+                elif isinstance(data1, list):
+                    self.failUnlessEqual(type(data1), type(data2))
+                    self.failUnlessEqual(len(data1), len(data2))
+                    for item1, item2 in zip(data1, data2):
+                        self.failUnlessEqual(item1, item2)
+                else:
                     raise
         except:
             print
