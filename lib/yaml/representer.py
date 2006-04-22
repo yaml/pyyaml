@@ -241,6 +241,9 @@ class SafeRepresenter(BaseRepresenter):
             state = data.__getstate__()
         else:
             state = data.__dict__.copy()
+        if isinstance(state, dict):
+            state = state.items()
+            state.sort()
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
@@ -372,6 +375,8 @@ class Representer(SafeRepresenter):
         else:
             state = data.__dict__
         if args is None and isinstance(state, dict):
+            state = state.items()
+            state.sort()
             return self.represent_mapping(
                     u'tag:yaml.org,2002:python/object:'+class_name, state)
         if isinstance(state, dict) and not state:
@@ -430,6 +435,8 @@ class Representer(SafeRepresenter):
         function_name = u'%s.%s' % (function.__module__, function.__name__)
         if not args and not listitems and not dictitems \
                 and isinstance(state, dict) and newobj:
+            state = state.items()
+            state.sort()
             return self.represent_mapping(
                     u'tag:yaml.org,2002:python/object:'+function_name, state)
         if not listitems and not dictitems  \
