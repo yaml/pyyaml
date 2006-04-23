@@ -184,18 +184,20 @@ class SafeRepresenter(BaseRepresenter):
     def represent_long(self, data):
         return self.represent_scalar(u'tag:yaml.org,2002:int', unicode(data))
 
-    inf_value = 1e300000
-    nan_value = inf_value/inf_value
+    repr_pos_inf = repr(1e300000)
+    repr_neg_inf = repr(-1e30000)
+    repr_nan = repr(1e300000/1e300000)
 
     def represent_float(self, data):
-        if data == self.inf_value:
+        repr_data = repr(data)
+        if repr_data == self.repr_pos_inf:
             value = u'.inf'
-        elif data == -self.inf_value:
+        elif repr_data == self.repr_neg_inf:
             value = u'-.inf'
-        elif data == self.nan_value or data != data:
+        elif repr_data == self.repr_nan:
             value = u'.nan'
         else:
-            value = unicode(repr(data))
+            value = unicode(repr_data)
         return self.represent_scalar(u'tag:yaml.org,2002:float', value)
 
     def represent_list(self, data):
