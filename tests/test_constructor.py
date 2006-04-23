@@ -255,10 +255,10 @@ class TestConstructorTypes(test_appliance.TestAppliance):
                 self.failUnlessEqual(data1, data2)
             except AssertionError:
                 if isinstance(data1, dict):
-                    data1 = data1.items()
+                    data1 = [(repr(key), value) for key, value in data1.items()]
                     data1.sort()
                     data1 = repr(data1)
-                    data2 = data2.items()
+                    data2 = [(repr(key), value) for key, value in data2.items()]
                     data2.sort()
                     data2 = repr(data2)
                 if data1 != data2:

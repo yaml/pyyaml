@@ -26,7 +26,7 @@ class TestAppliance(unittest.TestCase):
                 filenames = [os.path.join(cls.DATA, test+ext) for ext in extensions]
                 def test_method(self, test=test, filenames=filenames):
                     getattr(self, '_'+method_name)(test, *filenames)
-                test = test.replace('-', '_')
+                test = test.replace('-', '_').replace('.', '_')
                 try:
                     test_method.__name__ = '%s_%s' % (method_name, test)
                 except TypeError:
