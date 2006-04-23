@@ -185,7 +185,7 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_scalar(u'tag:yaml.org,2002:int', unicode(data))
 
     repr_pos_inf = repr(1e300000)
-    repr_neg_inf = repr(-1e30000)
+    repr_neg_inf = repr(-1e300000)
     repr_nan = repr(1e300000/1e300000)
 
     def represent_float(self, data):
