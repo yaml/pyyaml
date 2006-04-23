@@ -1301,6 +1301,13 @@ class Scanner:
                         or (self.flow_level and ch in u',:?[]{}'):
                     break
                 length += 1
+            # It's not clear what we should do with ':' in the flow context.
+            if (self.flow_level and ch == u':'
+                    and self.peek(length+1) not in u'\0 \t\r\n\x28\u2028\u2029,[]{}'):
+                self.forward(length)
+                raise ScannerError("while scanning a plain scalar", start_mark,
+                    "found unexpected ':'", self.get_mark(),
+                    "Please check http://pyyaml.org/wiki/YAMLColonInFlowContext for details.")
             if length == 0:
                 break
             self.allow_simple_key = False
