@@ -134,6 +134,7 @@ def serialize(node, stream=None, Dumper=Dumper, **kwds):
     return serialize_all([node], stream, Dumper=Dumper, **kwds)
 
 def dump_all(documents, stream=None, Dumper=Dumper,
+        default_style=None, default_flow_style=None,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
         encoding='utf-8', explicit_start=None, explicit_end=None,
@@ -150,7 +151,9 @@ def dump_all(documents, stream=None, Dumper=Dumper,
             from StringIO import StringIO
         stream = StringIO()
         getvalue = stream.getvalue
-    dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
+    dumper = Dumper(stream, default_style=default_style,
+            default_flow_style=default_flow_style,
+            canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break,
             encoding=encoding, version=version, tags=tags,
             explicit_start=explicit_start, explicit_end=explicit_end)
