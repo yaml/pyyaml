@@ -26,7 +26,9 @@ class BaseRepresenter:
     yaml_representers = {}
     yaml_multi_representers = {}
 
-    def __init__(self):
+    def __init__(self, default_style=None, default_flow_style=None):
+        self.default_style = default_style
+        self.default_flow_style = default_flow_style
         self.represented_objects = {}
 
     def represent(self, data):
@@ -96,6 +98,8 @@ class BaseRepresenter:
     add_multi_representer = classmethod(add_multi_representer)
 
     def represent_scalar(self, tag, value, style=None):
+        if style is None:
+            style = self.default_style
         return ScalarNode(tag, value, style=style)
 
     def represent_sequence(self, tag, sequence, flow_style=None):
@@ -106,6 +110,8 @@ class BaseRepresenter:
             if not (isinstance(node_item, ScalarNode) and not node_item.style):
                 best_style = False
             value.append(self.represent_data(item))
+        if flow_style is None:
+            flow_style = self.default_flow_style
         if flow_style is None:
             flow_style = best_style
         return SequenceNode(tag, value, flow_style=flow_style)
@@ -133,6 +139,8 @@ class BaseRepresenter:
                 if not (isinstance(node_value, ScalarNode) and not node_value.style):
                     best_style = False
                 value.append((node_key, node_value))
+        if flow_style is None:
+            flow_style = self.default_flow_style
         if flow_style is None:
             flow_style = best_style
         return MappingNode(tag, value, flow_style=flow_style)
