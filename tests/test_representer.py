@@ -6,12 +6,15 @@ from yaml import *
 
 class TestRepresenterTypes(test_appliance.TestAppliance):
 
-    def _testTypes(self, test_name, data_filename, code_filename):
+    def _testTypesUnicode(self, test_name, data_filename, code_filename):
+        return self._testTypes(test_name, data_filename, code_filename, allow_unicode=True)
+
+    def _testTypes(self, test_name, data_filename, code_filename, allow_unicode=False):
         data1 = eval(file(code_filename, 'rb').read())
         data2 = None
         output = None
         try:
-            output = dump(data1, Dumper=MyDumper)
+            output = dump(data1, Dumper=MyDumper, allow_unicode=allow_unicode)
             data2 = load(output, Loader=MyLoader)
             self.failUnlessEqual(type(data1), type(data2))
             try:
@@ -42,4 +45,5 @@ class TestRepresenterTypes(test_appliance.TestAppliance):
             raise
 
 TestRepresenterTypes.add_tests('testTypes', '.data', '.code')
+TestRepresenterTypes.add_tests('testTypesUnicode', '.data', '.code')
 

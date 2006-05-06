@@ -187,7 +187,7 @@ def safe_dump(data, stream=None, **kwds):
     """
     return dump_all([data], stream, Dumper=SafeDumper, **kwds)
 
-def add_implicit_detector(tag, regexp, first=None,
+def add_implicit_resolver(tag, regexp, first=None,
         Loader=Loader, Dumper=Dumper):
     """
     Add an implicit scalar detector.
