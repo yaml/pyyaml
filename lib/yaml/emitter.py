@@ -697,12 +697,13 @@ class Emitter:
             if ch in u'\n\x85\u2028\u2029':
                 line_breaks = True
             if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
-                if ch < u'\x80' or ch == u'\uFEFF': # '\uFEFF' is BOM.
-                    special_characters = True
-                else:
+                if (ch == u'\x85' or u'\xA0' <= ch <= u'\uD7FF'
+                        or u'\uE000' <= ch <= u'\uFFFD') and ch != u'\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
+                else:
+                    special_characters = True
 
             # Spaces, line breaks, and how they are mixed. State machine.
 
@@ -961,7 +962,9 @@ class Emitter:
                 ch = text[end]
             if ch is None or ch in u'"\\\x85\u2028\u2029\uFEFF' \
                     or not (u'\x20' <= ch <= u'\x7E'
-                            or (self.allow_unicode and ch > u'\x7F')):
+                        or (self.allow_unicode
+                            and (u'\xA0' <= ch <= u'\uD7FF'
+                                or u'\uE000' <= ch <= u'\uFFFD'))):
                 if start < end:
                     data = text[start:end]
                     self.column += len(data)
