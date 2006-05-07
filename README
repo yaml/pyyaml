@@ -5,6 +5,9 @@ To install, type 'python setup.py install'.
 For more information, check the PyYAML homepage:
 'http://pyyaml.org/wiki/PyYAML'.
 
+Documentation (rough and incomplete though):
+'http://pyyaml.org/wiki/PyYAMLDocumentation'.
+
 Post your questions and opinions to the YAML-Core mailing list:
 'http://lists.sourceforge.net/lists/listinfo/yaml-core'.
 

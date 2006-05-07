@@ -1,5 +1,5 @@
 
-.PHONY: default build force install test dist-src clean
+.PHONY: default build force install test dist clean
 
 PYTHON=/usr/bin/python
 TEST=
@@ -17,8 +17,9 @@ install: build
 test: build
 	${PYTHON} tests/test_build.py ${TEST}
 
-dist-src:
+dist: build
 	${PYTHON} setup.py sdist --formats=zip,gztar
+	${PYTHON} setup.py bdist_wininst
 
 clean:
 	${PYTHON} setup.py clean -a
