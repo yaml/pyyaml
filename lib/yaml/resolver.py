@@ -25,6 +25,8 @@ class BaseResolver:
     def add_implicit_resolver(cls, tag, regexp, first):
         if not 'yaml_implicit_resolvers' in cls.__dict__:
             cls.yaml_implicit_resolvers = cls.yaml_implicit_resolvers.copy()
+        if first is None:
+            first = [None]
         for ch in first:
             cls.yaml_implicit_resolvers.setdefault(ch, []).append((tag, regexp))
     add_implicit_resolver = classmethod(add_implicit_resolver)
