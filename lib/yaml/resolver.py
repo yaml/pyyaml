@@ -51,7 +51,7 @@ class BaseResolver:
                 node_check = ScalarNode
             elif node_check is list:
                 node_check = SequenceNode
-            elif node_check is map:
+            elif node_check is dict:
                 node_check = MappingNode
             elif node_check not in [ScalarNode, SequenceNode, MappingNode]  \
                     and not isinstance(node_check, basestring)  \
@@ -65,7 +65,7 @@ class BaseResolver:
             kind = ScalarNode
         elif kind is list:
             kind = SequenceNode
-        elif kind is map:
+        elif kind is dict:
             kind = MappingNode
         elif kind not in [ScalarNode, SequenceNode, MappingNode]    \
                 and kind is not None:
