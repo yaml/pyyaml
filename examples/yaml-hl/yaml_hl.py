@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import yaml, codecs, sys, optparse
+import yaml, codecs, sys, os.path, optparse
 
 class Style:
 
@@ -49,8 +49,6 @@ class YAMLHighlight:
             self.output = sys.stdout
 
     def highlight(self):
-        if self.style.header:
-            self.output.write(self.style.header)
         input = self.input.read()
         if input.startswith(codecs.BOM_UTF16_LE):
             input = unicode(input, 'utf-16-le')
@@ -93,6 +91,8 @@ class YAMLHighlight:
             chunks.append(substitution)
         chunks.reverse()
         result = u''.join(chunks)
+        if self.style.header:
+            self.output.write(self.style.header)
         self.output.write(result.encode('utf-8'))
         if self.style.footer:
             self.output.write(self.style.footer)
@@ -101,7 +101,8 @@ if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option('-s', '--style', dest='style', default='ascii',
             help="specify the highlighting style", metavar='STYLE')
-    parser.add_option('-c', '--config', dest='config', default='yaml_hl.cfg',
+    parser.add_option('-c', '--config', dest='config',
+            default=os.path.join(os.path.dirname(sys.argv[0]), 'yaml_hl.cfg'),
             help="set an alternative configuration file", metavar='CONFIG')
     parser.add_option('-i', '--input', dest='input', default=None,
             help="set the input file (default: stdin)", metavar='FILE')
