@@ -1,9 +1,44 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: PyYAML-3.01: Initial Release
+Subject: [ANN] PyYAML-3.02: YAML parser and emitter for Python
 
-PyYAML: YAML parser and emitter for Python
-==========================================
+========================
+ Announcing PyYAML-3.02
+========================
+
+A new bug-fix release of PyYAML is now available:
+
+    http://pyyaml.org/wiki/PyYAML
+
+
+Changes
+=======
+
+* Fix win32 installer.  Apparently bdist_wininst does not work under Linux.
+* Fix a bug in add_path_resolver.
+* Add the yaml_hl example.  Try to run on a color terminal:
+  `python yaml_hl.py <any_document.yaml`
+
+
+Resources
+=========
+
+PyYAML homepage: http://pyyaml.org/wiki/PyYAML
+PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
+
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.02.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.02.zip
+Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.02.win32.exe
+
+PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
+Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
+
+YAML homepage: http://yaml.org/
+YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
+
+
+About PyYAML
+============
 
 YAML is a data serialization format designed for human readability and
 interaction with scripting languages.  PyYAML is a YAML parser and
@@ -17,8 +52,6 @@ to represent an arbitrary Python object.
 PyYAML is applicable for a broad range of tasks from complex
 configuration files to object serialization and persistance.
 
-You may download PyYAML from http://pyyaml.org/wiki/PyYAML.
-
 
 Example
 =======
@@ -27,46 +60,19 @@ Example
 
 >>> yaml.load("""
 ... name: PyYAML
-... version: 3.01
 ... description: YAML parser and emitter for Python
 ... homepage: http://pyyaml.org/wiki/PyYAML
 ... keywords: [YAML, serialization, configuration, persistance, pickle]
 ... """)
 {'keywords': ['YAML', 'serialization', 'configuration', 'persistance',
-'pickle'], 'version': 3.01, 'homepage': 'http://pyyaml.org/wiki/PyYAML',
-'description': 'YAML parser and emitter for Python', 'name': 'PyYAML'}
+'pickle'], 'homepage': 'http://pyyaml.org/wiki/PyYAML', 'description':
+'YAML parser and emitter for Python', 'name': 'PyYAML'}
 
 >>> print yaml.dump(_)
-homepage: http://pyyaml.org/wiki/PyYAML
-version: 3.01
 name: PyYAML
-keywords: [YAML, serialization, configuration, persistance, pickle]
+homepage: http://pyyaml.org/wiki/PyYAML
 description: YAML parser and emitter for Python
-
-
-Links
-=====
-
-PyYAML homepage: http://pyyaml.org/wiki/PyYAML
-PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
-
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.01.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.01.zip
-Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.01.win32.exe
-
-PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
-Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
-
-YAML homepage: http://yaml.org/
-YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
-
-
-Changes
-=======
-
-* Initial release.  The version number reflects the codename of the
-  project (PyYAML 3000) and differenciates it from the abandoned PyYaml
-  module.
+keywords: [YAML, serialization, configuration, persistance, pickle]
 
 
 Copyright
