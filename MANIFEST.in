@@ -1,1 +1,2 @@
 include README LICENSE
+recursive-include examples *.py *.cfg
