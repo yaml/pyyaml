@@ -14,10 +14,11 @@ A new bug-fix release of PyYAML is now available:
 Changes
 =======
 
-* Fix win32 installer.  Apparently bdist_wininst does not work under Linux.
+* Fix win32 installer.  Apparently bdist_wininst does not work well under
+  Linux.
 * Fix a bug in add_path_resolver.
-* Add the yaml_hl example.  Try to run on a color terminal:
-  `python yaml_hl.py <any_document.yaml`
+* Add the yaml-highlight example.  Try to run on a color terminal:
+  `python yaml_hl.py <any_document.yaml`.
 
 
 Resources
