@@ -231,7 +231,9 @@ class SafeConstructor(BaseConstructor):
         else:
             return sign*int(value)
 
-    inf_value = 1e300000
+    inf_value = 1e300
+    while repr(inf_value) != repr(inf_value*inf_value):
+        inf_value *= inf_value
     nan_value = inf_value/inf_value
 
     def construct_yaml_float(self, node):
