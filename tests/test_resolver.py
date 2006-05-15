@@ -21,7 +21,7 @@ add_path_resolver(u'!root/key11/key12/*', ['key11', 'key12'],
 add_path_resolver(u'!root/key21/1/*', ['key21', 1],
         Loader=MyLoader, Dumper=MyDumper)
 
-add_path_resolver(u'!root/key31/*/*/key14/map', ['key31', None, None, 'key14'], map,
+add_path_resolver(u'!root/key31/*/*/key14/map', ['key31', None, None, 'key14'], dict,
         Loader=MyLoader, Dumper=MyDumper)
 
 class TestResolver(test_appliance.TestAppliance):

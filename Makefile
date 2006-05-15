@@ -19,6 +19,8 @@ test: build
 
 dist: build
 	${PYTHON} setup.py sdist --formats=zip,gztar
+
+windist: build
 	${PYTHON} setup.py bdist_wininst
 
 clean:
