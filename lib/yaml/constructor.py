@@ -258,7 +258,7 @@ class SafeConstructor(BaseConstructor):
                 base *= 60
             return sign*value
         else:
-            return float(value)
+            return sign*float(value)
 
     def construct_yaml_binary(self, node):
         value = self.construct_scalar(node)
