@@ -238,15 +238,15 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_float(self, node):
         value = str(self.construct_scalar(node))
-        value = value.replace('_', '')
+        value = value.replace('_', '').lower()
         sign = +1
         if value[0] == '-':
             sign = -1
         if value[0] in '+-':
             value = value[1:]
-        if value.lower() == '.inf':
+        if value == '.inf':
             return sign*self.inf_value
-        elif value.lower() == '.nan':
+        elif value == '.nan':
             return self.nan_value
         elif ':' in value:
             digits = [float(part) for part in value.split(':')]
