@@ -33,6 +33,9 @@ class TestRepresenterTypes(test_appliance.TestAppliance):
                     self.failUnlessEqual(type(data1), type(data2))
                     self.failUnlessEqual(len(data1), len(data2))
                     for item1, item2 in zip(data1, data2):
+                        if (item1 != item1 or (item1 == 0.0 and item1 == 1.0)) and  \
+                                (item2 != item2 or (item2 == 0.0 and item2 == 1.0)):
+                            continue
                         self.failUnlessEqual(item1, item2)
                 else:
                     raise

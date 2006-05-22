@@ -120,9 +120,11 @@ class Reader:
             self.determine_encoding()
 
     def peek(self, index=0):
-        if self.pointer+index+1 >= len(self.buffer):
+        try:
+            return self.buffer[self.pointer+index]
+        except IndexError:
             self.update(index+1)
-        return self.buffer[self.pointer+index]
+            return self.buffer[self.pointer+index]
 
     def prefix(self, length=1):
         if self.pointer+length >= len(self.buffer):
@@ -132,7 +134,7 @@ class Reader:
     def forward(self, length=1):
         if self.pointer+length+1 >= len(self.buffer):
             self.update(length+1)
-        for k in range(length):
+        while length:
             ch = self.buffer[self.pointer]
             self.pointer += 1
             self.index += 1
@@ -142,6 +144,7 @@ class Reader:
                 self.column = 0
             elif ch != u'\uFEFF':
                 self.column += 1
+            length -= 1
 
     def get_mark(self):
         if self.stream is None:
