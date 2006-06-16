@@ -139,7 +139,7 @@ class Reader:
             self.pointer += 1
             self.index += 1
             if ch in u'\n\x85\u2028\u2029'  \
-                    or (ch == u'\r' and self.buffer[self.pointer+1] != u'\n'):
+                    or (ch == u'\r' and self.buffer[self.pointer] != u'\n'):
                 self.line += 1
                 self.column = 0
             elif ch != u'\uFEFF':

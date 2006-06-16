@@ -214,11 +214,11 @@ class Scanner:
             return self.fetch_flow_mapping_end()
 
         # Is it the flow entry indicator?
-        if ch in u',':
+        if ch == u',':
             return self.fetch_flow_entry()
 
         # Is it the block entry indicator?
-        if ch in u'-' and self.check_block_entry():
+        if ch == u'-' and self.check_block_entry():
             return self.fetch_block_entry()
 
         # Is it the key indicator?
@@ -325,11 +325,11 @@ class Scanner:
         if self.flow_level in self.possible_simple_keys:
             key = self.possible_simple_keys[self.flow_level]
             
-            # I don't think it's possible, but I could be wrong.
-            assert not key.required
-            #if key.required:
-            #    raise ScannerError("while scanning a simple key", key.mark,
-            #            "could not found expected ':'", self.get_mark())
+            if key.required:
+                raise ScannerError("while scanning a simple key", key.mark,
+                        "could not found expected ':'", self.get_mark())
+
+            del self.possible_simple_keys[self.flow_level]
 
     # Indentation functions.
 
@@ -587,6 +587,14 @@ class Scanner:
                     raise ScannerError(None, None,
                             "mapping values are not allowed here",
                             self.get_mark())
+
+            # If this value starts a new block mapping, we need to add
+            # BLOCK-MAPPING-START.  It will be detected as an error later by
+            # the parser.
+            if not self.flow_level:
+                if self.add_indent(self.column):
+                    mark = self.get_mark()
+                    self.tokens.append(BlockMappingStartToken(mark, mark))
 
             # Simple keys are allowed after ':' in the block context.
             self.allow_simple_key = not self.flow_level
