@@ -1305,13 +1305,13 @@ class Scanner:
                 ch = self.peek(length)
                 if ch in u'\0 \t\r\n\x85\u2028\u2029'   \
                         or (not self.flow_level and ch == u':' and
-                                self.peek(length+1) in u'\0 \t\r\n\x28\u2028\u2029') \
+                                self.peek(length+1) in u'\0 \t\r\n\x85\u2028\u2029') \
                         or (self.flow_level and ch in u',:?[]{}'):
                     break
                 length += 1
             # It's not clear what we should do with ':' in the flow context.
             if (self.flow_level and ch == u':'
-                    and self.peek(length+1) not in u'\0 \t\r\n\x28\u2028\u2029,[]{}'):
+                    and self.peek(length+1) not in u'\0 \t\r\n\x85\u2028\u2029,[]{}'):
                 self.forward(length)
                 raise ScannerError("while scanning a plain scalar", start_mark,
                     "found unexpected ':'", self.get_mark(),
