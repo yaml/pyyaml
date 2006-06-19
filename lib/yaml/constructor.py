@@ -4,7 +4,6 @@ __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
 
 from error import *
 from nodes import *
-from composer import *
 
 try:
     import datetime
@@ -22,7 +21,7 @@ import binascii, re, sys
 class ConstructorError(MarkedYAMLError):
     pass
 
-class BaseConstructor(Composer):
+class BaseConstructor:
 
     yaml_constructors = {}
     yaml_multi_constructors = {}

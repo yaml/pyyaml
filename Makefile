@@ -1,5 +1,5 @@
 
-.PHONY: default build force install test dist clean
+.PHONY: default build buildext force forceext install installext test testext dist clean
 
 PYTHON=/usr/bin/python
 TEST=
@@ -8,19 +8,31 @@ PARAMETERS=
 build:
 	${PYTHON} setup.py build ${PARAMETERS}
 
+buildext:
+	${PYTHON} setup_ext.py build ${PARAMETERS}
+
 force:
 	${PYTHON} setup.py build -f ${PARAMETERS}
+
+forceext:
+	${PYTHON} setup_ext.py build -f ${PARAMETERS}
 
 install: build
 	${PYTHON} setup.py install ${PARAMETERS}
 
+installext: buildext
+	${PYTHON} setup_ext.py install ${PARAMETERS}
+
 test: build
 	${PYTHON} tests/test_build.py ${TEST}
 
-dist: build
+testext: buildext
+	${PYTHON} tests/test_build_ext.py ${TEST}
+
+dist:
 	${PYTHON} setup.py sdist --formats=zip,gztar
 
-windist: build
+windist:
 	${PYTHON} setup.py bdist_wininst
 
 clean:
