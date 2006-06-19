@@ -1,9 +1,9 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.02: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-3.03: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.02
+ Announcing PyYAML-3.03
 ========================
 
 A new bug-fix release of PyYAML is now available:
@@ -14,11 +14,10 @@ A new bug-fix release of PyYAML is now available:
 Changes
 =======
 
-* Fix win32 installer.  Apparently bdist_wininst does not work well under
-  Linux.
-* Fix a bug in add_path_resolver.
-* Add the yaml-highlight example.  Try to run on a color terminal:
-  `python yaml_hl.py <any_document.yaml`.
+* Fix Python 2.5 compatibility issues.
+* Fix numerous bugs in the float handling.
+* Fix scanning some ill-formed documents.
+* Other minor fixes.
 
 
 Resources
@@ -27,9 +26,9 @@ Resources
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.02.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.02.zip
-Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.02.win32.exe
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.03.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.03.zip
+Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.03.win32.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
