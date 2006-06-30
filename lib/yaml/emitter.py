@@ -922,13 +922,13 @@ class Emitter:
                             data = data.encode(self.encoding)
                         self.stream.write(data)
                         start = end
-                    if ch == u'\'':
-                        data = u'\'\''
-                        self.column += 2
-                        if self.encoding:
-                            data = data.encode(self.encoding)
-                        self.stream.write(data)
-                        start = end + 1
+            if ch == u'\'':
+                data = u'\'\''
+                self.column += 2
+                if self.encoding:
+                    data = data.encode(self.encoding)
+                self.stream.write(data)
+                start = end + 1
             if ch is not None:
                 spaces = (ch == u' ')
                 breaks = (ch in u'\n\x85\u2028\u2029')
