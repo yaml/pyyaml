@@ -9,15 +9,35 @@ def get_version():
     yaml_get_version(&major, &minor, &patch)
     return (major, minor, patch)
 
+def test_scanner(data):
+    cdef yaml_parser_t *parser
+    cdef yaml_token_t *token
+    cdef int done
+    if PyString_CheckExact(data) == 0:
+        raise TypeError("string input required")
+    parser = yaml_parser_new()
+    if parser == NULL:
+        raise MemoryError
+    yaml_parser_set_input_string(parser, PyString_AS_STRING(data), PyString_GET_SIZE(data))
+    done = 0
+    while done == 0:
+        token = yaml_parser_get_token(parser)
+        if token == NULL:
+            raise MemoryError
+        if token.type == YAML_STREAM_END_TOKEN:
+            done = 1
+        yaml_token_delete(token)
+    yaml_parser_delete(parser)
+
 cdef class Scanner:
 
     cdef yaml_parser_t *parser
     cdef int eof
     cdef object stream
+    cdef yaml_token_t *cached_token
+    cdef object cached_obj
 
     def __init__(self, stream):
-        cdef char *input
-        cdef int size
         if hasattr(stream, 'read'):
             stream = stream.read()
         if PyUnicode_CheckExact(stream) != 0:
@@ -30,6 +50,8 @@ cdef class Scanner:
         yaml_parser_set_input_string(self.parser, PyString_AS_STRING(stream), PyString_GET_SIZE(stream))
         self.eof = 0
         self.stream = stream
+        self.cached_token = NULL
+        self.cached_obj = None
 
     def __dealloc__(self):
         if self.parser != NULL:
@@ -142,6 +164,12 @@ cdef class Scanner:
 
     def get_token(self):
         cdef yaml_token_t *token
+        if self.cached_token != NULL:
+            yaml_token_delete(yaml_parser_get_token(self.parser))
+            obj = self.cached_obj
+            self.cached_token = NULL
+            self.cached_obj = None
+            return obj
         if self.eof != 0:
             return None
         token = yaml_parser_get_token(self.parser)
@@ -153,17 +181,31 @@ cdef class Scanner:
 
     def peek_token(self):
         cdef yaml_token_t *token
+        if self.cached_token != NULL:
+            return self.cached_obj
         if self.eof != 0:
             return None
         token = yaml_parser_peek_token(self.parser)
-        return self._convert(token)
+        obj = self._convert(token)
+        if token.type == YAML_STREAM_END_TOKEN:
+            self.eof = 1
+        self.cached_token = token
+        self.cached_obj = obj
+        return obj
 
     def check_token(self, *choices):
         cdef yaml_token_t *token
-        if self.eof != 0:
+        if self.cached_token != NULL:
+            obj = self.cached_obj
+        elif self.eof != 0:
             return False
-        token = yaml_parser_peek_token(self.parser)
-        obj = self._convert(token)
+        else:
+            token = yaml_parser_peek_token(self.parser)
+            obj = self._convert(token)
+            if token.type == YAML_STREAM_END_TOKEN:
+                self.eof = 1
+            self.cached_token = token
+            self.cached_obj = obj
         if not choices:
             return True
         for choice in choices:
