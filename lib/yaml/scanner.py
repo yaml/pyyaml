@@ -137,16 +137,6 @@ class Scanner:
             self.tokens_taken += 1
             return self.tokens.pop(0)
 
-    def __iter__(self):
-        # Iterator protocol.
-        while self.need_more_tokens():
-            self.fetch_more_tokens()
-        while self.tokens:
-            self.tokens_taken += 1
-            yield self.tokens.pop(0)
-            while self.need_more_tokens():
-                self.fetch_more_tokens()
-
     # Private methods.
 
     def need_more_tokens(self):

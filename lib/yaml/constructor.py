@@ -39,11 +39,6 @@ class BaseConstructor:
         if self.check_node():
             return self.construct_document(self.get_node())
 
-    def __iter__(self):
-        # Iterator protocol.
-        while self.check_node():
-            yield self.construct_document(self.get_node())
-
     def construct_document(self, node):
         data = self.construct_object(node)
         self.constructed_objects = {}
