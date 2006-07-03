@@ -22,11 +22,6 @@ class Composer:
         if not self.check_event(StreamEndEvent):
             return self.compose_document()
 
-    def __iter__(self):
-        # Iterator protocol.
-        while not self.check_event(StreamEndEvent):
-            yield self.compose_document()
-
     def compose_document(self):
 
         # Drop the STREAM-START event.
