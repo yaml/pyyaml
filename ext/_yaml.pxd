@@ -57,6 +57,17 @@ cdef extern from "_yaml.h":
         YAML_ANCHOR_TOKEN
         YAML_TAG_TOKEN
         YAML_SCALAR_TOKEN
+    cdef enum yaml_event_type_t:
+        YAML_STREAM_START_EVENT
+        YAML_STREAM_END_EVENT
+        YAML_DOCUMENT_START_EVENT
+        YAML_DOCUMENT_END_EVENT
+        YAML_ALIAS_EVENT
+        YAML_SCALAR_EVENT
+        YAML_SEQUENCE_START_EVENT
+        YAML_SEQUENCE_END_EVENT
+        YAML_MAPPING_START_EVENT
+        YAML_MAPPING_END_EVENT
 
     ctypedef int yaml_read_handler_t(void *data, char *buffer,
             int size, int *size_read)
@@ -65,6 +76,19 @@ cdef extern from "_yaml.h":
         int index
         int line
         int column
+    ctypedef struct yaml_version_directive_t:
+        int major
+        int minor
+    ctypedef struct yaml_tag_directive_t:
+        char *handle
+        char *prefix
+
+    ctypedef struct _yaml_token_stream_start_data_t:
+        yaml_encoding_t encoding
+    ctypedef struct _yaml_token_alias_data_t:
+        char *value
+    ctypedef struct _yaml_token_anchor_data_t:
+        char *value
     ctypedef struct _yaml_token_tag_data_t:
         char *handle
         char *suffix
@@ -79,8 +103,9 @@ cdef extern from "_yaml.h":
         char *handle
         char *prefix
     ctypedef union _yaml_token_data_t:
-        yaml_encoding_t encoding
-        char *anchor
+        _yaml_token_stream_start_data_t stream_start
+        _yaml_token_alias_data_t alias
+        _yaml_token_anchor_data_t anchor
         _yaml_token_tag_data_t tag
         _yaml_token_scalar_data_t scalar
         _yaml_token_version_directive_data_t version_directive
@@ -90,6 +115,49 @@ cdef extern from "_yaml.h":
         _yaml_token_data_t data
         yaml_mark_t start_mark
         yaml_mark_t end_mark
+
+    ctypedef struct _yaml_event_stream_start_data_t:
+        yaml_encoding_t encoding
+    ctypedef struct _yaml_event_document_start_data_t:
+        yaml_version_directive_t *version_directive
+        yaml_tag_directive_t **tag_directives
+        int implicit
+    ctypedef struct _yaml_event_document_end_data_t:
+        int implicit
+    ctypedef struct _yaml_event_alias_data_t:
+        char *anchor
+    ctypedef struct _yaml_event_scalar_data_t:
+        char *anchor
+        char *tag
+        char *value
+        int length
+        int plain_implicit
+        int quoted_implicit
+        yaml_scalar_style_t style
+    ctypedef struct _yaml_event_sequence_start_data_t:
+        char *anchor
+        char *tag
+        int implicit
+        yaml_sequence_style_t style
+    ctypedef struct _yaml_event_mapping_start_data_t:
+        char *anchor
+        char *tag
+        int implicit
+        yaml_mapping_style_t style
+    ctypedef union _yaml_event_data_t:
+        _yaml_event_stream_start_data_t stream_start
+        _yaml_event_document_start_data_t document_start
+        _yaml_event_document_end_data_t document_end
+        _yaml_event_alias_data_t alias
+        _yaml_event_scalar_data_t scalar
+        _yaml_event_sequence_start_data_t sequence_start
+        _yaml_event_mapping_start_data_t mapping_start
+    ctypedef struct yaml_event_t:
+        yaml_event_type_t type
+        _yaml_event_data_t data
+        yaml_mark_t start_mark
+        yaml_mark_t end_mark
+
     ctypedef struct yaml_parser_t:
         yaml_error_type_t error
         char *problem
@@ -102,6 +170,7 @@ cdef extern from "_yaml.h":
     char *yaml_get_version_string()
     void yaml_get_version(int *major, int *minor, int *patch)
     void yaml_token_delete(yaml_token_t *token)
+    void yaml_event_delete(yaml_event_t *event)
     yaml_parser_t *yaml_parser_new()
     void yaml_parser_delete(yaml_parser_t *parser)
     void yaml_parser_set_input_string(yaml_parser_t *parser,
@@ -112,4 +181,6 @@ cdef extern from "_yaml.h":
             yaml_encoding_t encoding)
     yaml_token_t *yaml_parser_get_token(yaml_parser_t *parser)
     yaml_token_t *yaml_parser_peek_token(yaml_parser_t *parser)
+    yaml_event_t *yaml_parser_get_event(yaml_parser_t *parser)
+    yaml_event_t *yaml_parser_peek_event(yaml_parser_t *parser)
 
