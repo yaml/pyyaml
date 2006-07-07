@@ -308,7 +308,6 @@ class Parser:
             if start_mark is None:
                 start_mark = end_mark = self.peek_token().start_mark
             event = None
-            collection_events = None
             implicit = (tag is None or tag == u'!')
             if indentless_sequence and self.check_token(BlockEntryToken):
                 end_mark = self.peek_token().end_mark
@@ -360,7 +359,7 @@ class Parser:
                     else:
                         node = 'flow'
                     token = self.peek_token()
-                    raise ParserError("while scanning a %s node" % node, start_mark,
+                    raise ParserError("while parsing a %s node" % node, start_mark,
                             "expected the node content, but found %r" % token.id,
                             token.start_mark)
         return event
@@ -383,7 +382,7 @@ class Parser:
                 return self.process_empty_scalar(token.end_mark)
         if not self.check_token(BlockEndToken):
             token = self.peek_token()
-            raise ParserError("while scanning a block collection", self.marks[-1],
+            raise ParserError("while parsing a block collection", self.marks[-1],
                     "expected <block end>, but found %r" % token.id, token.start_mark)
         token = self.get_token()
         event = SequenceEndEvent(token.start_mark, token.end_mark)
@@ -429,7 +428,7 @@ class Parser:
                 return self.process_empty_scalar(token.end_mark)
         if not self.check_token(BlockEndToken):
             token = self.peek_token()
-            raise ParserError("while scanning a block mapping", self.marks[-1],
+            raise ParserError("while parsing a block mapping", self.marks[-1],
                     "expected <block end>, but found %r" % token.id, token.start_mark)
         token = self.get_token()
         event = MappingEndEvent(token.start_mark, token.end_mark)
@@ -474,11 +473,11 @@ class Parser:
                     self.get_token()
                 else:
                     token = self.peek_token()
-                    raise ParserError("while scanning a flow sequence", self.marks[-1],
+                    raise ParserError("while parsing a flow sequence", self.marks[-1],
                             "expected ',' or ']', but got %r" % token.id, token.start_mark)
             
             if self.check_token(KeyToken):
-                token = self.get_token()
+                token = self.peek_token()
                 event = MappingStartEvent(None, None, True,
                         token.start_mark, token.end_mark,
                         flow_style=True)
@@ -494,6 +493,7 @@ class Parser:
         return event
 
     def parse_flow_sequence_entry_mapping_key(self):
+        token = self.get_token()
         if not self.check_token(ValueToken,
                 FlowEntryToken, FlowSequenceEndToken):
             self.states.append(self.parse_flow_sequence_entry_mapping_value)
@@ -539,7 +539,7 @@ class Parser:
                     self.get_token()
                 else:
                     token = self.peek_token()
-                    raise ParserError("while scanning a flow mapping", self.marks[-1],
+                    raise ParserError("while parsing a flow mapping", self.marks[-1],
                             "expected ',' or '}', but got %r" % token.id, token.start_mark)
             if self.check_token(KeyToken):
                 token = self.get_token()
