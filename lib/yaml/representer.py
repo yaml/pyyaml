@@ -417,7 +417,7 @@ class Representer(SafeRepresenter):
 
         cls = type(data)
         if cls in copy_reg.dispatch_table:
-            reduce = copy_reg.dispatch_table[cls]
+            reduce = copy_reg.dispatch_table[cls](data)
         elif hasattr(data, '__reduce_ex__'):
             reduce = data.__reduce_ex__(2)
         elif hasattr(data, '__reduce__'):
