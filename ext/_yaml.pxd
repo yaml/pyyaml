@@ -1,11 +1,15 @@
 
 cdef extern from "_yaml.h":
 
+    void memcpy(char *d, char *s, int l)
+    int strlen(char *s)
     int PyString_CheckExact(object o)
     int PyUnicode_CheckExact(object o)
     char *PyString_AS_STRING(object o)
     int PyString_GET_SIZE(object o)
     object PyString_FromStringAndSize(char *v, int l)
+    object PyUnicode_DecodeUTF8(char *s, int s, char *e)
+    object PyUnicode_AsUTF8String(object o)
 
     cdef enum yaml_encoding_t:
         YAML_ANY_ENCODING
@@ -36,6 +40,7 @@ cdef extern from "_yaml.h":
         YAML_BLOCK_MAPPING_STYLE
         YAML_FLOW_MAPPING_STYLE
     cdef enum yaml_token_type_t:
+        YAML_NO_TOKEN
         YAML_STREAM_START_TOKEN
         YAML_STREAM_END_TOKEN
         YAML_VERSION_DIRECTIVE_TOKEN
@@ -58,6 +63,7 @@ cdef extern from "_yaml.h":
         YAML_TAG_TOKEN
         YAML_SCALAR_TOKEN
     cdef enum yaml_event_type_t:
+        YAML_NO_EVENT
         YAML_STREAM_START_EVENT
         YAML_STREAM_END_EVENT
         YAML_DOCUMENT_START_EVENT
@@ -70,7 +76,7 @@ cdef extern from "_yaml.h":
         YAML_MAPPING_END_EVENT
 
     ctypedef int yaml_read_handler_t(void *data, char *buffer,
-            int size, int *size_read)
+            int size, int *size_read) except 0
 
     ctypedef struct yaml_mark_t:
         int index
@@ -171,7 +177,7 @@ cdef extern from "_yaml.h":
     void yaml_get_version(int *major, int *minor, int *patch)
     void yaml_token_delete(yaml_token_t *token)
     void yaml_event_delete(yaml_event_t *event)
-    yaml_parser_t *yaml_parser_new()
+    int yaml_parser_initialize(yaml_parser_t *parser)
     void yaml_parser_delete(yaml_parser_t *parser)
     void yaml_parser_set_input_string(yaml_parser_t *parser,
             char *input, int size)
@@ -179,8 +185,6 @@ cdef extern from "_yaml.h":
             yaml_read_handler_t *handler, void *data)
     void yaml_parser_set_encoding(yaml_parser_t *parser,
             yaml_encoding_t encoding)
-    yaml_token_t *yaml_parser_get_token(yaml_parser_t *parser)
-    yaml_token_t *yaml_parser_peek_token(yaml_parser_t *parser)
-    yaml_event_t *yaml_parser_get_event(yaml_parser_t *parser)
-    yaml_event_t *yaml_parser_peek_event(yaml_parser_t *parser)
+    int yaml_parser_scan(yaml_parser_t *parser, yaml_token_t *token) except *
+    int yaml_parser_parse(yaml_parser_t *parser, yaml_event_t *event) except *
 

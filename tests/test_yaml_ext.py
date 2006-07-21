@@ -10,11 +10,19 @@ class TestExtVersion(unittest.TestCase):
 
 class TestExtLoader(test_appliance.TestAppliance):
 
-    def _testExtScanner(self, test_name, data_filename, canonical_filename):
-        data = file(data_filename, 'r').read()
+    def _testExtScannerFileInput(self, test_name, data_filename, canonical_filename):
+        self._testExtScanner(test_name, data_filename, canonical_filename, True)
+
+    def _testExtScanner(self, test_name, data_filename, canonical_filename, file_input=False):
+        if file_input:
+            data = file(data_filename, 'r')
+        else:
+            data = file(data_filename, 'r').read()
         tokens = list(yaml.scan(data))
         ext_tokens = []
         try:
+            if file_input:
+                data = file(data_filename, 'r')
             for token in yaml.scan(data, Loader=yaml.ExtLoader):
                 ext_tokens.append(token)
             self.failUnlessEqual(len(tokens), len(ext_tokens))
@@ -62,6 +70,7 @@ class TestExtLoader(test_appliance.TestAppliance):
             raise
 
 TestExtLoader.add_tests('testExtScanner', '.data', '.canonical')
+TestExtLoader.add_tests('testExtScannerFileInput', '.data', '.canonical')
 TestExtLoader.add_tests('testExtParser', '.data', '.canonical')
 
 def main(module='__main__'):
