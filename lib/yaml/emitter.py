@@ -492,7 +492,8 @@ class Emitter:
                     or (not self.flow_level and self.analysis.allow_block_plain))):
                 return ''
         if self.event.style and self.event.style in '|>':
-            if not self.flow_level and self.analysis.allow_block:
+            if (not self.flow_level and not self.simple_key_context
+                    and self.analysis.allow_block):
                 return self.event.style
         if not self.event.style or self.event.style == '\'':
             if (self.analysis.allow_single_quoted and
@@ -670,7 +671,7 @@ class Emitter:
 
             if index == 0:
                 # Leading indicators are special characters.
-                if ch in u'#,[]{}#&*!|>\'\"%@`': 
+                if ch in u'#,[]{}&*!|>\'\"%@`': 
                     flow_indicators = True
                     block_indicators = True
                 if ch in u'?:':
