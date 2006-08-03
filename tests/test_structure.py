@@ -153,6 +153,7 @@ class MyLoader(Loader):
     def construct_undefined(self, node):
         return self.construct_scalar(node)
 
+MyLoader.add_constructor(u'tag:yaml.org,2002:map', MyLoader.construct_mapping)
 MyLoader.add_constructor(None, MyLoader.construct_undefined)
 
 class MyCanonicalLoader(test_appliance.CanonicalLoader):
@@ -168,6 +169,7 @@ class MyCanonicalLoader(test_appliance.CanonicalLoader):
     def construct_undefined(self, node):
         return self.construct_scalar(node)
 
+MyCanonicalLoader.add_constructor(u'tag:yaml.org,2002:map', MyCanonicalLoader.construct_mapping)
 MyCanonicalLoader.add_constructor(None, MyCanonicalLoader.construct_undefined)
 
 class TestConstructor(test_appliance.TestAppliance):

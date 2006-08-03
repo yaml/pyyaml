@@ -240,6 +240,10 @@ class MyDict(dict):
     def __eq__(self, other):
         return type(self) is type(other) and dict(self) == dict(other)
 
+def execute(code):
+    exec code
+    return value
+
 class TestConstructorTypes(test_appliance.TestAppliance):
 
     def _testTypes(self, test_name, data_filename, code_filename):

@@ -1,5 +1,5 @@
 
-class Token:
+class Token(object):
     def __init__(self, start_mark, end_mark):
         self.start_mark = start_mark
         self.end_mark = end_mark

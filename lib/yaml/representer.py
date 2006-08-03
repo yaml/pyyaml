@@ -21,7 +21,7 @@ import sys, copy_reg
 class RepresenterError(YAMLError):
     pass
 
-class BaseRepresenter:
+class BaseRepresenter(object):
 
     yaml_representers = {}
     yaml_multi_representers = {}
@@ -30,21 +30,27 @@ class BaseRepresenter:
         self.default_style = default_style
         self.default_flow_style = default_flow_style
         self.represented_objects = {}
+        self.object_keeper = []
+        self.alias_key = None
 
     def represent(self, data):
         node = self.represent_data(data)
         self.serialize(node)
         self.represented_objects = {}
+        self.object_keeper = []
+        self.alias_key = None
 
     class C: pass
     c = C()
     def f(): pass
+    def g(): yield None
     classobj_type = type(C)
     instance_type = type(c)
     function_type = type(f)
+    generator_type = type(g())
     builtin_function_type = type(abs)
     module_type = type(sys)
-    del C, c, f
+    del C, c, f, g
 
     def get_classobj_bases(self, cls):
         bases = [cls]
@@ -54,16 +60,17 @@ class BaseRepresenter:
 
     def represent_data(self, data):
         if self.ignore_aliases(data):
-            alias_key = None
+            self.alias_key = None
         else:
-            alias_key = id(data)
-        if alias_key is not None:
-            if alias_key in self.represented_objects:
-                node = self.represented_objects[alias_key]
-                if node is None:
-                    raise RepresenterError("recursive objects are not allowed: %r" % data)
+            self.alias_key = id(data)
+        if self.alias_key is not None:
+            if self.alias_key in self.represented_objects:
+                node = self.represented_objects[self.alias_key]
+                #if node is None:
+                #    raise RepresenterError("recursive objects are not allowed: %r" % data)
                 return node
-            self.represented_objects[alias_key] = None
+            #self.represented_objects[alias_key] = None
+            self.object_keeper.append(data)
         data_types = type(data).__mro__
         if type(data) is self.instance_type:
             data_types = self.get_classobj_bases(data.__class__)+list(data_types)
@@ -81,8 +88,8 @@ class BaseRepresenter:
                     node = self.yaml_representers[None](self, data)
                 else:
                     node = ScalarNode(None, unicode(data))
-        if alias_key is not None:
-            self.represented_objects[alias_key] = node
+        #if alias_key is not None:
+        #    self.represented_objects[alias_key] = node
         return node
 
     def add_representer(cls, data_type, representer):
@@ -100,50 +107,52 @@ class BaseRepresenter:
     def represent_scalar(self, tag, value, style=None):
         if style is None:
             style = self.default_style
-        return ScalarNode(tag, value, style=style)
+        node = ScalarNode(tag, value, style=style)
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
+        return node
 
     def represent_sequence(self, tag, sequence, flow_style=None):
-        best_style = True
         value = []
+        node = SequenceNode(tag, value, flow_style=flow_style)
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
+        best_style = True
         for item in sequence:
             node_item = self.represent_data(item)
             if not (isinstance(node_item, ScalarNode) and not node_item.style):
                 best_style = False
-            value.append(self.represent_data(item))
+            value.append(node_item)
         if flow_style is None:
-            flow_style = self.default_flow_style
-        if flow_style is None:
-            flow_style = best_style
-        return SequenceNode(tag, value, flow_style=flow_style)
+            if self.default_flow_style is not None:
+                node.flow_style = self.default_flow_style
+            else:
+                node.flow_style = best_style
+        return node
 
     def represent_mapping(self, tag, mapping, flow_style=None):
+        value = []
+        node = MappingNode(tag, value, flow_style=flow_style)
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
         best_style = True
-        if hasattr(mapping, 'keys'):
-            value = {}
-            for item_key in mapping.keys():
-                item_value = mapping[item_key]
-                node_key = self.represent_data(item_key)
-                node_value = self.represent_data(item_value)
-                if not (isinstance(node_key, ScalarNode) and not node_key.style):
-                    best_style = False
-                if not (isinstance(node_value, ScalarNode) and not node_value.style):
-                    best_style = False
-                value[node_key] = node_value
-        else:
-            value = []
-            for item_key, item_value in mapping:
-                node_key = self.represent_data(item_key)
-                node_value = self.represent_data(item_value)
-                if not (isinstance(node_key, ScalarNode) and not node_key.style):
-                    best_style = False
-                if not (isinstance(node_value, ScalarNode) and not node_value.style):
-                    best_style = False
-                value.append((node_key, node_value))
+        if hasattr(mapping, 'items'):
+            mapping = mapping.items()
+            mapping.sort()
+        for item_key, item_value in mapping:
+            node_key = self.represent_data(item_key)
+            node_value = self.represent_data(item_value)
+            if not (isinstance(node_key, ScalarNode) and not node_key.style):
+                best_style = False
+            if not (isinstance(node_value, ScalarNode) and not node_value.style):
+                best_style = False
+            value.append((node_key, node_value))
         if flow_style is None:
-            flow_style = self.default_flow_style
-        if flow_style is None:
-            flow_style = best_style
-        return MappingNode(tag, value, flow_style=flow_style)
+            if self.default_flow_style is not None:
+                node.flow_style = self.default_flow_style
+            else:
+                node.flow_style = best_style
+        return node
 
     def ignore_aliases(self, data):
         return False
@@ -208,19 +217,19 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_scalar(u'tag:yaml.org,2002:float', value)
 
     def represent_list(self, data):
-        pairs = (len(data) > 0 and isinstance(data, list))
-        if pairs:
-            for item in data:
-                if not isinstance(item, tuple) or len(item) != 2:
-                    pairs = False
-                    break
-        if not pairs:
+        #pairs = (len(data) > 0 and isinstance(data, list))
+        #if pairs:
+        #    for item in data:
+        #        if not isinstance(item, tuple) or len(item) != 2:
+        #            pairs = False
+        #            break
+        #if not pairs:
             return self.represent_sequence(u'tag:yaml.org,2002:seq', data)
-        value = []
-        for item_key, item_value in data:
-            value.append(self.represent_mapping(u'tag:yaml.org,2002:map',
-                [(item_key, item_value)]))
-        return SequenceNode(u'tag:yaml.org,2002:pairs', value)
+        #value = []
+        #for item_key, item_value in data:
+        #    value.append(self.represent_mapping(u'tag:yaml.org,2002:map',
+        #        [(item_key, item_value)]))
+        #return SequenceNode(u'tag:yaml.org,2002:pairs', value)
 
     def represent_dict(self, data):
         return self.represent_mapping(u'tag:yaml.org,2002:map', data)
@@ -250,9 +259,6 @@ class SafeRepresenter(BaseRepresenter):
             state = data.__getstate__()
         else:
             state = data.__dict__.copy()
-        if isinstance(state, dict):
-            state = state.items()
-            state.sort()
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
@@ -384,8 +390,6 @@ class Representer(SafeRepresenter):
         else:
             state = data.__dict__
         if args is None and isinstance(state, dict):
-            state = state.items()
-            state.sort()
             return self.represent_mapping(
                     u'tag:yaml.org,2002:python/object:'+class_name, state)
         if isinstance(state, dict) and not state:
@@ -444,8 +448,6 @@ class Representer(SafeRepresenter):
         function_name = u'%s.%s' % (function.__module__, function.__name__)
         if not args and not listitems and not dictitems \
                 and isinstance(state, dict) and newobj:
-            state = state.items()
-            state.sort()
             return self.represent_mapping(
                     u'tag:yaml.org,2002:python/object:'+function_name, state)
         if not listitems and not dictitems  \
