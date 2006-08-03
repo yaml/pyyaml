@@ -72,8 +72,7 @@ class TestResolver(test_appliance.TestAppliance):
             return node.tag, value
         elif isinstance(node, MappingNode):
             value = []
-            for key in node.value:
-                item = node.value[key]
+            for key, item in node.value:
                 value.append((self._convert(key), self._convert(item)))
             value.sort()
             return node.tag, value

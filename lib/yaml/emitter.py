@@ -16,7 +16,7 @@ import re
 class EmitterError(YAMLError):
     pass
 
-class ScalarAnalysis:
+class ScalarAnalysis(object):
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
@@ -30,7 +30,7 @@ class ScalarAnalysis:
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
 
-class Emitter:
+class Emitter(object):
 
     DEFAULT_TAG_PREFIXES = {
         u'!' : u'!',

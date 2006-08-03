@@ -8,7 +8,7 @@ from nodes import *
 class SerializerError(YAMLError):
     pass
 
-class Serializer:
+class Serializer(object):
 
     ANCHOR_TEMPLATE = u'id%03d'
 
@@ -67,14 +67,9 @@ class Serializer:
                 for item in node.value:
                     self.anchor_node(item)
             elif isinstance(node, MappingNode):
-                if hasattr(node.value, 'keys'):
-                    for key in node.value.keys():
-                        self.anchor_node(key)
-                        self.anchor_node(node.value[key])
-                else:
-                    for key, value in node.value:
-                        self.anchor_node(key)
-                        self.anchor_node(value)
+                for key, value in node.value:
+                    self.anchor_node(key)
+                    self.anchor_node(value)
 
     def generate_anchor(self, node):
         self.last_anchor_id += 1
@@ -108,14 +103,9 @@ class Serializer:
                             == self.resolve(MappingNode, node.value, True))
                 self.emit(MappingStartEvent(alias, node.tag, implicit,
                     flow_style=node.flow_style))
-                if hasattr(node.value, 'keys'):
-                    for key in node.value.keys():
-                        self.serialize_node(key, node, None)
-                        self.serialize_node(node.value[key], node, key)
-                else:
-                    for key, value in node.value:
-                        self.serialize_node(key, node, None)
-                        self.serialize_node(value, node, key)
+                for key, value in node.value:
+                    self.serialize_node(key, node, None)
+                    self.serialize_node(value, node, key)
                 self.emit(MappingEndEvent())
             self.ascend_resolver()
 

@@ -69,7 +69,7 @@ from scanner import *
 class ParserError(MarkedYAMLError):
     pass
 
-class Parser:
+class Parser(object):
     # Since writing a recursive-descendant parser is a straightforward task, we
     # do not give many comments here.
     # Note that we use Python generators. If you rewrite the parser in another
