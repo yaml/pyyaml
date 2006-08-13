@@ -37,7 +37,7 @@ class Composer(object):
         # Drop the DOCUMENT-END event.
         self.get_event()
 
-        self.complete_anchors = {}
+        self.anchors = {}
         return node
 
     def compose_node(self, parent, index):
