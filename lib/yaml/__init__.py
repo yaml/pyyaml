@@ -8,6 +8,11 @@ from nodes import *
 from loader import *
 from dumper import *
 
+try:
+    from cyaml import *
+except ImportError:
+    pass
+
 def scan(stream, Loader=Loader):
     """
     Scan a YAML stream and produce scanning tokens.
