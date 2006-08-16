@@ -5,11 +5,7 @@ __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
 from error import *
 from nodes import *
 
-try:
-    import datetime
-    datetime_available = True
-except ImportError:
-    datetime_available = False
+import datetime
 
 try:
     set
@@ -304,28 +300,36 @@ class SafeConstructor(BaseConstructor):
                 (?P<hour>[0-9][0-9]?)
                 :(?P<minute>[0-9][0-9])
                 :(?P<second>[0-9][0-9])
-                (?:\.(?P<fraction>[0-9]*))?
-                (?:[ \t]*(?:Z|(?P<tz_hour>[-+][0-9][0-9]?)
-                (?::(?P<tz_minute>[0-9][0-9])?)?))?)?$''', re.X)
+                (?:(?P<fraction>\.[0-9]*))?
+                (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
+                (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
 
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
         match = self.timestamp_regexp.match(node.value)
         values = match.groupdict()
-        for key in values:
-            if values[key]:
-                values[key] = int(values[key])
-            else:
-                values[key] = 0
-        fraction = values['fraction']
-        if fraction:
-            while 10*fraction < 1000000:
-                fraction *= 10
-            values['fraction'] = fraction
-        stamp = datetime.datetime(values['year'], values['month'], values['day'],
-                values['hour'], values['minute'], values['second'], values['fraction'])
-        diff = datetime.timedelta(hours=values['tz_hour'], minutes=values['tz_minute'])
-        return stamp-diff
+        year = int(values['year'])
+        month = int(values['month'])
+        day = int(values['day'])
+        if not values['hour']:
+            return datetime.date(year, month, day)
+        hour = int(values['hour'])
+        minute = int(values['minute'])
+        second = int(values['second'])
+        fraction = 0
+        if values['fraction']:
+            fraction = int(float(values['fraction'])*1000000)
+        delta = None
+        if values['tz_sign']:
+            tz_hour = int(values['tz_hour'])
+            tz_minute = int(values['tz_minute'] or 0)
+            delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
+            if values['tz_sign'] == '-':
+                delta = -delta
+        data = datetime.datetime(year, month, day, hour, minute, second, fraction)
+        if delta:
+            data -= delta
+        return data
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
@@ -429,10 +433,9 @@ SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:binary',
         SafeConstructor.construct_yaml_binary)
 
-if datetime_available:
-    SafeConstructor.add_constructor(
-            u'tag:yaml.org,2002:timestamp',
-            SafeConstructor.construct_yaml_timestamp)
+SafeConstructor.add_constructor(
+        u'tag:yaml.org,2002:timestamp',
+        SafeConstructor.construct_yaml_timestamp)
 
 SafeConstructor.add_constructor(
         u'tag:yaml.org,2002:omap',

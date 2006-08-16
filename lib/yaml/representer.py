@@ -5,11 +5,7 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from error import *
 from nodes import *
 
-try:
-    import datetime
-    datetime_available = True
-except ImportError:
-    datetime_available = False
+import datetime
 
 try:
     set
@@ -241,17 +237,11 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_mapping(u'tag:yaml.org,2002:set', value)
 
     def represent_date(self, data):
-        value = u'%04d-%02d-%02d' % (data.year, data.month, data.day)
+        value = unicode(data.isoformat())
         return self.represent_scalar(u'tag:yaml.org,2002:timestamp', value)
 
     def represent_datetime(self, data):
-        value = u'%04d-%02d-%02d %02d:%02d:%02d' \
-                % (data.year, data.month, data.day,
-                    data.hour, data.minute, data.second)
-        if data.microsecond:
-            value += u'.' + unicode(data.microsecond/1000000.0).split(u'.')[1]
-        if data.utcoffset():
-            value += unicode(data.utcoffset())
+        value = unicode(data.isoformat(' '))
         return self.represent_scalar(u'tag:yaml.org,2002:timestamp', value)
 
     def represent_yaml_object(self, tag, data, cls, flow_style=None):
@@ -297,11 +287,10 @@ SafeRepresenter.add_representer(dict,
 SafeRepresenter.add_representer(set,
         SafeRepresenter.represent_set)
 
-if datetime_available:
-    SafeRepresenter.add_representer(datetime.date,
-            SafeRepresenter.represent_date)
-    SafeRepresenter.add_representer(datetime.datetime,
-            SafeRepresenter.represent_datetime)
+SafeRepresenter.add_representer(datetime.date,
+        SafeRepresenter.represent_date)
+SafeRepresenter.add_representer(datetime.datetime,
+        SafeRepresenter.represent_datetime)
 
 SafeRepresenter.add_representer(None,
         SafeRepresenter.represent_undefined)

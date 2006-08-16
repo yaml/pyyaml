@@ -1,9 +1,7 @@
 
 import test_appliance
-try:
-    import datetime
-except ImportError:
-    pass
+
+import datetime
 try:
     set
 except NameError:
@@ -240,6 +238,22 @@ class MyDict(dict):
     def __eq__(self, other):
         return type(self) is type(other) and dict(self) == dict(other)
 
+class FixedOffset(datetime.tzinfo):
+
+    def __init__(self, offset, name):
+        self.__offset = datetime.timedelta(minutes=offset)
+        self.__name = name
+
+    def utcoffset(self, dt):
+        return self.__offset
+
+    def tzname(self, dt):
+        return self.__name
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+
 def execute(code):
     exec code
     return value
@@ -257,7 +271,7 @@ class TestConstructorTypes(test_appliance.TestAppliance):
             self.failUnlessEqual(type(data1), type(data2))
             try:
                 self.failUnlessEqual(data1, data2)
-            except AssertionError:
+            except (AssertionError, TypeError):
                 if isinstance(data1, dict):
                     data1 = [(repr(key), value) for key, value in data1.items()]
                     data1.sort()
@@ -274,6 +288,10 @@ class TestConstructorTypes(test_appliance.TestAppliance):
                         if (item1 != item1 or (item1 == 0.0 and item1 == 1.0)) and  \
                                 (item2 != item2 or (item2 == 0.0 and item2 == 1.0)):
                             continue
+                        if isinstance(item1, datetime.datetime):
+                            item1 = item1.utctimetuple()
+                        if isinstance(item2, datetime.datetime):
+                            item2 = item2.utctimetuple()
                         self.failUnlessEqual(item1, item2)
                 else:
                     raise

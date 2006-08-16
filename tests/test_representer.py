@@ -19,7 +19,7 @@ class TestRepresenterTypes(test_appliance.TestAppliance):
             self.failUnlessEqual(type(data1), type(data2))
             try:
                 self.failUnlessEqual(data1, data2)
-            except AssertionError:
+            except (AssertionError, TypeError):
                 if isinstance(data1, dict):
                     data1 = [(repr(key), value) for key, value in data1.items()]
                     data1.sort()
@@ -36,6 +36,10 @@ class TestRepresenterTypes(test_appliance.TestAppliance):
                         if (item1 != item1 or (item1 == 0.0 and item1 == 1.0)) and  \
                                 (item2 != item2 or (item2 == 0.0 and item2 == 1.0)):
                             continue
+                        if isinstance(item1, datetime.datetime):
+                            item1 = item1.utctimetuple()
+                        if isinstance(item2, datetime.datetime):
+                            item2 = item2.utctimetuple()
                         self.failUnlessEqual(item1, item2)
                 else:
                     raise
