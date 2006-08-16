@@ -3,4 +3,5 @@
     "answer": False,
     "logical": True,
     "option": True,
+    "but": { "y": "is a string", "n": "is a string" },
 }
