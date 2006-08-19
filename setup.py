@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '3.03'
+VERSION = '3.04'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability and
@@ -30,23 +30,24 @@ CLASSIFIERS = [
     "Topic :: Text Processing :: Markup",
 ]
 
-
 from distutils.core import setup
 
-setup(
-    name=NAME,
-    version=VERSION,
-    description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
-    author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
-    license=LICENSE,
-    platforms=PLATFORMS,
-    url=URL,
-    download_url=DOWNLOAD_URL,
-    classifiers=CLASSIFIERS,
+if __name__ == '__main__':
 
-    package_dir={'': 'lib'},
-    packages=['yaml'],
-)
+    setup(
+        name=NAME,
+        version=VERSION,
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        author=AUTHOR,
+        author_email=AUTHOR_EMAIL,
+        license=LICENSE,
+        platforms=PLATFORMS,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        classifiers=CLASSIFIERS,
+
+        package_dir={'': 'lib'},
+        packages=['yaml'],
+    )
 

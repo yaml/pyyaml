@@ -1,2 +1,3 @@
-include README LICENSE
+include README LICENSE setup.py setup_with_libyaml.py
+include ext/_yaml.pyx ext/_yaml.pxd ext/_yaml.h ext/_yaml.c
 recursive-include examples *.py *.cfg
