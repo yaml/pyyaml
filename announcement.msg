@@ -17,7 +17,8 @@ Changes
 
 * Include experimental LibYAML bindings.
 * Fully support recursive structures.
-* Fix a number of bugs and annoyances.
+* Fix a number of bugs and annoyances
+  (see http://pyyaml.org/wiki/PyYAML#History for more details).
 
 
 Resources
@@ -28,7 +29,9 @@ PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
 TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.04.tar.gz
 ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.04.zip
-Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.04.win32.exe
+Windows installer:
+    http://pyyaml.org/download/pyyaml/PyYAML-3.04.win32-py2.3.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.04.win32-py2.4.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
@@ -58,9 +61,10 @@ Example
 
 >>> import yaml
 >>> print yaml.load("""
-... --- &A
-... direct self reference: *A
-... indirect self references: [*A, *A, *A]
+... &A {
+...     direct self reference: *A,
+...     indirect self references: [*A, *A, *A]
+... }
 ... """)
 {'direct self reference': {...},
 'indirect self references': [{...}, {...}, {...}]}
@@ -72,4 +76,7 @@ Copyright
 The PyYAML module is written by Kirill Simonov <xi@resolvent.net>.
 
 PyYAML is released under the MIT license.
+
+This release is developed with the support of the Google Summer of Code
+program under the mentorship of Clark Evans.
 
