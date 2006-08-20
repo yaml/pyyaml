@@ -9,19 +9,19 @@ build:
 	${PYTHON} setup.py build ${PARAMETERS}
 
 buildext:
-	${PYTHON} setup_ext.py build ${PARAMETERS}
+	${PYTHON} setup_with_libyaml.py build ${PARAMETERS}
 
 force:
 	${PYTHON} setup.py build -f ${PARAMETERS}
 
 forceext:
-	${PYTHON} setup_ext.py build -f ${PARAMETERS}
+	${PYTHON} setup_with_libyaml.py build -f ${PARAMETERS}
 
 install: build
 	${PYTHON} setup.py install ${PARAMETERS}
 
 installext: buildext
-	${PYTHON} setup_ext.py install ${PARAMETERS}
+	${PYTHON} setup_with_libyaml.py install ${PARAMETERS}
 
 test: build
 	${PYTHON} tests/test_build.py ${TEST}
@@ -37,4 +37,3 @@ windist:
 
 clean:
 	${PYTHON} setup.py clean -a
-
