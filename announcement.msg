@@ -1,12 +1,13 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.03: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-3.04: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.03
+ Announcing PyYAML-3.04
 ========================
 
-A new bug-fix release of PyYAML is now available:
+A new release of PyYAML, featuring LibYAML bindings and support for recursive
+structures, is now available:
 
     http://pyyaml.org/wiki/PyYAML
 
@@ -14,10 +15,9 @@ A new bug-fix release of PyYAML is now available:
 Changes
 =======
 
-* Fix Python 2.5 compatibility issues.
-* Fix numerous bugs in the float handling.
-* Fix scanning some ill-formed documents.
-* Other minor fixes.
+* Include experimental LibYAML bindings.
+* Fully support recursive structures.
+* Fix a number of bugs and annoyances.
 
 
 Resources
@@ -26,9 +26,9 @@ Resources
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.03.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.03.zip
-Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.03.win32.exe
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.04.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.04.zip
+Windows installer: http://pyyaml.org/download/pyyaml/PyYAML-3.04.win32.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
@@ -57,22 +57,13 @@ Example
 =======
 
 >>> import yaml
-
->>> yaml.load("""
-... name: PyYAML
-... description: YAML parser and emitter for Python
-... homepage: http://pyyaml.org/wiki/PyYAML
-... keywords: [YAML, serialization, configuration, persistance, pickle]
+>>> print yaml.load("""
+... --- &A
+... direct self reference: *A
+... indirect self references: [*A, *A, *A]
 ... """)
-{'keywords': ['YAML', 'serialization', 'configuration', 'persistance',
-'pickle'], 'homepage': 'http://pyyaml.org/wiki/PyYAML', 'description':
-'YAML parser and emitter for Python', 'name': 'PyYAML'}
-
->>> print yaml.dump(_)
-name: PyYAML
-homepage: http://pyyaml.org/wiki/PyYAML
-description: YAML parser and emitter for Python
-keywords: [YAML, serialization, configuration, persistance, pickle]
+{'direct self reference': {...},
+'indirect self references': [{...}, {...}, {...}]}
 
 
 Copyright
