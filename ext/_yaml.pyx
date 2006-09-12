@@ -651,6 +651,9 @@ cdef class CParser:
 
     def check_node(self):
         self._parse_next_event()
+        if self.parsed_event.type == YAML_STREAM_START_EVENT:
+            yaml_event_delete(&self.parsed_event)
+            self._parse_next_event()
         if self.parsed_event.type != YAML_STREAM_END_EVENT:
             return True
         return False
@@ -661,9 +664,6 @@ cdef class CParser:
             return self._compose_document()
 
     cdef object _compose_document(self):
-        if self.parsed_event.type == YAML_STREAM_START_EVENT:
-            yaml_event_delete(&self.parsed_event)
-            self._parse_next_event()
         yaml_event_delete(&self.parsed_event)
         node = self._compose_node(None, None)
         self._parse_next_event()
