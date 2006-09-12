@@ -14,6 +14,10 @@ class Composer(object):
         self.anchors = {}
 
     def check_node(self):
+        # Drop the STREAM-START event.
+        if self.check_event(StreamStartEvent):
+            self.get_event()
+
         # If there are more documents available?
         return not self.check_event(StreamEndEvent)
 
@@ -23,11 +27,6 @@ class Composer(object):
             return self.compose_document()
 
     def compose_document(self):
-
-        # Drop the STREAM-START event.
-        if self.check_event(StreamStartEvent):
-            self.get_event()
-
         # Drop the DOCUMENT-START event.
         self.get_event()
 
