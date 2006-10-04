@@ -300,7 +300,7 @@ class SafeConstructor(BaseConstructor):
                 (?P<hour>[0-9][0-9]?)
                 :(?P<minute>[0-9][0-9])
                 :(?P<second>[0-9][0-9])
-                (?:(?P<fraction>\.[0-9]*))?
+                (?:\.(?P<fraction>[0-9]*))?
                 (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
                 (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
 
@@ -318,7 +318,7 @@ class SafeConstructor(BaseConstructor):
         second = int(values['second'])
         fraction = 0
         if values['fraction']:
-            fraction = int(float(values['fraction'])*1000000)
+            fraction = int(values['fraction'][:6].ljust(6, '0'))
         delta = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])

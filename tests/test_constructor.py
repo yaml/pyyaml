@@ -288,6 +288,10 @@ class TestConstructorTypes(test_appliance.TestAppliance):
                         if (item1 != item1 or (item1 == 0.0 and item1 == 1.0)) and  \
                                 (item2 != item2 or (item2 == 0.0 and item2 == 1.0)):
                             continue
+                        if isinstance(item1, datetime.datetime) \
+                                and isinstance(item2, datetime.datetime):
+                            self.failUnlessEqual(item1.microsecond,
+                                    item2.microsecond)
                         if isinstance(item1, datetime.datetime):
                             item1 = item1.utctimetuple()
                         if isinstance(item2, datetime.datetime):
