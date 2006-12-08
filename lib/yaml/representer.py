@@ -12,7 +12,7 @@ try:
 except NameError:
     from sets import Set as set
 
-import sys, copy_reg
+import sys, copy_reg, types
 
 class RepresenterError(YAMLError):
     pass
@@ -36,18 +36,6 @@ class BaseRepresenter(object):
         self.object_keeper = []
         self.alias_key = None
 
-    class C: pass
-    c = C()
-    def f(): pass
-    def g(): yield None
-    classobj_type = type(C)
-    instance_type = type(c)
-    function_type = type(f)
-    generator_type = type(g())
-    builtin_function_type = type(abs)
-    module_type = type(sys)
-    del C, c, f, g
-
     def get_classobj_bases(self, cls):
         bases = [cls]
         for base in cls.__bases__:
@@ -68,7 +56,7 @@ class BaseRepresenter(object):
             #self.represented_objects[alias_key] = None
             self.object_keeper.append(data)
         data_types = type(data).__mro__
-        if type(data) is self.instance_type:
+        if type(data) is types.InstanceType:
             data_types = self.get_classobj_bases(data.__class__)+list(data_types)
         if data_types[0] in self.yaml_representers:
             node = self.yaml_representers[data_types[0]](self, data)
@@ -471,19 +459,19 @@ Representer.add_representer(tuple,
 Representer.add_representer(type,
         Representer.represent_name)
 
-Representer.add_representer(Representer.classobj_type,
+Representer.add_representer(types.ClassType,
         Representer.represent_name)
 
-Representer.add_representer(Representer.function_type,
+Representer.add_representer(types.FunctionType,
         Representer.represent_name)
 
-Representer.add_representer(Representer.builtin_function_type,
+Representer.add_representer(types.BuiltinFunctionType,
         Representer.represent_name)
 
-Representer.add_representer(Representer.module_type,
+Representer.add_representer(types.ModuleType,
         Representer.represent_module)
 
-Representer.add_multi_representer(Representer.instance_type,
+Representer.add_multi_representer(types.InstanceType,
         Representer.represent_instance)
 
 Representer.add_multi_representer(object,
