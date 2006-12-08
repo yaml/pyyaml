@@ -12,7 +12,7 @@ try:
 except NameError:
     from sets import Set as set
 
-import binascii, re, sys
+import binascii, re, sys, types
 
 class ConstructorError(MarkedYAMLError):
     pass
@@ -36,10 +36,6 @@ class BaseConstructor(object):
         # Construct and return the next document.
         if self.check_node():
             return self.construct_document(self.get_node())
-
-    def g(): yield None
-    generator_type = type(g())
-    del g
 
     def construct_document(self, node):
         data = self.construct_object(node)
@@ -91,7 +87,7 @@ class BaseConstructor(object):
             data = constructor(self, node)
         else:
             data = constructor(self, tag_suffix, node)
-        if isinstance(data, self.generator_type):
+        if isinstance(data, types.GeneratorType):
             generator = data
             data = generator.next()
             if self.deep_construct:

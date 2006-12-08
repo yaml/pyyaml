@@ -291,7 +291,7 @@ class Parser(object):
                     token = self.get_token()
                     end_mark = token.end_mark
                     anchor = token.value
-            if tag is not None and tag != u'!':
+            if tag is not None:
                 handle, suffix = tag
                 if handle is not None:
                     if handle not in self.tag_handles:
