@@ -32,6 +32,18 @@ class BaseResolver(object):
     add_implicit_resolver = classmethod(add_implicit_resolver)
 
     def add_path_resolver(cls, tag, path, kind=None):
+        # Note: `add_path_resolver` is experimental.  The API could be changed.
+        # `new_path` is a pattern that is matched against the path from the
+        # root to the node that is being considered.  `node_path` elements are
+        # tuples `(node_check, index_check)`.  `node_check` is a node class:
+        # `ScalarNode`, `SequenceNode`, `MappingNode` or `None`.  `None`
+        # matches any kind of a node.  `index_check` could be `None`, a boolean
+        # value, a string value, or a number.  `None` and `False` match against
+        # any _value_ of sequence and mapping nodes.  `True` matches against
+        # any _key_ of a mapping node.  A string `index_check` matches against
+        # a mapping value that corresponds to a scalar key which content is
+        # equal to the `index_check` value.  An integer `index_check` matches
+        # against a sequence value with the index equal to `index_check`.
         if not 'yaml_path_resolvers' in cls.__dict__:
             cls.yaml_path_resolvers = cls.yaml_path_resolvers.copy()
         new_path = []
@@ -113,13 +125,14 @@ class BaseResolver(object):
                 return
         if index_check is True and current_index is not None:
             return
-        if index_check in [False, None] and current_index is None:
+        if (index_check is False or index_check is None)    \
+                and current_index is None:
             return
         if isinstance(index_check, basestring):
             if not (isinstance(current_index, ScalarNode)
                     and index_check == current_index.value):
                 return
-        elif isinstance(index_check, int):
+        elif isinstance(index_check, int) and not isinstance(index_check, bool):
             if index_check != current_index:
                 return
         return True
