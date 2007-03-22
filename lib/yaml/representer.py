@@ -197,7 +197,16 @@ class SafeRepresenter(BaseRepresenter):
         elif data == -self.inf_value:
             value = u'-.inf'
         else:
-            value = unicode(repr(data))
+            value = unicode(repr(data)).lower()
+            # Note that in some cases `repr(data)` represents a float number
+            # without the decimal parts.  For instance:
+            #   >>> repr(1e17)
+            #   '1e17'
+            # Unfortunately, this is not a valid float representation according
+            # to the definition of the `!!float` tag.  We fix this by adding
+            # '.0' before the 'e' symbol.
+            if u'.' not in value and u'e' in value:
+                value = value.replace(u'e', u'.0e', 1)
         return self.represent_scalar(u'tag:yaml.org,2002:float', value)
 
     def represent_list(self, data):
