@@ -155,6 +155,10 @@ class Parser(object):
 
     def parse_document_start(self):
 
+        # Parse any extra document end indicators.
+        while self.check_token(DocumentEndToken):
+            self.get_token()
+
         # Parse an explicit document.
         if not self.check_token(StreamEndToken):
             token = self.peek_token()
@@ -186,7 +190,7 @@ class Parser(object):
         token = self.peek_token()
         start_mark = end_mark = token.start_mark
         explicit = False
-        while self.check_token(DocumentEndToken):
+        if self.check_token(DocumentEndToken):
             token = self.get_token()
             end_mark = token.end_mark
             explicit = True
