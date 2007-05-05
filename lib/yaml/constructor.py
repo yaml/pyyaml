@@ -379,7 +379,7 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_str(self, node):
         value = self.construct_scalar(node)
         try:
-            return str(value)
+            return value.encode('ascii')
         except UnicodeEncodeError:
             return value
 
