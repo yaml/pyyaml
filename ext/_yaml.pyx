@@ -281,9 +281,9 @@ cdef class CParser:
 
     cdef object _parser_error(self):
         if self.parser.error == YAML_MEMORY_ERROR:
-            raise MemoryError
+            return MemoryError
         elif self.parser.error == YAML_READER_ERROR:
-            raise ReaderError(self.stream_name, self.parser.problem_offset,
+            return ReaderError(self.stream_name, self.parser.problem_offset,
                     self.parser.problem_value, '?', self.parser.problem)
         elif self.parser.error == YAML_SCANNER_ERROR    \
                 or self.parser.error == YAML_PARSER_ERROR:
@@ -609,9 +609,9 @@ cdef class CParser:
             if event.data.mapping_start.implicit == 1:
                 implicit = True
             flow_style = None
-            if event.data.mapping_start.style == YAML_FLOW_SEQUENCE_STYLE:
+            if event.data.mapping_start.style == YAML_FLOW_MAPPING_STYLE:
                 flow_style = True
-            elif event.data.mapping_start.style == YAML_BLOCK_SEQUENCE_STYLE:
+            elif event.data.mapping_start.style == YAML_BLOCK_MAPPING_STYLE:
                 flow_style = False
             return MappingStartEvent(anchor, tag, implicit,
                     start_mark, end_mark, flow_style)
