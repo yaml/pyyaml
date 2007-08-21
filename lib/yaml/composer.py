@@ -26,6 +26,27 @@ class Composer(object):
         if not self.check_event(StreamEndEvent):
             return self.compose_document()
 
+    def get_single_node(self):
+        # Drop the STREAM-START event.
+        self.get_event()
+
+        # Compose a document if the stream is not empty.
+        document = None
+        if not self.check_event(StreamEndEvent):
+            document = self.compose_document()
+
+        # Ensure that the stream contains no more documents.
+        if not self.check_event(StreamEndEvent):
+            event = self.get_event()
+            raise ComposerError("expected a single document in the stream",
+                    document.start_mark, "but found another document",
+                    event.start_mark)
+
+        # Drop the STREAM-END event.
+        self.get_event()
+
+        return document
+
     def compose_document(self):
         # Drop the DOCUMENT-START event.
         self.get_event()

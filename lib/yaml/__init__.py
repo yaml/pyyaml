@@ -35,8 +35,7 @@ def compose(stream, Loader=Loader):
     and produce the corresponding representation tree.
     """
     loader = Loader(stream)
-    if loader.check_node():
-        return loader.get_node()
+    return loader.get_single_node()
 
 def compose_all(stream, Loader=Loader):
     """
@@ -47,6 +46,14 @@ def compose_all(stream, Loader=Loader):
     while loader.check_node():
         yield loader.get_node()
 
+def load(stream, Loader=Loader):
+    """
+    Parse the first YAML document in a stream
+    and produce the corresponding Python object.
+    """
+    loader = Loader(stream)
+    return loader.get_single_data()
+
 def load_all(stream, Loader=Loader):
     """
     Parse all YAML documents in a stream
@@ -56,14 +63,13 @@ def load_all(stream, Loader=Loader):
     while loader.check_data():
         yield loader.get_data()
 
-def load(stream, Loader=Loader):
+def safe_load(stream):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
+    Resolve only basic YAML tags.
     """
-    loader = Loader(stream)
-    if loader.check_data():
-        return loader.get_data()
+    return load(stream, SafeLoader)
 
 def safe_load_all(stream):
     """
@@ -72,14 +78,6 @@ def safe_load_all(stream):
     Resolve only basic YAML tags.
     """
     return load_all(stream, SafeLoader)
-
-def safe_load(stream):
-    """
-    Parse the first YAML document in a stream
-    and produce the corresponding Python object.
-    Resolve only basic YAML tags.
-    """
-    return load(stream, SafeLoader)
 
 def emit(events, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,

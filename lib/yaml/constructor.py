@@ -37,6 +37,13 @@ class BaseConstructor(object):
         if self.check_node():
             return self.construct_document(self.get_node())
 
+    def get_single_data(self):
+        # Ensure that the stream contains a single document and construct it.
+        node = self.get_single_node()
+        if node is not None:
+            return self.construct_document(node)
+        return None
+
     def construct_document(self, node):
         data = self.construct_object(node)
         while self.state_generators:
