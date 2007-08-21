@@ -663,6 +663,24 @@ cdef class CParser:
         if self.parsed_event.type != YAML_STREAM_END_EVENT:
             return self._compose_document()
 
+    def get_single_node(self):
+        self._parse_next_event()
+        yaml_event_delete(&self.parsed_event)
+        self._parse_next_event()
+        document = None
+        if self.parsed_event.type != YAML_STREAM_END_EVENT:
+            document = self._compose_document()
+        self._parse_next_event()
+        if self.parsed_event.type != YAML_STREAM_END_EVENT:
+            mark = Mark(self.stream_name,
+                    self.parsed_event.start_mark.index,
+                    self.parsed_event.start_mark.line,
+                    self.parsed_event.start_mark.column,
+                    None, None)
+            raise ComposerError("expected a single document in the stream",
+                    document.start_mark, "but found another document", mark)
+        return document
+
     cdef object _compose_document(self):
         yaml_event_delete(&self.parsed_event)
         node = self._compose_node(None, None)
