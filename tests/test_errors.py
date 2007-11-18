@@ -17,7 +17,7 @@ class TestErrors(test_appliance.TestAppliance):
         self.failUnlessRaises(YAMLError, lambda: self._load_string(invalid_filename))
 
     def _testLoaderSingleErrors(self, test_name, invalid_filename):
-        self._load_single(invalid_filename)
+        #self._load_single(invalid_filename)
         self.failUnlessRaises(YAMLError, lambda: self._load_single(invalid_filename))
 
     def _testEmitterErrors(self, test_name, invalid_filename):
