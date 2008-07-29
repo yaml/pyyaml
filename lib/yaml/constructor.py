@@ -321,7 +321,10 @@ class SafeConstructor(BaseConstructor):
         second = int(values['second'])
         fraction = 0
         if values['fraction']:
-            fraction = int(values['fraction'][:6].ljust(6, '0'))
+            fraction = values['fraction'][:6]
+            while len(fraction) < 6:
+                fraction += '0'
+            fraction = int(fraction)
         delta = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])
