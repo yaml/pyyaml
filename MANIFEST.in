@@ -1,3 +1,2 @@
-include README LICENSE setup.py
 include ext/_yaml.pyx ext/_yaml.pxd ext/_yaml.h ext/_yaml.c
-recursive-include examples *.py *.cfg
+exclude announcement.msg MANIFEST.in Makefile

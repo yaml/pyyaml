@@ -29,7 +29,7 @@ test: build
 testext: buildext
 	${PYTHON} tests/test_build_ext.py ${TEST}
 
-dist:
+dist: buildext
 	${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
 
 windist:
