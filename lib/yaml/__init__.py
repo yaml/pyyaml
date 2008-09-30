@@ -10,8 +10,9 @@ from dumper import *
 
 try:
     from cyaml import *
+    with_libyaml = True
 except ImportError:
-    pass
+    with_libyaml = False
 
 def scan(stream, Loader=Loader):
     """
