@@ -22,6 +22,7 @@ Changes
   bindings, run 'python setup.py --with-libyaml install'.  Building
   LibYAML bindings no longer requires PyRex installed.
 * Windows binary packages are built against the LibYAML stable branch.
+* Added an attribute 'yaml.__version__' and a flag 'yaml.__libyaml__'.
 
 
 Resources
