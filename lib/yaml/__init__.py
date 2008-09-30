@@ -8,11 +8,13 @@ from nodes import *
 from loader import *
 from dumper import *
 
+__version__ = '3.06'
+
 try:
     from cyaml import *
-    with_libyaml = True
+    __libyaml__ = True
 except ImportError:
-    with_libyaml = False
+    __libyaml__ = False
 
 def scan(stream, Loader=Loader):
     """
