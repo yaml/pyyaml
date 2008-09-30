@@ -30,6 +30,9 @@ CLASSIFIERS = [
     "Topic :: Text Processing :: Markup",
 ]
 
+from ez_setup import use_setuptools
+use_setuptools(version='0.6c5')
+
 from setuptools import setup, Extension, Feature
 
 if __name__ == '__main__':
