@@ -1,9 +1,9 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.05: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-3.06: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.05
+ Announcing PyYAML-3.06
 ========================
 
 A new bug fix release of PyYAML is now available:
@@ -14,16 +14,14 @@ A new bug fix release of PyYAML is now available:
 Changes
 =======
 
-* Windows binary packages were built with LibYAML trunk.
-* Fixed a bug that prevent processing a live stream of YAML documents in timely
-  manner (Thanks edward(at)sweetbytes(dot)net).
-* Fixed a bug when the path in add_path_resolver contains boolean values
-  (Thanks jstroud(at)mbi(dot)ucla(dot)edu).
-* Fixed loss of microsecond precision in timestamps
-  (Thanks edemaine(at)mit(dot)edu).
-* Fixed loading an empty YAML stream.
-* A number of smaller fixes and improvements
-  (see http://pyyaml.org/wiki/PyYAML#History for more details).
+* Fixed a dot '.' character being recognized as !!float.
+* Fixed exceptions produced by LibYAML bindings.
+* 'yaml.load()' raises an exception if the input stream contains
+  more than one YAML document.
+* Use setuptools for setup.py.  If you want to build optional LibYAML
+  bindings, run 'python setup.py --with-libyaml install'.  Building
+  LibYAML bindings no longer requires PyRex installed.
+* Windows binary packages are built against the LibYAML stable branch.
 
 
 Resources
@@ -32,12 +30,13 @@ Resources
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.05.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.05.zip
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.06.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.06.zip
 Windows installer:
-    http://pyyaml.org/download/pyyaml/PyYAML-3.05.win32-py2.3.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.05.win32-py2.4.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.05.win32-py2.5.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.3.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.4.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.5.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.6.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
