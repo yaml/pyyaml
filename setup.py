@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '3.05'
+VERSION = '3.06'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability and
@@ -21,7 +21,7 @@ PLATFORMS = "Any"
 URL = "http://pyyaml.org/wiki/PyYAML"
 DOWNLOAD_URL = "http://pyyaml.org/download/pyyaml/%s-%s.tar.gz" % (NAME, VERSION)
 CLASSIFIERS = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -30,7 +30,7 @@ CLASSIFIERS = [
     "Topic :: Text Processing :: Markup",
 ]
 
-from distutils.core import setup
+from setuptools import setup, Extension, Feature
 
 if __name__ == '__main__':
 
@@ -49,5 +49,14 @@ if __name__ == '__main__':
 
         package_dir={'': 'lib'},
         packages=['yaml'],
+
+        features = {
+            'libyaml': Feature(
+                description="LibYAML bindings",
+                ext_modules=[
+                    Extension('_yaml', ['ext/_yaml.pyx'], libraries=['yaml']),
+                ],
+            ),
+        },
     )
 
