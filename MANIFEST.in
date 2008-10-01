@@ -1,2 +1,4 @@
-include ext/_yaml.pyx ext/_yaml.pxd ext/_yaml.h ext/_yaml.c
-exclude announcement.msg MANIFEST.in Makefile
+include README LICENSE setup.py
+recursive-include examples *.py *.cfg *.yaml
+recursive-include tests *.py
+recursive-include tests/data *

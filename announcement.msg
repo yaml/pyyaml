@@ -18,6 +18,7 @@ Changes
 * Fixed exceptions produced by LibYAML bindings.
 * 'yaml.load()' raises an exception if the input stream contains
   more than one YAML document.
+* Improved compatibility with Python 2.3.
 * Use setuptools for setup.py.  If you want to build optional LibYAML
   bindings, run 'python setup.py --with-libyaml install'.  Building
   LibYAML bindings no longer requires PyRex installed.
