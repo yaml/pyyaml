@@ -55,7 +55,7 @@ from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
 from distutils.dir_util import mkpath
 from distutils.command.build_ext import build_ext as _build_ext
-from distutils.errors import CompileError, LinkError
+from distutils.errors import CompileError, LinkError, DistutilsPlatformError
 
 try:
     from Pyrex.Distutils import Extension as _Extension
@@ -73,7 +73,8 @@ class Distribution(_Distribution):
         _Distribution.__init__(self, attrs)
         if not self.ext_modules:
             return
-        for ext in reversed(self.ext_modules):
+        for idx in range(len(self.ext_modules)-1, -1, -1):
+            ext = self.ext_modules[idx]
             if not isinstance(ext, Extension):
                 continue
             setattr(self, ext.attr_name, None)
@@ -95,8 +96,9 @@ class Extension(_Extension):
         if not with_pyrex:
             for filename in sources[:]:
                 base, ext = os.path.splitext(filename)
-                if ext == 'pyx':
-                    sources.replace(filename, '%s.c' % base)
+                if ext == '.pyx':
+                    sources.remove(filename)
+                    sources.append('%s.c' % base)
         _Extension.__init__(self, name, sources, **kwds)
         self.feature_name = feature_name
         self.feature_description = feature_description
@@ -107,6 +109,32 @@ class Extension(_Extension):
 
 
 class build_ext(_build_ext):
+
+    def run(self):
+        optional = True
+        disabled = True
+        for ext in self.extensions:
+            if isinstance(ext, Extension):
+                with_ext = getattr(self.distribution, ext.attr_name)
+                if with_ext is None:
+                    disabled = False
+                elif with_ext:
+                    optional = False
+                    disabled = False
+            else:
+                optional = False
+                disabled = False
+                break
+        if disabled:
+            return
+        try:
+            _build_ext.run(self)
+        except DistutilsPlatformError, exc:
+            if optional:
+                log.warn(str(exc))
+                log.warn("skipping build_ext")
+            else:
+                raise
 
     def get_source_files(self):
         self.check_extensions_list(self.extensions)
@@ -220,7 +248,7 @@ if __name__ == '__main__':
         package_dir={'': 'lib'},
         packages=['yaml'],
         ext_modules=[
-            Extension('yaml/_yaml', ['ext/_yaml.pyx'],
+            Extension('_yaml', ['ext/_yaml.pyx'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,
                 libraries=['yaml']),
         ],
