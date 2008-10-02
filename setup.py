@@ -31,10 +31,31 @@ CLASSIFIERS = [
 ]
 
 
+LIBYAML_CHECK = """
+#include <yaml.h>
+
+int main(void) {
+    yaml_parser_t parser;
+    yaml_emitter_t emitter;
+
+    yaml_parser_initialize(&parser);
+    yaml_parser_delete(&parser);
+
+    yaml_emitter_initialize(&emitter);
+    yaml_emitter_delete(&emitter);
+
+    return 0;
+}
+"""
+
+
+from distutils import log
 from distutils.core import setup, Command
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
+from distutils.dir_util import mkpath
 from distutils.command.build_ext import build_ext as _build_ext
+from distutils.errors import CompileError, LinkError
 
 try:
     from Pyrex.Distutils import Extension as _Extension
@@ -58,9 +79,10 @@ class Distribution(_Distribution):
             setattr(self, ext.attr_name, None)
             self.global_options = [
                     (ext.option_name, None,
-                        "include %s" % ext.feature_description),
+                        "include %s (default if %s is available)"
+                        % (ext.feature_description, ext.feature_name)),
                     (ext.neg_option_name, None,
-                        "exclude %s (default)" % ext.feature_description),
+                        "exclude %s" % ext.feature_description),
             ] + self.global_options
             self.negative_opt = self.negative_opt.copy()
             self.negative_opt[ext.neg_option_name] = ext.option_name
@@ -68,7 +90,8 @@ class Distribution(_Distribution):
 
 class Extension(_Extension):
 
-    def __init__(self, name, sources, feature_name, feature_description, **kwds):
+    def __init__(self, name, sources, feature_name, feature_description,
+            feature_check, **kwds):
         if not with_pyrex:
             for filename in sources[:]:
                 base, ext = os.path.splitext(filename)
@@ -77,6 +100,7 @@ class Extension(_Extension):
         _Extension.__init__(self, name, sources, **kwds)
         self.feature_name = feature_name
         self.feature_description = feature_description
+        self.feature_check = feature_check
         self.attr_name = 'with_' + feature_name.replace('-', '_')
         self.option_name = 'with-' + feature_name
         self.neg_option_name = 'without-' + feature_name
@@ -103,11 +127,60 @@ class build_ext(_build_ext):
         self.check_extensions_list(self.extensions)
         for ext in self.extensions:
             if isinstance(ext, Extension):
-                if not getattr(self.distribution, ext.attr_name):
+                with_ext = getattr(self.distribution, ext.attr_name)
+                if with_ext is None:
+                    with_ext = self.check_extension_availability(ext)
+                if not with_ext:
                     continue
             if with_pyrex:
                 ext.sources = self.pyrex_sources(ext.sources, ext)
             self.build_extension(ext)
+
+    def check_extension_availability(self, ext):
+        cache = os.path.join(self.build_temp, 'check_%s.out' % ext.feature_name)
+        if not self.force and os.path.isfile(cache):
+            data = open(cache).read().strip()
+            if data == '1':
+                return True
+            elif data == '0':
+                return False
+        mkpath(self.build_temp)
+        src = os.path.join(self.build_temp, 'check_%s.c' % ext.feature_name)
+        open(src, 'w').write(ext.feature_check)
+        log.info("checking if %s compiles" % ext.feature_name)
+        try:
+            [obj] = self.compiler.compile([src],
+                    macros=ext.define_macros+[(undef,) for undef in ext.undef_macros],
+                    include_dirs=ext.include_dirs,
+                    extra_postargs=(ext.extra_compile_args or []),
+                    depends=ext.depends)
+        except CompileError:
+            log.warn("%s appears not to be installed" % ext.feature_name)
+            log.warn("(if %s is installed, you may need to specify"
+                    % ext.feature_name)
+            log.warn(" the option --include-dirs or uncomment and modify")
+            log.warn(" the parameter include_dirs in setup.cfg)")
+            open(cache, 'w').write('0\n')
+            return False
+        prog = 'check_%s' % ext.feature_name
+        log.info("checking if %s links" % ext.feature_name)
+        try:
+            self.compiler.link_executable([obj], prog,
+                    output_dir=self.build_temp,
+                    libraries=ext.libraries,
+                    library_dirs=ext.library_dirs,
+                    runtime_library_dirs=ext.runtime_library_dirs,
+                    extra_postargs=(ext.extra_link_args or []))
+        except LinkError:
+            log.warn("unable to link against %s" % ext.feature_name)
+            log.warn("(if %s is installed correctly, you may need to specify"
+                    % ext.feature_name)
+            log.warn(" the option --library-dirs or uncomment and modify")
+            log.warn(" the parameter library_dirs in setup.cfg)")
+            open(cache, 'w').write('0\n')
+            return False
+        open(cache, 'w').write('1\n')
+        return True
 
 
 class test(Command):
@@ -148,7 +221,7 @@ if __name__ == '__main__':
         packages=['yaml'],
         ext_modules=[
             Extension('yaml/_yaml', ['ext/_yaml.pyx'],
-                'libyaml', "LibYAML bindings",
+                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
                 libraries=['yaml']),
         ],
 
