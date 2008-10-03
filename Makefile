@@ -17,10 +17,10 @@ force:
 forceext:
 	${PYTHON} setup.py --with-libyaml build -f ${PARAMETERS}
 
-install: build
+install:
 	${PYTHON} setup.py install ${PARAMETERS}
 
-installext: buildext
+installext:
 	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
 
 test: build
@@ -29,7 +29,7 @@ test: build
 testext: buildext
 	${PYTHON} tests/test_build_ext.py ${TEST}
 
-dist: buildext
+dist:
 	${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
 
 windist:

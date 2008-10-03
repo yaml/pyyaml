@@ -2,9 +2,15 @@ PyYAML - The next generation YAML parser and emitter for Python.
 
 To install, type 'python setup.py install'.
 
-To build and install PyYAML with LibYAML bindings, type
-'python setup.py --with-libyaml install'.
-Then you may use a fast LibYAML-based parser and emitter as follows:
+By default, the setup.py script checks whether LibYAML is installed
+and if so, builds and installs LibYAML bindings.  To skip the check
+and force installation of LibYAML bindings, add the option '--with-libyaml':
+'python setup.py --with-libyaml install'.  To disable the check and
+skip building and installing LibYAML bindings, use '--without-libyaml':
+'python setup.py --without-libyaml install'.
+
+When LibYAML bindings are installed, you may use a fast LibYAML-based
+parser and emitter as follows:
 
     >>> yaml.load(stream, Loader=yaml.CLoader)
     >>> yaml.dump(data, Dumper=yaml.CDumper)

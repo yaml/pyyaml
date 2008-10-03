@@ -14,16 +14,18 @@ A new bug fix release of PyYAML is now available:
 Changes
 =======
 
-* Fixed a dot '.' character being recognized as !!float.
-* Fixed exceptions produced by LibYAML bindings.
+* setup.py checks whether LibYAML is installed and if so, builds
+  and installs LibYAML bindings.  To force or disable installation
+  of LibYAML bindings, use '--with-libyaml' or '--without-libyaml'
+  respectively.
+* Building LibYAML bindings no longer requires Pyrex installed.
 * 'yaml.load()' raises an exception if the input stream contains
   more than one YAML document.
-* Improved compatibility with Python 2.3.
-* Use setuptools for setup.py.  If you want to build optional LibYAML
-  bindings, run 'python setup.py --with-libyaml install'.  Building
-  LibYAML bindings no longer requires PyRex installed.
+* Fixed exceptions produced by LibYAML bindings.
+* Fixed a dot '.' character being recognized as !!float.
+* Fixed Python 2.3 compatibility issue in constructing !!timestamp values.
 * Windows binary packages are built against the LibYAML stable branch.
-* Added an attribute 'yaml.__version__' and a flag 'yaml.__libyaml__'.
+* Added attributes 'yaml.__version__' and  'yaml.__with_libyaml__'.
 
 
 Resources

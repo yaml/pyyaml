@@ -256,7 +256,7 @@ if __name__ == '__main__':
         distclass=Distribution,
         cmdclass={
             'build_ext': build_ext,
-            'test': test,
+#            'test': test,
         },
     )
 

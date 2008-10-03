@@ -12,9 +12,9 @@ __version__ = '3.06'
 
 try:
     from cyaml import *
-    __libyaml__ = True
+    __with_libyaml__ = True
 except ImportError:
-    __libyaml__ = False
+    __with_libyaml__ = False
 
 def scan(stream, Loader=Loader):
     """
