@@ -49,6 +49,8 @@ int main(void) {
 """
 
 
+import sys, os.path
+
 from distutils import log
 from distutils.core import setup, Command
 from distutils.core import Distribution as _Distribution
@@ -57,6 +59,12 @@ from distutils.dir_util import mkpath
 from distutils.command.build_ext import build_ext as _build_ext
 from distutils.errors import CompileError, LinkError, DistutilsPlatformError
 
+if 'setuptools.extension' in sys.modules:
+    _Extension = sys.modules['setuptools.extension']._Extension
+    sys.modules['distutils.core'].Extension = _Extension
+    sys.modules['distutils.extension'].Extension = _Extension
+    sys.modules['distutils.command.build_ext'].Extension = _Extension
+
 try:
     from Pyrex.Distutils import Extension as _Extension
     from Pyrex.Distutils import build_ext as _build_ext
@@ -64,7 +72,6 @@ try:
 except ImportError:
     with_pyrex = False
 
-import sys, os.path
 
 
 class Distribution(_Distribution):
