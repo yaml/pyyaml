@@ -774,17 +774,16 @@ class Emitter(object):
         allow_double_quoted = True
         allow_block = True
 
-        # Leading and trailing whitespace are bad for plain scalars. We also
-        # do not want to mess with leading whitespaces for block scalars.
-        if leading_spaces or leading_breaks or trailing_spaces:
-            allow_flow_plain = allow_block_plain = allow_block = False
-
-        # Trailing breaks are fine for block scalars, but unacceptable for
-        # plain scalars.
-        if trailing_breaks:
+        # Leading and trailing whitespaces are bad for plain scalars.
+        if (leading_spaces or leading_breaks
+                or trailing_spaces or trailing_breaks):
             allow_flow_plain = allow_block_plain = False
 
-        # The combination of (space+ break+) is only acceptable for block
+        # We do not permit trailing spaces for block scalars.
+        if trailing_spaces:
+            allow_block = False
+
+        # Spaces at the beginning of a new line are only acceptable for block
         # scalars.
         if inline_breaks_spaces:
             allow_flow_plain = allow_block_plain = allow_single_quoted = False
@@ -1009,20 +1008,22 @@ class Emitter(object):
         self.write_indicator(u'"', False)
 
     def determine_chomp(self, text):
+        hints = u''
+        if text and text[0] in u' \n\x85\u2028\u2029':
+            hints += unicode(self.best_indent)
         tail = text[-2:]
         while len(tail) < 2:
             tail = u' '+tail
         if tail[-1] in u'\n\x85\u2028\u2029':
             if tail[-2] in u'\n\x85\u2028\u2029':
-                return u'+'
-            else:
-                return u''
+                hints += u'+'
         else:
-            return u'-'
+            hints += u'-'
+        return hints
 
     def write_folded(self, text):
-        chomp = self.determine_chomp(text)
-        self.write_indicator(u'>'+chomp, True)
+        hints = self.determine_block_hints(text)
+        self.write_indicator(u'>'+hints, True)
         self.write_indent()
         leading_space = False
         spaces = False
