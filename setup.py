@@ -57,6 +57,7 @@ from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
 from distutils.dir_util import mkpath
 from distutils.command.build_ext import build_ext as _build_ext
+from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
 from distutils.errors import CompileError, LinkError, DistutilsPlatformError
 
 if 'setuptools.extension' in sys.modules:
@@ -95,6 +96,22 @@ class Distribution(_Distribution):
             self.negative_opt = self.negative_opt.copy()
             self.negative_opt[ext.neg_option_name] = ext.option_name
 
+    def has_ext_modules(self):
+        if not self.ext_modules:
+            return False
+        for ext in self.ext_modules:
+            with_ext = self.ext_status(ext)
+            if with_ext is None or with_ext:
+                return True
+        return False
+
+    def ext_status(self, ext):
+        if isinstance(ext, Extension):
+            with_ext = getattr(self, ext.attr_name)
+            return with_ext
+        else:
+            return True
+
 
 class Extension(_Extension):
 
@@ -121,14 +138,10 @@ class build_ext(_build_ext):
         optional = True
         disabled = True
         for ext in self.extensions:
-            if isinstance(ext, Extension):
-                with_ext = getattr(self.distribution, ext.attr_name)
-                if with_ext is None:
-                    disabled = False
-                elif with_ext:
-                    optional = False
-                    disabled = False
-            else:
+            with_ext = self.distribution.ext_status(ext)
+            if with_ext is None:
+                disabled = False
+            elif with_ext:
                 optional = False
                 disabled = False
                 break
@@ -158,15 +171,25 @@ class build_ext(_build_ext):
                         filenames.append(filename)
         return filenames
 
+    def get_outputs(self):
+        self.check_extensions_list(self.extensions)
+        outputs = []
+        for ext in self.extensions:
+            fullname = self.get_ext_fullname(ext.name)
+            filename = os.path.join(self.build_lib,
+                                    self.get_ext_filename(fullname))
+            if os.path.isfile(filename):
+                outputs.append(filename)
+        return outputs
+
     def build_extensions(self):
         self.check_extensions_list(self.extensions)
         for ext in self.extensions:
-            if isinstance(ext, Extension):
-                with_ext = getattr(self.distribution, ext.attr_name)
-                if with_ext is None:
-                    with_ext = self.check_extension_availability(ext)
-                if not with_ext:
-                    continue
+            with_ext = self.distribution.ext_status(ext)
+            if with_ext is None:
+                with_ext = self.check_extension_availability(ext)
+            if not with_ext:
+                continue
             if with_pyrex:
                 ext.sources = self.pyrex_sources(ext.sources, ext)
             self.build_extension(ext)
@@ -182,7 +205,7 @@ class build_ext(_build_ext):
         mkpath(self.build_temp)
         src = os.path.join(self.build_temp, 'check_%s.c' % ext.feature_name)
         open(src, 'w').write(ext.feature_check)
-        log.info("checking if %s compiles" % ext.feature_name)
+        log.info("checking if %s is compilable" % ext.feature_name)
         try:
             [obj] = self.compiler.compile([src],
                     macros=ext.define_macros+[(undef,) for undef in ext.undef_macros],
@@ -198,7 +221,7 @@ class build_ext(_build_ext):
             open(cache, 'w').write('0\n')
             return False
         prog = 'check_%s' % ext.feature_name
-        log.info("checking if %s links" % ext.feature_name)
+        log.info("checking if %s is linkable" % ext.feature_name)
         try:
             self.compiler.link_executable([obj], prog,
                     output_dir=self.build_temp,
@@ -218,23 +241,25 @@ class build_ext(_build_ext):
         return True
 
 
-class test(Command):
+class bdist_rpm(_bdist_rpm):
 
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        build_cmd = self.get_finalized_command('build')
-        build_cmd.run()
-        sys.path.insert(0, build_cmd.build_lib)
-        sys.path.insert(0, 'tests')
-        import test_all
-        test_all.main()
+    def _make_spec_file(self):
+        argv0 = sys.argv[0]
+        features = []
+        for ext in self.distribution.ext_modules:
+            if not isinstance(ext, Extension):
+                continue
+            with_ext = getattr(self.distribution, ext.attr_name)
+            if with_ext is None:
+                continue
+            if with_ext:
+                features.append('--'+ext.option_name)
+            else:
+                features.append('--'+ext.neg_option_name)
+        sys.argv[0] = ' '.join([argv0]+features)
+        spec_file = _bdist_rpm._make_spec_file(self)
+        sys.argv[0] = argv0
+        return spec_file
 
 
 if __name__ == '__main__':
@@ -263,7 +288,7 @@ if __name__ == '__main__':
         distclass=Distribution,
         cmdclass={
             'build_ext': build_ext,
-#            'test': test,
+            'bdist_rpm': bdist_rpm,
         },
     )
 
