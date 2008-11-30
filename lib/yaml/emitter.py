@@ -1007,7 +1007,7 @@ class Emitter(object):
             end += 1
         self.write_indicator(u'"', False)
 
-    def determine_chomp(self, text):
+    def determine_block_hints(self, text):
         hints = u''
         if text and text[0] in u' \n\x85\u2028\u2029':
             hints += unicode(self.best_indent)
@@ -1073,7 +1073,7 @@ class Emitter(object):
             end += 1
 
     def write_literal(self, text):
-        chomp = self.determine_chomp(text)
+        chomp = self.determine_block_hints(text)
         self.write_indicator(u'|'+chomp, True)
         self.write_indent()
         breaks = False
