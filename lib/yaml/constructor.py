@@ -68,7 +68,6 @@ class BaseConstructor(object):
                     "found unconstructable recursive node", node.start_mark)
         self.recursive_objects[node] = None
         constructor = None
-        state_constructor = None
         tag_suffix = None
         if node.tag in self.yaml_constructors:
             constructor = self.yaml_constructors[node.tag]
