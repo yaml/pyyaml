@@ -1009,25 +1009,22 @@ class Emitter(object):
 
     def determine_block_hints(self, text):
         hints = u''
-        if text and text[0] in u' \n\x85\u2028\u2029':
-            hints += unicode(self.best_indent)
-        tail = text[-2:]
-        while len(tail) < 2:
-            tail = u' '+tail
-        if tail[-1] in u'\n\x85\u2028\u2029':
-            if tail[-2] in u'\n\x85\u2028\u2029':
+        if text:
+            if text[0] in u' \n\x85\u2028\u2029':
+                hints += unicode(self.best_indent)
+            if text[-1] not in u'\n\x85\u2028\u2029':
+                hints += u'-'
+            elif len(text) == 1 or text[-2] in u'\n\x85\u2028\u2029':
                 hints += u'+'
-        else:
-            hints += u'-'
         return hints
 
     def write_folded(self, text):
         hints = self.determine_block_hints(text)
         self.write_indicator(u'>'+hints, True)
-        self.write_indent()
-        leading_space = False
+        self.write_line_break()
+        leading_space = True
         spaces = False
-        breaks = False
+        breaks = True
         start = end = 0
         while end <= len(text):
             ch = None
@@ -1075,8 +1072,8 @@ class Emitter(object):
     def write_literal(self, text):
         chomp = self.determine_block_hints(text)
         self.write_indicator(u'|'+chomp, True)
-        self.write_indent()
-        breaks = False
+        self.write_line_break()
+        breaks = True
         start = end = 0
         while end <= len(text):
             ch = None
