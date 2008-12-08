@@ -16,7 +16,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
             version=None, tags=None):
         Emitter.__init__(self, stream, canonical=canonical,
                 indent=indent, width=width,
-                allow_uncode=allow_unicode, line_break=line_break)
+                allow_unicode=allow_unicode, line_break=line_break)
         Serializer.__init__(self, encoding=encoding,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
