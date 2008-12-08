@@ -11,8 +11,6 @@ __all__ = ['Emitter', 'EmitterError']
 from error import YAMLError
 from events import *
 
-import re
-
 class EmitterError(YAMLError):
     pass
 
@@ -1111,7 +1109,7 @@ class Emitter(object):
             if self.encoding:
                 data = data.encode(self.encoding)
             self.stream.write(data)
-        self.writespace = False
+        self.whitespace = False
         self.indention = False
         spaces = False
         breaks = False
@@ -1124,7 +1122,7 @@ class Emitter(object):
                 if ch != u' ':
                     if start+1 == end and self.column > self.best_width and split:
                         self.write_indent()
-                        self.writespace = False
+                        self.whitespace = False
                         self.indention = False
                     else:
                         data = text[start:end]
