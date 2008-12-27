@@ -9,6 +9,7 @@ from yaml.resolver import *
 class TestAppliance(unittest.TestCase):
 
     DATA = 'tests/data'
+    SKIP_EXT = '.skip'
 
     all_tests = {}
     for filename in os.listdir(DATA):
@@ -19,6 +20,8 @@ class TestAppliance(unittest.TestCase):
     def add_tests(cls, method_name, *extensions):
         for test in cls.all_tests:
             available_extensions = cls.all_tests[test]
+            if cls.SKIP_EXT in available_extensions:
+                continue
             for ext in extensions:
                 if ext not in available_extensions:
                     break

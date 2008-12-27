@@ -34,6 +34,41 @@ class TestEmitter(test_appliance.TestAppliance):
                     self.failUnlessEqual(event.tag, new_event.tag)
                 self.failUnlessEqual(event.value, new_event.value)
 
+    def _testEmitterStyles(self, test_name, canonical_filename, data_filename):
+        for filename in [canonical_filename, data_filename]:
+            events = list(parse(file(filename, 'rb')))
+            for flow_style in [False, True]:
+                for style in ['|', '>', '"', '\'', '']:
+                    styled_events = []
+                    for event in events:
+                        if isinstance(event, ScalarEvent):
+                            event = ScalarEvent(event.anchor, event.tag,
+                                    event.implicit, event.value, style=style)
+                        elif isinstance(event, SequenceStartEvent):
+                            event = SequenceStartEvent(event.anchor, event.tag,
+                                    event.implicit, flow_style=flow_style)
+                        elif isinstance(event, MappingStartEvent):
+                            event = MappingStartEvent(event.anchor, event.tag,
+                                    event.implicit, flow_style=flow_style)
+                        styled_events.append(event)
+                    stream = StringIO.StringIO()
+                    emit(styled_events, stream)
+                    data = stream.getvalue()
+                    #print data
+                    new_events = list(parse(data))
+                    for event, new_event in zip(events, new_events):
+                        self.failUnlessEqual(event.__class__, new_event.__class__)
+                        if isinstance(event, NodeEvent):
+                            self.failUnlessEqual(event.anchor, new_event.anchor)
+                        if isinstance(event, CollectionStartEvent):
+                            self.failUnlessEqual(event.tag, new_event.tag)
+                        if isinstance(event, ScalarEvent):
+                            #self.failUnlessEqual(event.implicit, new_event.implicit)
+                            if True not in event.implicit+new_event.implicit:
+                                self.failUnlessEqual(event.tag, new_event.tag)
+                            self.failUnlessEqual(event.value, new_event.value)
+
+
     def _dump(self, filename, events, canonical):
         print "="*30
         print "ORIGINAL DOCUMENT:"
@@ -45,6 +80,7 @@ class TestEmitter(test_appliance.TestAppliance):
 TestEmitter.add_tests('testEmitterOnData', '.canonical', '.data')
 TestEmitter.add_tests('testEmitterOnCanonicalNormally', '.canonical')
 TestEmitter.add_tests('testEmitterOnCanonicalCanonically', '.canonical')
+TestEmitter.add_tests('testEmitterStyles', '.canonical', '.data')
 
 class EventsLoader(Loader):
 
