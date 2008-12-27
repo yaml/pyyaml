@@ -76,6 +76,9 @@ class Emitter(object):
         self.whitespace = True
         self.indention = True
 
+        # Whether the document requires an explicit document indicator
+        self.open_ended = False
+
         # Formatting details.
         self.canonical = canonical
         self.allow_unicode = allow_unicode
@@ -169,6 +172,9 @@ class Emitter(object):
 
     def expect_document_start(self, first=False):
         if isinstance(self.event, DocumentStartEvent):
+            if (self.event.version or self.event.tags) and self.open_ended:
+                self.write_indicator(u'...', True)
+                self.write_indent()
             if self.event.version:
                 version_text = self.prepare_version(self.event.version)
                 self.write_version_directive(version_text)
@@ -192,6 +198,9 @@ class Emitter(object):
                     self.write_indent()
             self.state = self.expect_document_root
         elif isinstance(self.event, StreamEndEvent):
+            if self.open_ended:
+                self.write_indicator(u'...', True)
+                self.write_indent()
             self.write_stream_end()
             self.state = self.expect_nothing
         else:
@@ -792,6 +801,7 @@ class Emitter(object):
         self.whitespace = whitespace
         self.indention = self.indention and indention
         self.column += len(data)
+        self.open_ended = False
         if self.encoding:
             data = data.encode(self.encoding)
         self.stream.write(data)
@@ -976,6 +986,8 @@ class Emitter(object):
     def write_folded(self, text):
         hints = self.determine_block_hints(text)
         self.write_indicator(u'>'+hints, True)
+        if hints[-1:] == u'+':
+            self.open_ended = True
         self.write_line_break()
         leading_space = True
         spaces = False
@@ -1025,8 +1037,10 @@ class Emitter(object):
             end += 1
 
     def write_literal(self, text):
-        chomp = self.determine_block_hints(text)
-        self.write_indicator(u'|'+chomp, True)
+        hints = self.determine_block_hints(text)
+        self.write_indicator(u'|'+hints, True)
+        if hints[-1:] == u'+':
+            self.open_ended = True
         self.write_line_break()
         breaks = True
         start = end = 0
@@ -1058,6 +1072,8 @@ class Emitter(object):
             end += 1
 
     def write_plain(self, text, split=True):
+        if self.root_context:
+            self.open_ended = True
         if not text:
             return
         if not self.whitespace:
