@@ -3,6 +3,8 @@ import unittest, test_appliance
 
 import _yaml, yaml
 
+test_appliance.TestAppliance.SKIP_EXT = '.skip-ext'
+
 class TestCVersion(unittest.TestCase):
 
     def testCVersion(self):
@@ -102,7 +104,7 @@ class TestCEmitter(test_appliance.TestAppliance):
                     self.failUnlessEqual(event.implicit, ext_event.implicit)
                 if hasattr(event, 'value'):
                     self.failUnlessEqual(event.value, ext_event.value)
-                if hasattr(event, 'explicit'):
+                if hasattr(event, 'explicit') and event.explicit:
                     self.failUnlessEqual(event.explicit, ext_event.explicit)
                 if hasattr(event, 'version'):
                     self.failUnlessEqual(event.version, ext_event.version)
