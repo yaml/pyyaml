@@ -625,15 +625,13 @@ class Emitter(object):
         line_breaks = False
         special_characters = False
 
-        # Whitespaces.
-        inline_spaces = False          # non-space space+ non-space
-        inline_breaks = False          # non-space break+ non-space
-        leading_spaces = False         # ^ space+ (non-space | $)
-        leading_breaks = False         # ^ break+ (non-space | $)
-        trailing_spaces = False        # (^ | non-space) space+ $
-        trailing_breaks = False        # (^ | non-space) break+ $
-        inline_breaks_spaces = False   # non-space break+ space+ non-space
-        mixed_breaks_spaces = False    # anything else
+        # Important whitespace combinations.
+        leading_space = False
+        leading_break = False
+        trailing_space = False
+        trailing_break = False
+        break_space = False
+        space_break = False
 
         # Check document indicators.
         if scalar.startswith(u'---') or scalar.startswith(u'...'):
@@ -641,32 +639,23 @@ class Emitter(object):
             flow_indicators = True
 
         # First character or preceded by a whitespace.
-        preceeded_by_space = True
+        preceeded_by_whitespace = True
 
         # Last character or followed by a whitespace.
-        followed_by_space = (len(scalar) == 1 or
+        followed_by_whitespace = (len(scalar) == 1 or
                 scalar[1] in u'\0 \t\r\n\x85\u2028\u2029')
 
-        # The current series of whitespaces contain plain spaces.
-        spaces = False
+        # The previous character is a space.
+        previous_space = False
 
-        # The current series of whitespaces contain line breaks.
-        breaks = False
-
-        # The current series of whitespaces contain a space followed by a
-        # break.
-        mixed = False
-
-        # The current series of whitespaces start at the beginning of the
-        # scalar.
-        leading = False
+        # The previous character is a break.
+        previous_break = False
 
         index = 0
         while index < len(scalar):
             ch = scalar[index]
 
             # Check for indicators.
-
             if index == 0:
                 # Leading indicators are special characters.
                 if ch in u'#,[]{}&*!|>\'\"%@`': 
@@ -674,9 +663,9 @@ class Emitter(object):
                     block_indicators = True
                 if ch in u'?:':
                     flow_indicators = True
-                    if followed_by_space:
+                    if followed_by_whitespace:
                         block_indicators = True
-                if ch == u'-' and followed_by_space:
+                if ch == u'-' and followed_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
             else:
@@ -685,14 +674,13 @@ class Emitter(object):
                     flow_indicators = True
                 if ch == u':':
                     flow_indicators = True
-                    if followed_by_space:
+                    if followed_by_whitespace:
                         block_indicators = True
-                if ch == u'#' and preceeded_by_space:
+                if ch == u'#' and preceeded_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
 
             # Check for line breaks, special, and unicode characters.
-
             if ch in u'\n\x85\u2028\u2029':
                 line_breaks = True
             if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
@@ -704,65 +692,33 @@ class Emitter(object):
                 else:
                     special_characters = True
 
-            # Spaces, line breaks, and how they are mixed. State machine.
-
-            # Start or continue series of whitespaces.
-            if ch in u' \n\x85\u2028\u2029':
-                if spaces and breaks:
-                    if ch != u' ':      # break+ (space+ break+)    => mixed
-                        mixed = True
-                elif spaces:
-                    if ch != u' ':      # (space+ break+)   => mixed
-                        breaks = True
-                        mixed = True
-                elif breaks:
-                    if ch == u' ':      # break+ space+
-                        spaces = True
-                else:
-                    leading = (index == 0)
-                    if ch == u' ':      # space+
-                        spaces = True
-                    else:               # break+
-                        breaks = True
-
-            # Series of whitespaces ended with a non-space.
-            elif spaces or breaks:
-                if leading:
-                    if spaces and breaks:
-                        mixed_breaks_spaces = True
-                    elif spaces:
-                        leading_spaces = True
-                    elif breaks:
-                        leading_breaks = True
-                else:
-                    if mixed:
-                        mixed_breaks_spaces = True
-                    elif spaces and breaks:
-                        inline_breaks_spaces = True
-                    elif spaces:
-                        inline_spaces = True
-                    elif breaks:
-                        inline_breaks = True
-                spaces = breaks = mixed = leading = False
-
-            # Series of whitespaces reach the end.
-            if (spaces or breaks) and (index == len(scalar)-1):
-                if spaces and breaks:
-                    mixed_breaks_spaces = True
-                elif spaces:
-                    trailing_spaces = True
-                    if leading:
-                        leading_spaces = True
-                elif breaks:
-                    trailing_breaks = True
-                    if leading:
-                        leading_breaks = True
-                spaces = breaks = mixed = leading = False
+            # Detect important whitespace combinations.
+            if ch == u' ':
+                if index == 0:
+                    leading_space = True
+                if index == len(scalar)-1:
+                    trailing_space = True
+                if previous_break:
+                    break_space = True
+                previous_space = True
+                previous_break = False
+            elif ch in u'\n\x85\u2028\u2029':
+                if index == 0:
+                    leading_break = True
+                if index == len(scalar)-1:
+                    trailing_break = True
+                if previous_space:
+                    space_break = True
+                previous_space = False
+                previous_break = True
+            else:
+                previous_space = False
+                previous_break = False
 
             # Prepare for the next character.
             index += 1
-            preceeded_by_space = (ch in u'\0 \t\r\n\x85\u2028\u2029')
-            followed_by_space = (index+1 >= len(scalar) or
+            preceeded_by_whitespace = (ch in u'\0 \t\r\n\x85\u2028\u2029')
+            followed_by_whitespace = (index+1 >= len(scalar) or
                     scalar[index+1] in u'\0 \t\r\n\x85\u2028\u2029')
 
         # Let's decide what styles are allowed.
@@ -773,26 +729,27 @@ class Emitter(object):
         allow_block = True
 
         # Leading and trailing whitespaces are bad for plain scalars.
-        if (leading_spaces or leading_breaks
-                or trailing_spaces or trailing_breaks):
+        if (leading_space or leading_break
+                or trailing_space or trailing_break):
             allow_flow_plain = allow_block_plain = False
 
         # We do not permit trailing spaces for block scalars.
-        if trailing_spaces:
+        if trailing_space:
             allow_block = False
 
         # Spaces at the beginning of a new line are only acceptable for block
         # scalars.
-        if inline_breaks_spaces:
+        if break_space:
             allow_flow_plain = allow_block_plain = allow_single_quoted = False
 
-        # Mixed spaces and breaks, as well as special character are only
+        # Spaces followed by breaks, as well as special character are only
         # allowed for double quoted scalars.
-        if mixed_breaks_spaces or special_characters:
+        if space_break or special_characters:
             allow_flow_plain = allow_block_plain =  \
             allow_single_quoted = allow_block = False
 
-        # We don't emit multiline plain scalars.
+        # Although the plain scalar writer supports breaks, we never emit
+        # multiline plain scalars.
         if line_breaks:
             allow_flow_plain = allow_block_plain = False
 
