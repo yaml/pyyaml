@@ -1351,6 +1351,7 @@ cdef class CEmitter:
                 if yaml_emitter_emit(&self.emitter, &event) == 0:
                     error = self._emitter_error()
                     raise error
+            self.ascend_resolver()
         return 1
 
 cdef int output_handler(void *data, char *buffer, int size) except 0:
