@@ -82,7 +82,6 @@ except ImportError:
     with_pyrex = False
 
 
-
 class Distribution(_Distribution):
 
     def __init__(self, attrs=None):
