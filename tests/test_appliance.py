@@ -51,9 +51,13 @@ def parse_arguments(args):
     return include_functions, include_filenames, verbose
 
 def execute(function, filenames, verbose):
+    if hasattr(function, 'unittest_name'):
+        name = function.unittest_name
+    else:
+        name = function.func_name
     if verbose:
         sys.stdout.write('='*75+'\n')
-        sys.stdout.write('%s(%s)...\n' % (function.func_name, ', '.join(filenames)))
+        sys.stdout.write('%s(%s)...\n' % (name, ', '.join(filenames)))
     try:
         function(verbose=verbose, *filenames)
     except Exception, exc:
@@ -73,7 +77,7 @@ def execute(function, filenames, verbose):
         if not verbose:
             sys.stdout.write('.')
     sys.stdout.flush()
-    return (function, filenames, kind, info)
+    return (name, filenames, kind, info)
 
 def display(results, verbose):
     if results and not verbose:
@@ -81,7 +85,7 @@ def display(results, verbose):
     total = len(results)
     failures = 0
     errors = 0
-    for function, filenames, kind, info in results:
+    for name, filenames, kind, info in results:
         if kind == 'SUCCESS':
             continue
         if kind == 'FAILURE':
@@ -89,7 +93,7 @@ def display(results, verbose):
         if kind == 'ERROR':
             errors += 1
         sys.stdout.write('='*75+'\n')
-        sys.stdout.write('%s(%s): %s\n' % (function.func_name, ', '.join(filenames), kind))
+        sys.stdout.write('%s(%s): %s\n' % (name, ', '.join(filenames), kind))
         if kind == 'ERROR':
             traceback.print_exception(file=sys.stdout, *info)
         else:
@@ -98,7 +102,7 @@ def display(results, verbose):
             sys.stdout.write('%s: see below\n' % info[0].__name__)
             sys.stdout.write('~'*75+'\n')
             for arg in info[1].args:
-                pprint.pprint(arg, stream=sys.stdout, indent=2)
+                pprint.pprint(arg, stream=sys.stdout)
         for filename in filenames:
             sys.stdout.write('-'*75+'\n')
             sys.stdout.write('%s:\n' % filename)

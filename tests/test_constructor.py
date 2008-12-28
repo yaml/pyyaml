@@ -231,6 +231,8 @@ def _serialize_value(data):
         return repr(data.utctimetuple())
     elif isinstance(data, unicode):
         return data.encode('utf-8')
+    elif isinstance(data, float) and data != data:
+        return '?'
     else:
         return str(data)
 

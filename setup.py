@@ -220,7 +220,8 @@ class build_ext(_build_ext):
                     extra_postargs=(ext.extra_compile_args or []),
                     depends=ext.depends)
         except CompileError:
-            log.warn("%s appears not to be installed" % ext.feature_name)
+            log.warn("%s appears not to be installed: forcing --%s"
+                     % (ext.feature_name, ext.neg_option_name))
             log.warn("(if %s is installed, you may need to specify"
                     % ext.feature_name)
             log.warn(" the option --include-dirs or uncomment and modify")
