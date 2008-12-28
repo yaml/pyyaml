@@ -269,6 +269,25 @@ class bdist_rpm(_bdist_rpm):
         return spec_file
 
 
+class test(Command):
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        build_cmd = self.get_finalized_command('build')
+        build_cmd.run()
+        sys.path.insert(0, build_cmd.build_lib)
+        sys.path.insert(0, 'tests')
+        import test_all
+        test_all.main([])
+
+
 if __name__ == '__main__':
 
     setup(
@@ -296,6 +315,7 @@ if __name__ == '__main__':
         cmdclass={
             'build_ext': build_ext,
             'bdist_rpm': bdist_rpm,
+            'test': test,
         },
     )
 

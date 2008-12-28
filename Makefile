@@ -29,6 +29,9 @@ test: build
 testext: buildext
 	${PYTHON} tests/test_build_ext.py ${TEST}
 
+testall:
+	${PYTHON} setup.py test
+
 dist:
 	${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
 

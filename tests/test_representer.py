@@ -1,60 +1,42 @@
 
-import test_appliance
-from test_constructor import *
+import yaml
+import test_constructor
+import pprint
 
-from yaml import *
-
-class TestRepresenterTypes(test_appliance.TestAppliance):
-
-    def _testTypesUnicode(self, test_name, data_filename, code_filename):
-        return self._testTypes(test_name, data_filename, code_filename, allow_unicode=True)
-
-    def _testTypes(self, test_name, data_filename, code_filename, allow_unicode=False):
-        data1 = eval(file(code_filename, 'rb').read())
-        data2 = None
-        output = None
+def test_representer_types(code_filename, verbose=False):
+    test_constructor._make_objects()
+    for allow_unicode in [False, True]:
+        native1 = test_constructor._load_code(open(code_filename, 'rb').read())
+        native2 = None
         try:
-            output = dump(data1, Dumper=MyDumper, allow_unicode=allow_unicode)
-            data2 = load(output, Loader=MyLoader)
-            self.failUnlessEqual(type(data1), type(data2))
+            output = yaml.dump(native1, Dumper=test_constructor.MyDumper,
+                        allow_unicode=allow_unicode)
+            native2 = yaml.load(output, Loader=test_constructor.MyLoader)
             try:
-                self.failUnlessEqual(data1, data2)
-            except (AssertionError, TypeError):
-                if isinstance(data1, dict):
-                    data1 = [(repr(key), value) for key, value in data1.items()]
-                    data1.sort()
-                    data1 = repr(data1)
-                    data2 = [(repr(key), value) for key, value in data2.items()]
-                    data2.sort()
-                    data2 = repr(data2)
-                    if data1 != data2:
-                        raise
-                elif isinstance(data1, list):
-                    self.failUnlessEqual(type(data1), type(data2))
-                    self.failUnlessEqual(len(data1), len(data2))
-                    for item1, item2 in zip(data1, data2):
-                        if (item1 != item1 or (item1 == 0.0 and item1 == 1.0)) and  \
-                                (item2 != item2 or (item2 == 0.0 and item2 == 1.0)):
-                            continue
-                        if isinstance(item1, datetime.datetime) \
-                                and isinstance(item2, datetime.datetime):
-                            self.failUnlessEqual(item1.microsecond,
-                                    item2.microsecond)
-                        if isinstance(item1, datetime.datetime):
-                            item1 = item1.utctimetuple()
-                        if isinstance(item2, datetime.datetime):
-                            item2 = item2.utctimetuple()
-                        self.failUnlessEqual(item1, item2)
-                else:
-                    raise
-        except:
-            print
-            print "OUTPUT:"
-            print output
-            print "NATIVES1:", data1
-            print "NATIVES2:", data2
-            raise
+                if native1 == native2:
+                    continue
+            except TypeError:
+                pass
+            value1 = test_constructor._serialize_value(native1)
+            value2 = test_constructor._serialize_value(native2)
+            if verbose:
+                print "SERIALIZED NATIVE1:"
+                print value1
+                print "SERIALIZED NATIVE2:"
+                print value2
+            assert value1 == value2, (native1, native2)
+        finally:
+            if verbose:
+                print "NATIVE1:"
+                pprint.pprint(native1)
+                print "NATIVE2:"
+                pprint.pprint(native2)
+                print "OUTPUT:"
+                print output
 
-TestRepresenterTypes.add_tests('testTypes', '.data', '.code')
-TestRepresenterTypes.add_tests('testTypesUnicode', '.data', '.code')
+test_representer_types.unittest = ['.code']
+
+if __name__ == '__main__':
+    import test_appliance
+    test_appliance.run(globals())
 
