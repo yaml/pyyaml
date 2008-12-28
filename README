@@ -15,6 +15,9 @@ parser and emitter as follows:
     >>> yaml.load(stream, Loader=yaml.CLoader)
     >>> yaml.dump(data, Dumper=yaml.CDumper)
 
+PyYAML includes a comprehensive test suite.  To run the tests,
+type 'python setup.py test'.
+
 For more information, check the PyYAML homepage:
 'http://pyyaml.org/wiki/PyYAML'.
 

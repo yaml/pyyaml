@@ -220,12 +220,13 @@ class build_ext(_build_ext):
                     extra_postargs=(ext.extra_compile_args or []),
                     depends=ext.depends)
         except CompileError:
-            log.warn("%s appears not to be installed: forcing --%s"
+            log.warn("")
+            log.warn("%s is not found or a compiler error: forcing --%s"
                      % (ext.feature_name, ext.neg_option_name))
-            log.warn("(if %s is installed, you may need to specify"
+            log.warn("(if %s is installed correctly, you may need to"
                     % ext.feature_name)
-            log.warn(" the option --include-dirs or uncomment and modify")
-            log.warn(" the parameter include_dirs in setup.cfg)")
+            log.warn(" specify the option --include-dirs or uncomment and")
+            log.warn(" modify the parameter include_dirs in setup.cfg)")
             open(cache, 'w').write('0\n')
             return False
         prog = 'check_%s' % ext.feature_name
@@ -238,11 +239,13 @@ class build_ext(_build_ext):
                     runtime_library_dirs=ext.runtime_library_dirs,
                     extra_postargs=(ext.extra_link_args or []))
         except LinkError:
-            log.warn("unable to link against %s" % ext.feature_name)
-            log.warn("(if %s is installed correctly, you may need to specify"
+            log.warn("")
+            log.warn("%s is not found or a linker error: forcing --%s"
+                     % (ext.feature_name, ext.neg_option_name))
+            log.warn("(if %s is installed correctly, you may need to"
                     % ext.feature_name)
-            log.warn(" the option --library-dirs or uncomment and modify")
-            log.warn(" the parameter library_dirs in setup.cfg)")
+            log.warn(" specify the option --library-dirs or uncomment and")
+            log.warn(" modify the parameter library_dirs in setup.cfg)")
             open(cache, 'w').write('0\n')
             return False
         open(cache, 'w').write('1\n')
