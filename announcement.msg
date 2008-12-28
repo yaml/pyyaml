@@ -1,12 +1,12 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.06: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-3.07: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.06
+ Announcing PyYAML-3.07
 ========================
 
-A new bug fix release of PyYAML is now available:
+A new release of PyYAML is now available:
 
     http://pyyaml.org/wiki/PyYAML
 
@@ -14,18 +14,22 @@ A new bug fix release of PyYAML is now available:
 Changes
 =======
 
-* setup.py checks whether LibYAML is installed and if so, builds
-  and installs LibYAML bindings.  To force or disable installation
-  of LibYAML bindings, use '--with-libyaml' or '--without-libyaml'
-  respectively.
-* Building LibYAML bindings no longer requires Pyrex installed.
-* 'yaml.load()' raises an exception if the input stream contains
-  more than one YAML document.
-* Fixed exceptions produced by LibYAML bindings.
-* Fixed a dot '.' character being recognized as !!float.
-* Fixed Python 2.3 compatibility issue in constructing !!timestamp values.
-* Windows binary packages are built against the LibYAML stable branch.
-* Added attributes 'yaml.__version__' and  'yaml.__with_libyaml__'.
+* The emitter learned to use an optional indentation indicator
+  for block scalar; thus scalars with leading whitespaces
+  could now be represented in a literal or folded style.
+* The test suite is now included in the source distribution.
+  To run the tests, type 'python setup.py test'.
+* Refactored the test suite: dropped unittest in favor of
+  a custom test appliance.
+* Fixed the path resolver in the LibYAML-based dumper.
+* Forced an explicit document end indicator when there is
+  a possibility of parsing ambiguity.
+* More setup.py improvements: the package should be usable
+  when any combination of setuptools, Pyrex and LibYAML
+  is installed.
+* Windows binary packages are built against LibYAML-0.1.2.
+* Other minor fixes and improvements (Thank to Ingy dot Net
+  and Andrey Somov).
 
 
 Resources
@@ -34,13 +38,13 @@ Resources
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.06.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.06.zip
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.07.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.07.zip
 Windows installer:
-    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.3.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.4.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.5.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.06.win32-py2.6.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.07.win32-py2.3.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.07.win32-py2.4.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.07.win32-py2.5.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.07.win32-py2.6.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml

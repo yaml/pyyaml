@@ -1,4 +1,4 @@
-include README LICENSE setup.py
+include README LICENSE CHANGES setup.py
 recursive-include examples *.py *.cfg *.yaml
 recursive-include tests *.py
 recursive-include tests/data *
