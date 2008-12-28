@@ -74,7 +74,7 @@ class ReaderError(YAMLError):
         else:
             return "unacceptable character #x%04x: %s\n"    \
                     "  in \"%s\", position %d"    \
-                    % (ord(self.character), self.reason,
+                    % (self.character, self.reason,
                             self.name, self.position)
 
 class Reader(object):
@@ -175,7 +175,7 @@ class Reader(object):
         if match:
             character = match.group()
             position = self.index+(len(self.buffer)-self.pointer)+match.start()
-            raise ReaderError(self.name, position, character,
+            raise ReaderError(self.name, position, ord(character),
                     'unicode', "special characters are not allowed")
 
     def update(self, length):
