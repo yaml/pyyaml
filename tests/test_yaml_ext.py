@@ -240,7 +240,11 @@ def wrap_ext_function(function):
             function(*args, **kwds)
         finally:
             _tear_down()
-    wrapper.func_name = '%s_ext' % function.func_name
+    try:
+        wrapper.func_name = '%s_ext' % function.func_name
+    except TypeError:
+        pass
+    wrapper.unittest_name = '%s_ext' % function.func_name
     wrapper.unittest = function.unittest
     wrapper.skip = getattr(function, 'skip', [])+['.skip-ext']
     return wrapper
@@ -259,8 +263,8 @@ def wrap_ext(collections):
             if isinstance(value, types.FunctionType) and hasattr(value, 'unittest'):
                 functions.append(wrap_ext_function(value))
     for function in functions:
-        assert function.func_name not in globals()
-        globals()[function.func_name] = function
+        assert function.unittest_name not in globals()
+        globals()[function.unittest_name] = function
 
 import test_tokens, test_structure, test_errors, test_resolver, test_constructor,   \
         test_emitter, test_representer, test_recursive

@@ -35,8 +35,8 @@ def test_recursive(recursive_filename, verbose=False):
         assert output1 == output2, (output1, output2)
     finally:
         if verbose:
-            print "VALUE1:", value1
-            print "VALUE2:", value2
+            #print "VALUE1:", value1
+            #print "VALUE2:", value2
             print "OUTPUT1:"
             print output1
             print "OUTPUT2:"
