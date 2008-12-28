@@ -1,2 +1,2 @@
-dumper = Dumper(StringIO.StringIO())
+dumper = yaml.Dumper(StringIO.StringIO())
 dumper.close()

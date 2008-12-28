@@ -1,1 +1,1 @@
-[file, Loader, dump, abs, yaml.tokens]
+[file, yaml.Loader, yaml.dump, abs, yaml.tokens]

@@ -1,1 +1,1 @@
-safe_dump(object)
+yaml.safe_dump(object)

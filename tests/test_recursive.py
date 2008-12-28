@@ -1,7 +1,5 @@
 
-import test_appliance
-
-from yaml import *
+import yaml
 
 class AnInstance:
 
@@ -24,29 +22,29 @@ class AnInstanceWithState(AnInstance):
     def __setstate__(self, state):
         self.foo, self.bar = state['attributes']
 
-class TestRecursive(test_appliance.TestAppliance):
-
-    def _testRecursive(self, test_name, recursive_filename):
-        exec file(recursive_filename, 'r').read()
-        value1 = value
-        output1 = None
-        value2 = None
-        output2 = None
-        try:
-            output1 = dump(value1)
-            #print "OUTPUT %s:" % test_name
-            #print output1
-            value2 = load(output1)
-            output2 = dump(value2)
-            self.failUnlessEqual(output1, output2)
-        except:
+def test_recursive(recursive_filename, verbose=False):
+    exec open(recursive_filename, 'rb').read()
+    value1 = value
+    output1 = None
+    value2 = None
+    output2 = None
+    try:
+        output1 = yaml.dump(value1)
+        value2 = yaml.load(output1)
+        output2 = yaml.dump(value2)
+        assert output1 == output2, (output1, output2)
+    finally:
+        if verbose:
             print "VALUE1:", value1
             print "VALUE2:", value2
             print "OUTPUT1:"
             print output1
             print "OUTPUT2:"
             print output2
-            raise
 
-TestRecursive.add_tests('testRecursive', '.recursive')
+test_recursive.unittest = ['.recursive']
+
+if __name__ == '__main__':
+    import test_appliance
+    test_appliance.run(globals())
 

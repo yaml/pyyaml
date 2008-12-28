@@ -1,91 +1,66 @@
 
-import test_appliance
-import test_emitter
+import yaml, test_emitter
 
-import StringIO
+def test_loader_error(error_filename, verbose=False):
+    try:
+        list(yaml.load_all(open(error_filename, 'rb')))
+    except yaml.YAMLError, exc:
+        if verbose:
+            print "%s:" % exc.__class__.__name__, exc
+    else:
+        raise AssertionError("expected an exception")
 
-from yaml import *
+test_loader_error.unittest = ['.loader-error']
 
-class TestErrors(test_appliance.TestAppliance):
+def test_loader_error_string(error_filename, verbose=False):
+    try:
+        list(yaml.load_all(open(error_filename, 'rb').read()))
+    except yaml.YAMLError, exc:
+        if verbose:
+            print "%s:" % exc.__class__.__name__, exc
+    else:
+        raise AssertionError("expected an exception")
 
-    def _testLoaderErrors(self, test_name, invalid_filename):
-        #self._load(invalid_filename)
-        self.failUnlessRaises(YAMLError, lambda: self._load(invalid_filename))
+test_loader_error_string.unittest = ['.loader-error']
 
-    def _testLoaderStringErrors(self, test_name, invalid_filename):
-        #self._load_string(invalid_filename)
-        self.failUnlessRaises(YAMLError, lambda: self._load_string(invalid_filename))
+def test_loader_error_single(error_filename, verbose=False):
+    try:
+        yaml.load(open(error_filename, 'rb').read())
+    except yaml.YAMLError, exc:
+        if verbose:
+            print "%s:" % exc.__class__.__name__, exc
+    else:
+        raise AssertionError("expected an exception")
 
-    def _testLoaderSingleErrors(self, test_name, invalid_filename):
-        #self._load_single(invalid_filename)
-        self.failUnlessRaises(YAMLError, lambda: self._load_single(invalid_filename))
+test_loader_error_single.unittest = ['.single-loader-error']
 
-    def _testEmitterErrors(self, test_name, invalid_filename):
-        events = list(load(file(invalid_filename, 'rb').read(),
-            Loader=test_emitter.EventsLoader))
-        self.failUnlessRaises(YAMLError, lambda: self._emit(events))
+def test_emitter_error(error_filename, verbose=False):
+    events = list(yaml.load(open(error_filename, 'rb'),
+                    Loader=test_emitter.EventsLoader))
+    try:
+        yaml.emit(events)
+    except yaml.YAMLError, exc:
+        if verbose:
+            print "%s:" % exc.__class__.__name__, exc
+    else:
+        raise AssertionError("expected an exception")
 
-    def _testDumperErrors(self, test_name, invalid_filename):
-        code = file(invalid_filename, 'rb').read()
-        self.failUnlessRaises(YAMLError, lambda: self._dump(code))
+test_emitter_error.unittest = ['.emitter-error']
 
-    def _dump(self, code):
-        try:
-            exec code
-        except YAMLError, exc:
-            #print '.'*70
-            #print "%s:" % exc.__class__.__name__, exc
-            raise
+def test_dumper_error(error_filename, verbose=False):
+    code = open(error_filename, 'rb').read()
+    try:
+        import yaml, StringIO
+        exec code
+    except yaml.YAMLError, exc:
+        if verbose:
+            print "%s:" % exc.__class__.__name__, exc
+    else:
+        raise AssertionError("expected an exception")
 
-    def _emit(self, events):
-        try:
-            emit(events)
-        except YAMLError, exc:
-            #print '.'*70
-            #print "%s:" % exc.__class__.__name__, exc
-            raise
+test_dumper_error.unittest = ['.dumper-error']
 
-    def _load(self, filename):
-        try:
-            return list(load_all(file(filename, 'rb')))
-        except YAMLError, exc:
-        #except ScannerError, exc:
-        #except ParserError, exc:
-        #except ComposerError, exc:
-        #except ConstructorError, exc:
-            #print '.'*70
-            #print "%s:" % exc.__class__.__name__, exc
-            raise
-
-    def _load_string(self, filename):
-        try:
-            return list(load_all(file(filename, 'rb').read()))
-        except YAMLError, exc:
-        #except ScannerError, exc:
-        #except ParserError, exc:
-        #except ComposerError, exc:
-        #except ConstructorError, exc:
-            #print '.'*70
-            #print "%s:" % filename
-            #print "%s:" % exc.__class__.__name__, exc
-            raise
-
-    def _load_single(self, filename):
-        try:
-            return load(file(filename, 'rb').read())
-        except YAMLError, exc:
-        #except ScannerError, exc:
-        #except ParserError, exc:
-        #except ComposerError, exc:
-        #except ConstructorError, exc:
-            #print '.'*70
-            #print "%s:" % filename
-            #print "%s:" % exc.__class__.__name__, exc
-            raise
-
-TestErrors.add_tests('testLoaderErrors', '.loader-error')
-TestErrors.add_tests('testLoaderStringErrors', '.loader-error')
-TestErrors.add_tests('testLoaderSingleErrors', '.single-loader-error')
-TestErrors.add_tests('testEmitterErrors', '.emitter-error')
-TestErrors.add_tests('testDumperErrors', '.dumper-error')
+if __name__ == '__main__':
+    import test_appliance
+    test_appliance.run(globals())
 

@@ -1,2 +1,2 @@
-dumper = Dumper(StringIO.StringIO())
-dumper.serialize(ScalarNode(tag='!foo', value='bar'))
+dumper = yaml.Dumper(StringIO.StringIO())
+dumper.serialize(yaml.ScalarNode(tag='!foo', value='bar'))

@@ -1,86 +1,77 @@
 
-import test_appliance
+import yaml
+import pprint
 
-from yaml import *
+# Tokens mnemonic:
+# directive:            %
+# document_start:       ---
+# document_end:         ...
+# alias:                *
+# anchor:               &
+# tag:                  !
+# scalar                _
+# block_sequence_start: [[
+# block_mapping_start:  {{
+# block_end:            ]}
+# flow_sequence_start:  [
+# flow_sequence_end:    ]
+# flow_mapping_start:   {
+# flow_mapping_end:     }
+# entry:                ,
+# key:                  ?
+# value:                :
 
-class TestTokens(test_appliance.TestAppliance):
+_replaces = {
+    yaml.DirectiveToken: '%',
+    yaml.DocumentStartToken: '---',
+    yaml.DocumentEndToken: '...',
+    yaml.AliasToken: '*',
+    yaml.AnchorToken: '&',
+    yaml.TagToken: '!',
+    yaml.ScalarToken: '_',
+    yaml.BlockSequenceStartToken: '[[',
+    yaml.BlockMappingStartToken: '{{',
+    yaml.BlockEndToken: ']}',
+    yaml.FlowSequenceStartToken: '[',
+    yaml.FlowSequenceEndToken: ']',
+    yaml.FlowMappingStartToken: '{',
+    yaml.FlowMappingEndToken: '}',
+    yaml.BlockEntryToken: ',',
+    yaml.FlowEntryToken: ',',
+    yaml.KeyToken: '?',
+    yaml.ValueToken: ':',
+}
 
-    # Tokens mnemonic:
-    # directive:            %
-    # document_start:       ---
-    # document_end:         ...
-    # alias:                *
-    # anchor:               &
-    # tag:                  !
-    # scalar                _
-    # block_sequence_start: [[
-    # block_mapping_start:  {{
-    # block_end:            ]}
-    # flow_sequence_start:  [
-    # flow_sequence_end:    ]
-    # flow_mapping_start:   {
-    # flow_mapping_end:     }
-    # entry:                ,
-    # key:                  ?
-    # value:                :
+def test_tokens(data_filename, tokens_filename, verbose=False):
+    tokens1 = []
+    tokens2 = open(tokens_filename, 'rb').read().split()
+    try:
+        for token in yaml.scan(open(data_filename, 'rb')):
+            if not isinstance(token, (yaml.StreamStartToken, yaml.StreamEndToken)):
+                tokens1.append(_replaces[token.__class__])
+    finally:
+        if verbose:
+            print "TOKENS1:", ' '.join(tokens1)
+            print "TOKENS2:", ' '.join(tokens2)
+    assert len(tokens1) == len(tokens2), (tokens1, tokens2)
+    for token1, token2 in zip(tokens1, tokens2):
+        assert token1 == token2, (token1, token2)
 
-    replaces = {
-        DirectiveToken: '%',
-        DocumentStartToken: '---',
-        DocumentEndToken: '...',
-        AliasToken: '*',
-        AnchorToken: '&',
-        TagToken: '!',
-        ScalarToken: '_',
-        BlockSequenceStartToken: '[[',
-        BlockMappingStartToken: '{{',
-        BlockEndToken: ']}',
-        FlowSequenceStartToken: '[',
-        FlowSequenceEndToken: ']',
-        FlowMappingStartToken: '{',
-        FlowMappingEndToken: '}',
-        BlockEntryToken: ',',
-        FlowEntryToken: ',',
-        KeyToken: '?',
-        ValueToken: ':',
-    }
+test_tokens.unittest = ['.data', '.tokens']
 
-    def _testTokens(self, test_name, data_filename, tokens_filename):
-        tokens1 = None
-        tokens2 = file(tokens_filename, 'rb').read().split()
+def test_scanner(data_filename, canonical_filename, verbose=False):
+    for filename in [data_filename, canonical_filename]:
+        tokens = []
         try:
-            tokens1 = []
-            for token in scan(file(data_filename, 'rb')):
-                if not isinstance(token, (StreamStartToken, StreamEndToken)):
-                    tokens1.append(token)
-            tokens1 = [self.replaces[t.__class__] for t in tokens1]
-            self.failUnlessEqual(tokens1, tokens2)
-        except:
-            print
-            print "DATA:"
-            print file(data_filename, 'rb').read()
-            print "TOKENS1:", tokens1
-            print "TOKENS2:", tokens2
-            raise
+            for token in yaml.scan(open(filename, 'rb')):
+                tokens.append(token.__class__.__name__)
+        finally:
+            if verbose:
+                pprint.pprint(tokens)
 
-TestTokens.add_tests('testTokens', '.data', '.tokens')
+test_scanner.unittest = ['.data', '.canonical']
 
-class TestScanner(test_appliance.TestAppliance):
-
-    def _testScanner(self, test_name, data_filename, canonical_filename):
-        for filename in [canonical_filename, data_filename]:
-            tokens = None
-            try:
-                tokens = []
-                for token in scan(file(filename, 'rb')):
-                    if not isinstance(token, (StreamStartToken, StreamEndToken)):
-                        tokens.append(token.__class__.__name__)
-            except:
-                print
-                print "DATA:"
-                print file(data_filename, 'rb').read()
-                print "TOKENS:", tokens
-                raise
-
-TestScanner.add_tests('testScanner', '.data', '.canonical')
+if __name__ == '__main__':
+    import test_appliance
+    test_appliance.run(globals())
 
