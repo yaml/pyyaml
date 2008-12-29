@@ -24,10 +24,10 @@ installext:
 	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
 
 test: build
-	${PYTHON} tests/test_build.py ${TEST}
+	${PYTHON} tests/lib/test_build.py ${TEST}
 
 testext: buildext
-	${PYTHON} tests/test_build_ext.py ${TEST}
+	${PYTHON} tests/lib/test_build_ext.py ${TEST}
 
 testall:
 	${PYTHON} setup.py test

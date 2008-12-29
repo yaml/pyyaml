@@ -1,3 +1,0 @@
-value = set()
-value.add(AnInstance(foo=value, bar=value))
-value.add(AnInstance(foo=value, bar=value))
