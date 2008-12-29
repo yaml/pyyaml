@@ -807,7 +807,7 @@ class Scanner(object):
         # See the specification for details.
         length = 0
         ch = self.peek(length)
-        while u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+        while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
                 or ch in u'-_':
             length += 1
             ch = self.peek(length)
@@ -846,7 +846,7 @@ class Scanner(object):
     def scan_yaml_directive_number(self, start_mark):
         # See the specification for details.
         ch = self.peek()
-        if not (u'0' <= ch <= '9'):
+        if not (u'0' <= ch <= u'9'):
             raise ScannerError("while scanning a directive", start_mark,
                     "expected a digit, but found %r" % ch.encode('utf-8'),
                     self.get_mark())
@@ -912,14 +912,14 @@ class Scanner(object):
         # Therefore we restrict aliases to numbers and ASCII letters.
         start_mark = self.get_mark()
         indicator = self.peek()
-        if indicator == '*':
+        if indicator == u'*':
             name = 'alias'
         else:
             name = 'anchor'
         self.forward()
         length = 0
         ch = self.peek(length)
-        while u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+        while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
                 or ch in u'-_':
             length += 1
             ch = self.peek(length)
@@ -1368,7 +1368,7 @@ class Scanner(object):
         length = 1
         ch = self.peek(length)
         if ch != u' ':
-            while u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+            while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
                     or ch in u'-_':
                 length += 1
                 ch = self.peek(length)
@@ -1388,7 +1388,7 @@ class Scanner(object):
         chunks = []
         length = 0
         ch = self.peek(length)
-        while u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+        while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
                 or ch in u'-;/?:@&=+$,_.!~*\'()[]%':
             if ch == u'%':
                 chunks.append(self.prefix(length))

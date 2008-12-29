@@ -31,9 +31,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 2.4",
     "Programming Language :: Python :: 2.5",
     "Programming Language :: Python :: 2.6",
-#   Python 3.0 is not yet supported, but see http://pyyaml.org/ticket/74
-#    "Programming Language :: Python :: 3",
-#    "Programming Language :: Python :: 3.0",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.0",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup",
 ]
@@ -156,7 +155,8 @@ class build_ext(_build_ext):
             return
         try:
             _build_ext.run(self)
-        except DistutilsPlatformError, exc:
+        except DistutilsPlatformError:
+            exc = sys.exc_info()[1]
             if optional:
                 log.warn(str(exc))
                 log.warn("skipping build_ext")
@@ -287,39 +287,67 @@ class test(Command):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        sys.path.insert(0, 'tests')
+        if sys.version_info[0] < 3:
+            sys.path.insert(0, 'tests')
+        else:
+            sys.path.insert(0, 'tests3')
         import test_all
         test_all.main([])
 
 
 if __name__ == '__main__':
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        license=LICENSE,
-        platforms=PLATFORMS,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        classifiers=CLASSIFIERS,
+    if sys.version_info[0] < 3:
 
-        package_dir={'': 'lib'},
-        packages=['yaml'],
-        ext_modules=[
-            Extension('_yaml', ['ext/_yaml.pyx'],
-                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-                libraries=['yaml']),
-        ],
+        setup(
+            name=NAME,
+            version=VERSION,
+            description=DESCRIPTION,
+            long_description=LONG_DESCRIPTION,
+            author=AUTHOR,
+            author_email=AUTHOR_EMAIL,
+            license=LICENSE,
+            platforms=PLATFORMS,
+            url=URL,
+            download_url=DOWNLOAD_URL,
+            classifiers=CLASSIFIERS,
 
-        distclass=Distribution,
-        cmdclass={
-            'build_ext': build_ext,
-            'bdist_rpm': bdist_rpm,
-            'test': test,
-        },
-    )
+            package_dir={'': 'lib'},
+            packages=['yaml'],
+            ext_modules=[
+                Extension('_yaml', ['ext/_yaml.pyx'],
+                    'libyaml', "LibYAML bindings", LIBYAML_CHECK,
+                    libraries=['yaml']),
+            ],
+
+            distclass=Distribution,
+            cmdclass={
+                'build_ext': build_ext,
+                'bdist_rpm': bdist_rpm,
+                'test': test,
+            },
+        )
+
+    else:
+
+        setup(
+            name=NAME,
+            version=VERSION,
+            description=DESCRIPTION,
+            long_description=LONG_DESCRIPTION,
+            author=AUTHOR,
+            author_email=AUTHOR_EMAIL,
+            license=LICENSE,
+            platforms=PLATFORMS,
+            url=URL,
+            download_url=DOWNLOAD_URL,
+            classifiers=CLASSIFIERS,
+
+            package_dir={'': 'lib3'},
+            packages=['yaml'],
+
+            cmdclass={
+                'test': test,
+            },
+        )
 

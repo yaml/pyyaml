@@ -286,6 +286,7 @@ SafeRepresenter.add_representer(set,
 
 SafeRepresenter.add_representer(datetime.date,
         SafeRepresenter.represent_date)
+
 SafeRepresenter.add_representer(datetime.datetime,
         SafeRepresenter.represent_datetime)
 

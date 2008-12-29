@@ -545,7 +545,7 @@ class Emitter(object):
             raise EmitterError("tag handle must start and end with '!': %r"
                     % (handle.encode('utf-8')))
         for ch in handle[1:-1]:
-            if not (u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'    \
+            if not (u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'  \
                     or ch in u'-_'):
                 raise EmitterError("invalid character %r in the tag handle: %r"
                         % (ch.encode('utf-8'), handle.encode('utf-8')))
@@ -560,7 +560,7 @@ class Emitter(object):
             end = 1
         while end < len(prefix):
             ch = prefix[end]
-            if u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+            if u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'   \
                     or ch in u'-;/?!:@&=+$,_.~*\'()[]':
                 end += 1
             else:
@@ -590,7 +590,7 @@ class Emitter(object):
         start = end = 0
         while end < len(suffix):
             ch = suffix[end]
-            if u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'  \
+            if u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'   \
                     or ch in u'-;/?:@&=+$,_.~*\'()[]'   \
                     or (ch == u'!' and handle != u'!'):
                 end += 1
@@ -613,7 +613,7 @@ class Emitter(object):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
-            if not (u'0' <= ch <= u'9' or u'A' <= ch <= 'Z' or u'a' <= ch <= 'z'    \
+            if not (u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'  \
                     or ch in u'-_'):
                 raise EmitterError("invalid character %r in the anchor: %r"
                         % (ch.encode('utf-8'), anchor.encode('utf-8')))
