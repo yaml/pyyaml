@@ -1,7 +1,4 @@
 
-__version__ = '3.08'
-__with_libyaml__ = False
-
 from .error import *
 
 from .tokens import *
@@ -10,6 +7,13 @@ from .nodes import *
 
 from .loader import *
 from .dumper import *
+
+__version__ = '3.08'
+try:
+    from .cyaml import *
+    __with_libyaml__ = True
+except ImportError:
+    __with_libyaml__ = False
 
 import io
 

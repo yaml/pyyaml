@@ -139,7 +139,7 @@ def _make_loader():
             return tuple(yaml.Loader.construct_sequence(self, node))
         def construct_mapping(self, node):
             pairs = self.construct_pairs(node)
-            pairs.sort()
+            pairs.sort(key=(lambda i: str(i)))
             return pairs
         def construct_undefined(self, node):
             return self.construct_scalar(node)
@@ -155,7 +155,7 @@ def _make_canonical_loader():
             return tuple(yaml.CanonicalLoader.construct_sequence(self, node))
         def construct_mapping(self, node):
             pairs = self.construct_pairs(node)
-            pairs.sort()
+            pairs.sort(key=(lambda i: str(i)))
             return pairs
         def construct_undefined(self, node):
             return self.construct_scalar(node)

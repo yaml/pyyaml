@@ -251,10 +251,16 @@ cdef class CParser:
     cdef object anchors
 
     def __init__(self, stream):
+        cdef is_readable
         if yaml_parser_initialize(&self.parser) == 0:
             raise MemoryError
         self.parsed_event.type = YAML_NO_EVENT
-        if hasattr(stream, 'read'):
+        is_readable = 1
+        try:
+            stream.read
+        except AttributeError:
+            is_readable = 0
+        if is_readable:
             self.stream = stream
             try:
                 self.stream_name = stream.name
@@ -357,23 +363,25 @@ cdef class CParser:
         elif token.type == YAML_STREAM_START_TOKEN:
             encoding = None
             if token.data.stream_start.encoding == YAML_UTF8_ENCODING:
-                encoding = "utf-8"
+                encoding = u"utf-8"
             elif token.data.stream_start.encoding == YAML_UTF16LE_ENCODING:
-                encoding = "utf-16-le"
+                encoding = u"utf-16-le"
             elif token.data.stream_start.encoding == YAML_UTF16BE_ENCODING:
-                encoding = "utf-16-be"
+                encoding = u"utf-16-be"
             return StreamStartToken(start_mark, end_mark, encoding)
         elif token.type == YAML_STREAM_END_TOKEN:
             return StreamEndToken(start_mark, end_mark)
         elif token.type == YAML_VERSION_DIRECTIVE_TOKEN:
-            return DirectiveToken("YAML",
+            return DirectiveToken(u"YAML",
                     (token.data.version_directive.major,
                         token.data.version_directive.minor),
                     start_mark, end_mark)
         elif token.type == YAML_TAG_DIRECTIVE_TOKEN:
-            return DirectiveToken("TAG",
-                    (token.data.tag_directive.handle,
-                        token.data.tag_directive.prefix),
+            handle = PyUnicode_DecodeUTF8(token.data.tag_directive.handle,
+                    strlen(token.data.tag_directive.handle), 'strict')
+            prefix = PyUnicode_DecodeUTF8(token.data.tag_directive.prefix,
+                    strlen(token.data.tag_directive.prefix), 'strict')
+            return DirectiveToken(u"TAG", (handle, prefix),
                     start_mark, end_mark)
         elif token.type == YAML_DOCUMENT_START_TOKEN:
             return DocumentStartToken(start_mark, end_mark)
@@ -870,6 +878,8 @@ cdef int input_handler(void *data, char *buffer, int size, int *read) except 0:
     cdef CParser parser
     parser = <CParser>data
     value = parser.stream.read(size)
+    if PyUnicode_CheckExact(value) != 0:
+        value = PyUnicode_AsUTF8String(value)
     if PyString_CheckExact(value) == 0:
         raise TypeError("a string value is expected")
     if PyString_GET_SIZE(value) > size:
@@ -894,6 +904,7 @@ cdef class CEmitter:
     cdef object anchors
     cdef int last_alias_id
     cdef int closed
+    cdef int decode_output
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None, encoding=None,
@@ -901,6 +912,11 @@ cdef class CEmitter:
         if yaml_emitter_initialize(&self.emitter) == 0:
             raise MemoryError
         self.stream = stream
+        self.decode_output = 1
+        try:
+            stream.encoding
+        except AttributeError:
+            self.decode_output = 0
         yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)    
         if canonical is not None:
             yaml_emitter_set_canonical(&self.emitter, 1)
@@ -1216,7 +1232,7 @@ cdef class CEmitter:
         if node in self.anchors:
             if self.anchors[node] is None:
                 self.last_alias_id = self.last_alias_id+1
-                self.anchors[node] = "id%03d" % self.last_alias_id
+                self.anchors[node] = u"id%03d" % self.last_alias_id
         else:
             self.anchors[node] = None
             node_class = node.__class__
@@ -1245,7 +1261,7 @@ cdef class CEmitter:
         anchor_object = self.anchors[node]
         anchor = NULL
         if anchor_object is not None:
-            anchor = PyString_AS_STRING(anchor_object)
+            anchor = PyString_AS_STRING(PyUnicode_AsUTF8String(anchor_object))
         if node in self.serialized_nodes:
             if yaml_alias_event_initialize(&event, anchor) == 0:
                 raise MemoryError
@@ -1357,7 +1373,10 @@ cdef class CEmitter:
 cdef int output_handler(void *data, char *buffer, int size) except 0:
     cdef CEmitter emitter
     emitter = <CEmitter>data
-    value = PyString_FromStringAndSize(buffer, size)
+    if emitter.decode_output == 0:
+        value = PyString_FromStringAndSize(buffer, size)
+    else:
+        value = PyUnicode_DecodeUTF8(buffer, size, 'strict')
     emitter.stream.write(value)
     return 1
 
