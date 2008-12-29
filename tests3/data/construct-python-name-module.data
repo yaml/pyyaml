@@ -1,4 +1,4 @@
-- !!python/name:file
+- !!python/name:str
 - !!python/name:yaml.Loader
 - !!python/name:yaml.dump
 - !!python/name:abs

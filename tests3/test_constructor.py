@@ -6,14 +6,14 @@ import datetime
 import yaml.tokens
 
 def execute(code):
+    global value
     exec(code)
     return value
 
 def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
-            AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
-            NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
-            FixedOffset, execute
+            AnObject, AnInstance, AState, ACustomState, NewArgs, NewArgsWithState,  \
+            Reduce, ReduceWithState, MyInt, MyList, MyDict, FixedOffset, execute
 
     class MyLoader(yaml.Loader):
         pass
@@ -99,7 +99,7 @@ def _make_objects():
             else:
                 return False
 
-    class AnObject(object):
+    class AnObject:
         def __new__(cls, foo=None, bar=None, baz=None):
             self = object.__new__(cls)
             self.foo = foo
@@ -142,20 +142,6 @@ def _make_objects():
             return (self.foo, self.bar, self.baz)
         def __setstate__(self, state):
             self.foo, self.bar, self.baz = state
-
-    class InitArgs(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar, self.baz)
-        def __getstate__(self):
-            return {}
-
-    class InitArgsWithState(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar)
-        def __getstate__(self):
-            return self.baz
-        def __setstate__(self, state):
-            self.baz = state
 
     class NewArgs(AnObject):
         def __getnewargs__(self):

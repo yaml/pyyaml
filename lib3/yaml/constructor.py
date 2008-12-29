@@ -509,7 +509,7 @@ class Constructor(SafeConstructor):
         if '.' in name:
             module_name, object_name = name.rsplit('.', 1)
         else:
-            module_name = '__builtin__'
+            module_name = 'builtins'
             object_name = name
         try:
             __import__(module_name)
