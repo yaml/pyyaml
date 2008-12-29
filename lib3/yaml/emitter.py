@@ -180,8 +180,7 @@ class Emitter:
                 self.write_version_directive(version_text)
             self.tag_prefixes = self.DEFAULT_TAG_PREFIXES.copy()
             if self.event.tags:
-                handles = self.event.tags.keys()
-                handles.sort()
+                handles = sorted(self.event.tags.keys())
                 for handle in handles:
                     prefix = self.event.tags[handle]
                     self.tag_prefixes[prefix] = handle
