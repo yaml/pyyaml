@@ -252,15 +252,13 @@ def wrap_ext(collections):
     for collection in collections:
         if not isinstance(collection, dict):
             collection = vars(collection)
-        keys = collection.keys()
-        keys.sort()
-        for key in keys:
+        for key in sorted(collection):
             value = collection[key]
             if isinstance(value, types.FunctionType) and hasattr(value, 'unittest'):
                 functions.append(wrap_ext_function(value))
     for function in functions:
-        assert function.unittest_name not in globals()
-        globals()[function.unittest_name] = function
+        assert function.__name__ not in globals()
+        globals()[function.__name__] = function
 
 import test_tokens, test_structure, test_errors, test_resolver, test_constructor,   \
         test_emitter, test_representer, test_recursive

@@ -73,12 +73,19 @@ if 'setuptools.extension' in sys.modules:
     sys.modules['distutils.extension'].Extension = _Extension
     sys.modules['distutils.command.build_ext'].Extension = _Extension
 
-try:
-    from Pyrex.Distutils import Extension as _Extension
-    from Pyrex.Distutils import build_ext as _build_ext
-    with_pyrex = True
-except ImportError:
-    with_pyrex = False
+with_pyrex = None
+if sys.version_info[0] < 3:
+    try:
+        from Cython.Distutils.extension import Extension as _Extension
+        from Cython.Distutils import build_ext as _build_ext
+        with_pyrex = 'cython'
+    except ImportError:
+        try:
+            from Pyrex.Distutils import Extension as _Extension
+            from Pyrex.Distutils import build_ext as _build_ext
+            with_pyrex = 'pyrex'
+        except ImportError:
+            pass
 
 
 class Distribution(_Distribution):
@@ -167,8 +174,10 @@ class build_ext(_build_ext):
         self.check_extensions_list(self.extensions)
         filenames = []
         for ext in self.extensions:
-            if with_pyrex:
+            if with_pyrex == 'pyrex':
                 self.pyrex_sources(ext.sources, ext)
+            elif with_pyrex == 'cython':
+                self.cython_sources(ext.sources, ext)
             for filename in ext.sources:
                 filenames.append(filename)
                 base = os.path.splitext(filename)[0]
@@ -197,8 +206,10 @@ class build_ext(_build_ext):
                 with_ext = self.check_extension_availability(ext)
             if not with_ext:
                 continue
-            if with_pyrex:
+            if with_pyrex == 'pyrex':
                 ext.sources = self.pyrex_sources(ext.sources, ext)
+            elif with_pyrex == 'cython':
+                ext.sources = self.cython_sources(ext.sources, ext)
             self.build_extension(ext)
 
     def check_extension_availability(self, ext):
@@ -297,57 +308,37 @@ class test(Command):
 
 if __name__ == '__main__':
 
-    if sys.version_info[0] < 3:
+    package_dir = {
+            '2': 'lib',
+    }
 
-        setup(
-            name=NAME,
-            version=VERSION,
-            description=DESCRIPTION,
-            long_description=LONG_DESCRIPTION,
-            author=AUTHOR,
-            author_email=AUTHOR_EMAIL,
-            license=LICENSE,
-            platforms=PLATFORMS,
-            url=URL,
-            download_url=DOWNLOAD_URL,
-            classifiers=CLASSIFIERS,
+    setup(
+        name=NAME,
+        version=VERSION,
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        author=AUTHOR,
+        author_email=AUTHOR_EMAIL,
+        license=LICENSE,
+        platforms=PLATFORMS,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        classifiers=CLASSIFIERS,
 
-            package_dir={'': 'lib'},
-            packages=['yaml'],
-            ext_modules=[
-                Extension('_yaml', ['ext/_yaml.pyx'],
-                    'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-                    libraries=['yaml']),
-            ],
+        package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
+        packages=['yaml'],
+        ext_modules=[
+            Extension('_yaml', ['ext/_yaml.pyx'],
+                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
+                libraries=['yaml']),
+        ],
 
-            distclass=Distribution,
-            cmdclass={
-                'build_ext': build_ext,
-                'bdist_rpm': bdist_rpm,
-                'test': test,
-            },
-        )
+        distclass=Distribution,
 
-    else:
-
-        setup(
-            name=NAME,
-            version=VERSION,
-            description=DESCRIPTION,
-            long_description=LONG_DESCRIPTION,
-            author=AUTHOR,
-            author_email=AUTHOR_EMAIL,
-            license=LICENSE,
-            platforms=PLATFORMS,
-            url=URL,
-            download_url=DOWNLOAD_URL,
-            classifiers=CLASSIFIERS,
-
-            package_dir={'': 'lib3'},
-            packages=['yaml'],
-
-            cmdclass={
-                'test': test,
-            },
-        )
+        cmdclass={
+            'build_ext': build_ext,
+            'bdist_rpm': bdist_rpm,
+            'test': test,
+        },
+    )
 
