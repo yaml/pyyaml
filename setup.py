@@ -288,9 +288,9 @@ class test(Command):
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
         if sys.version_info[0] < 3:
-            sys.path.insert(0, 'tests')
+            sys.path.insert(0, 'tests/lib')
         else:
-            sys.path.insert(0, 'tests3')
+            sys.path.insert(0, 'tests/lib3')
         import test_all
         test_all.main([])
 
