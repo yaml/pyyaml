@@ -1,0 +1,3 @@
+dumper = yaml.Dumper(io.StringIO())
+dumper.open()
+dumper.open()

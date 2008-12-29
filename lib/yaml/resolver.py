@@ -192,7 +192,7 @@ Resolver.add_implicit_resolver(
 Resolver.add_implicit_resolver(
         u'tag:yaml.org,2002:merge',
         re.compile(ur'^(?:<<)$'),
-        ['<'])
+        [u'<'])
 
 Resolver.add_implicit_resolver(
         u'tag:yaml.org,2002:null',
@@ -213,7 +213,7 @@ Resolver.add_implicit_resolver(
 Resolver.add_implicit_resolver(
         u'tag:yaml.org,2002:value',
         re.compile(ur'^(?:=)$'),
-        ['='])
+        [u'='])
 
 # The following resolver is only for documentation purposes. It cannot work
 # because plain scalars cannot start with '!', '&', or '*'.
