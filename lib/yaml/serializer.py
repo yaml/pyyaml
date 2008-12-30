@@ -55,7 +55,7 @@ class Serializer(object):
         self.emit(DocumentEndEvent(explicit=self.use_explicit_end))
         self.serialized_nodes = {}
         self.anchors = {}
-        self.last_alias_id = 0
+        self.last_anchor_id = 0
 
     def anchor_node(self, node):
         if node in self.anchors:
