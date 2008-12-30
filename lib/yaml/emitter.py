@@ -154,7 +154,7 @@ class Emitter(object):
 
     def expect_stream_start(self):
         if isinstance(self.event, StreamStartEvent):
-            if self.event.encoding:
+            if self.event.encoding and not getattr(self.stream, 'encoding', None):
                 self.encoding = self.event.encoding
             self.write_stream_start()
             self.state = self.expect_first_document_start

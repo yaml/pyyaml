@@ -41,7 +41,7 @@ class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
             encoding=None, explicit_start=None, explicit_end=None,
             version=None, tags=None):
         CEmitter.__init__(self, stream, canonical=canonical,
-                indent=indent, width=width,
+                indent=indent, width=width, encoding=encoding,
                 allow_unicode=allow_unicode, line_break=line_break,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
@@ -58,7 +58,7 @@ class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
             encoding=None, explicit_start=None, explicit_end=None,
             version=None, tags=None):
         CEmitter.__init__(self, stream, canonical=canonical,
-                indent=indent, width=width,
+                indent=indent, width=width, encoding=encoding,
                 allow_unicode=allow_unicode, line_break=line_break,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
@@ -75,7 +75,7 @@ class CDumper(CEmitter, Serializer, Representer, Resolver):
             encoding=None, explicit_start=None, explicit_end=None,
             version=None, tags=None):
         CEmitter.__init__(self, stream, canonical=canonical,
-                indent=indent, width=width,
+                indent=indent, width=width, encoding=encoding,
                 allow_unicode=allow_unicode, line_break=line_break,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)

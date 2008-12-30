@@ -91,10 +91,7 @@ def emit(events, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        try:
-            from cStringIO import StringIO
-        except ImportError:
-            from StringIO import StringIO
+        from StringIO import StringIO
         stream = StringIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
@@ -115,10 +112,10 @@ def serialize_all(nodes, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        try:
-            from cStringIO import StringIO
-        except ImportError:
+        if encoding is None:
             from StringIO import StringIO
+        else:
+            from cStringIO import StringIO
         stream = StringIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
@@ -151,10 +148,10 @@ def dump_all(documents, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        try:
-            from cStringIO import StringIO
-        except ImportError:
+        if encoding is None:
             from StringIO import StringIO
+        else:
+            from cStringIO import StringIO
         stream = StringIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, default_style=default_style,
