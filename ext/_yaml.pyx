@@ -249,6 +249,10 @@ cdef class CParser:
     cdef object current_token
     cdef object current_event
     cdef object anchors
+    cdef object stream_cache
+    cdef int stream_cache_len
+    cdef int stream_cache_pos
+    cdef int unicode_source
 
     def __init__(self, stream):
         cdef is_readable
@@ -260,19 +264,24 @@ cdef class CParser:
             stream.read
         except AttributeError:
             is_readable = 0
+        self.unicode_source = 0
         if is_readable:
             self.stream = stream
             try:
                 self.stream_name = stream.name
             except AttributeError:
                 self.stream_name = '<file>'
+            self.stream_cache = None
+            self.stream_cache_len = 0
+            self.stream_cache_pos = 0
             yaml_parser_set_input(&self.parser, input_handler, <void *>self)
         else:
             if PyUnicode_CheckExact(stream) != 0:
                 stream = PyUnicode_AsUTF8String(stream)
                 self.stream_name = '<unicode string>'
+                self.unicode_source = 1
             else:
-                self.stream_name = '<string>'
+                self.stream_name = '<byte string>'
             if PyString_CheckExact(stream) == 0:
                 raise TypeError("a string or stream input is required")
             self.stream = stream
@@ -363,7 +372,8 @@ cdef class CParser:
         elif token.type == YAML_STREAM_START_TOKEN:
             encoding = None
             if token.data.stream_start.encoding == YAML_UTF8_ENCODING:
-                encoding = u"utf-8"
+                if self.unicode_source == 0:
+                    encoding = u"utf-8"
             elif token.data.stream_start.encoding == YAML_UTF16LE_ENCODING:
                 encoding = u"utf-16-le"
             elif token.data.stream_start.encoding == YAML_UTF16BE_ENCODING:
@@ -515,7 +525,8 @@ cdef class CParser:
         elif event.type == YAML_STREAM_START_EVENT:
             encoding = None
             if event.data.stream_start.encoding == YAML_UTF8_ENCODING:
-                encoding = "utf-8"
+                if self.unicode_source == 0:
+                    encoding = "utf-8"
             elif event.data.stream_start.encoding == YAML_UTF16LE_ENCODING:
                 encoding = "utf-16-le"
             elif event.data.stream_start.encoding == YAML_UTF16BE_ENCODING:
@@ -877,15 +888,25 @@ cdef class CParser:
 cdef int input_handler(void *data, char *buffer, int size, int *read) except 0:
     cdef CParser parser
     parser = <CParser>data
-    value = parser.stream.read(size)
-    if PyUnicode_CheckExact(value) != 0:
-        value = PyUnicode_AsUTF8String(value)
-    if PyString_CheckExact(value) == 0:
-        raise TypeError("a string value is expected")
-    if PyString_GET_SIZE(value) > size:
-        raise ValueError("a string value it too long")
-    memcpy(buffer, PyString_AS_STRING(value), PyString_GET_SIZE(value))
-    read[0] = PyString_GET_SIZE(value)
+    if parser.stream_cache is None:
+        value = parser.stream.read(size)
+        if PyUnicode_CheckExact(value) != 0:
+            value = PyUnicode_AsUTF8String(value)
+            parser.unicode_source = 1
+        if PyString_CheckExact(value) == 0:
+            raise TypeError("a string value is expected")
+        parser.stream_cache = value
+        parser.stream_cache_pos = 0
+        parser.stream_cache_len = PyString_GET_SIZE(value)
+    if (parser.stream_cache_len - parser.stream_cache_pos) < size:
+        size = parser.stream_cache_len - parser.stream_cache_pos
+    if size > 0:
+        memcpy(buffer, PyString_AS_STRING(parser.stream_cache)
+                            + parser.stream_cache_pos, size)
+    read[0] = size
+    parser.stream_cache_pos += size
+    if parser.stream_cache_pos == parser.stream_cache_len:
+        parser.stream_cache = None
     return 1
 
 cdef class CEmitter:
@@ -894,7 +915,6 @@ cdef class CEmitter:
 
     cdef object stream
 
-    cdef yaml_encoding_t use_encoding
     cdef int document_start_implicit
     cdef int document_end_implicit
     cdef object use_version
@@ -904,7 +924,8 @@ cdef class CEmitter:
     cdef object anchors
     cdef int last_alias_id
     cdef int closed
-    cdef int decode_output
+    cdef int dump_unicode
+    cdef object use_encoding
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None, encoding=None,
@@ -912,19 +933,21 @@ cdef class CEmitter:
         if yaml_emitter_initialize(&self.emitter) == 0:
             raise MemoryError
         self.stream = stream
-        self.decode_output = 1
+        self.dump_unicode = 0
         try:
-            stream.encoding
+            if stream.encoding:
+                self.dump_unicode = 1
         except AttributeError:
-            self.decode_output = 0
+            pass
+        self.use_encoding = encoding
         yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)    
-        if canonical is not None:
+        if canonical:
             yaml_emitter_set_canonical(&self.emitter, 1)
         if indent is not None:
             yaml_emitter_set_indent(&self.emitter, indent)
         if width is not None:
             yaml_emitter_set_width(&self.emitter, width)
-        if allow_unicode is not None:
+        if allow_unicode:
             yaml_emitter_set_unicode(&self.emitter, 1)
         if line_break is not None:
             if line_break == '\r':
@@ -933,12 +956,6 @@ cdef class CEmitter:
                 yaml_emitter_set_break(&self.emitter, YAML_LN_BREAK)
             elif line_break == '\r\n':
                 yaml_emitter_set_break(&self.emitter, YAML_CRLN_BREAK)
-        if encoding == 'utf-16-le':
-            self.use_encoding = YAML_UTF16LE_ENCODING
-        elif encoding == 'utf-16-be':
-            self.use_encoding = YAML_UTF16BE_ENCODING
-        else:
-            self.use_encoding = YAML_UTF8_ENCODING
         self.document_start_implicit = 1
         if explicit_start:
             self.document_start_implicit = 0
@@ -986,6 +1003,10 @@ cdef class CEmitter:
                 encoding = YAML_UTF16LE_ENCODING
             elif event_object.encoding == 'utf-16-be':
                 encoding = YAML_UTF16BE_ENCODING
+            if event_object.encoding is None:
+                self.dump_unicode = 1
+            if self.dump_unicode == 1:
+                encoding = YAML_UTF8_ENCODING
             yaml_stream_start_event_initialize(event, encoding)
         elif event_class is StreamEndEvent:
             yaml_stream_end_event_initialize(event)
@@ -1150,8 +1171,19 @@ cdef class CEmitter:
 
     def open(self):
         cdef yaml_event_t event
+        cdef yaml_encoding_t encoding
         if self.closed == -1:
-            yaml_stream_start_event_initialize(&event, self.use_encoding)
+            if self.use_encoding == 'utf-16-le':
+                encoding = YAML_UTF16LE_ENCODING
+            elif self.use_encoding == 'utf-16-be':
+                encoding = YAML_UTF16BE_ENCODING
+            else:
+                encoding = YAML_UTF8_ENCODING
+            if self.use_encoding is None:
+                self.dump_unicode = 1
+            if self.dump_unicode == 1:
+                encoding = YAML_UTF8_ENCODING
+            yaml_stream_start_event_initialize(&event, encoding)
             if yaml_emitter_emit(&self.emitter, &event) == 0:
                 error = self._emitter_error()
                 raise error
@@ -1373,7 +1405,7 @@ cdef class CEmitter:
 cdef int output_handler(void *data, char *buffer, int size) except 0:
     cdef CEmitter emitter
     emitter = <CEmitter>data
-    if emitter.decode_output == 0:
+    if emitter.dump_unicode == 0:
         value = PyString_FromStringAndSize(buffer, size)
     else:
         value = PyUnicode_DecodeUTF8(buffer, size, 'strict')

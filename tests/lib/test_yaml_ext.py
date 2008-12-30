@@ -267,9 +267,9 @@ def wrap_ext(collections):
         globals()[function.unittest_name] = function
 
 import test_tokens, test_structure, test_errors, test_resolver, test_constructor,   \
-        test_emitter, test_representer, test_recursive
+        test_emitter, test_representer, test_recursive, test_input_output
 wrap_ext([test_tokens, test_structure, test_errors, test_resolver, test_constructor,
-        test_emitter, test_representer, test_recursive])
+        test_emitter, test_representer, test_recursive, test_input_output])
 
 if __name__ == '__main__':
     import test_appliance
