@@ -9,8 +9,10 @@ cdef extern from "_yaml.h":
     char *PyString_AS_STRING(object o)
     int PyString_GET_SIZE(object o)
     object PyString_FromStringAndSize(char *v, int l)
-    object PyUnicode_DecodeUTF8(char *s, int s, char *e)
+    object PyUnicode_FromString(char *u)
+    object PyUnicode_DecodeUTF8(char *u, int s, char *e)
     object PyUnicode_AsUTF8String(object o)
+    int PY_MAJOR_VERSION
 
     ctypedef enum:
         SIZEOF_VOID_P
