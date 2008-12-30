@@ -13,3 +13,11 @@
 #define PyString_FromStringAndSize  PyBytes_FromStringAndSize
 
 #endif
+
+#ifdef _MSC_VER	/* MS Visual C++ 6.0 */
+#if _MSC_VER == 1200
+
+#define PyLong_FromUnsignedLongLong(z)	PyInt_FromLong(i)
+
+#endif
+#endif
