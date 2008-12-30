@@ -2,6 +2,14 @@
 For a complete Subversion changelog, see 'http://pyyaml.org/log/pyyaml'.
 
 
+3.08 (2008-12-31)
+-----------------
+
+* Python 3 support (Thank to Erick Tryzelaar).
+* Use Cython instead of Pyrex to build LibYAML bindings.
+* Refactored support for unicode and byte input/output streams.
+
+
 3.07 (2008-12-29)
 -----------------
 

@@ -56,6 +56,9 @@ def test_unicode_output(unicode_filename, verbose=False):
             yaml.dump(value, stream, encoding=encoding, allow_unicode=allow_unicode)
             data2 = stream.getvalue()
             data3 = yaml.dump(value, encoding=encoding, allow_unicode=allow_unicode)
+            if encoding is not None:
+                assert isinstance(data3, bytes)
+                data3 = data3.decode(encoding)
             stream = io.BytesIO()
             if encoding is None:
                 try:
