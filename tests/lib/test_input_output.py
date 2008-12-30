@@ -4,7 +4,13 @@ import codecs, StringIO
 
 def _unicode_open(file, encoding, errors='strict'):
     info = codecs.lookup(encoding)
-    srw = codecs.StreamReaderWriter(file, info.streamreader, info.streamwriter, errors)
+    if isinstance(info, tuple):
+        reader = info[2]
+        writer = info[3]
+    else:
+        reader = info.streamreader
+        writer = info.streamwriter
+    srw = codecs.StreamReaderWriter(file, reader, writer, errors)
     srw.encoding = encoding
     return srw
 
