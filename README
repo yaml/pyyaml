@@ -21,7 +21,7 @@ type 'python setup.py test'.
 For more information, check the PyYAML homepage:
 'http://pyyaml.org/wiki/PyYAML'.
 
-Documentation (rough and incomplete though):
+For PyYAML tutorial and reference, see:
 'http://pyyaml.org/wiki/PyYAMLDocumentation'.
 
 Post your questions and opinions to the YAML-Core mailing list:
@@ -32,3 +32,4 @@ Submit bug reports and feature requests to the PyYAML bug tracker:
 
 PyYAML is written by Kirill Simonov <xi@resolvent.net>.  It is released
 under the MIT license. See the file LICENSE for more details.
+

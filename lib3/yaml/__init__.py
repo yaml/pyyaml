@@ -104,7 +104,7 @@ def emit(events, stream=None, Dumper=Dumper,
 def serialize_all(nodes, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
-        encoding='utf-8', explicit_start=None, explicit_end=None,
+        encoding=None, explicit_start=None, explicit_end=None,
         version=None, tags=None):
     """
     Serialize a sequence of representation trees into a YAML stream.
@@ -112,7 +112,10 @@ def serialize_all(nodes, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        stream = io.StringIO()
+        if encoding is None:
+            stream = io.StringIO()
+        else:
+            stream = io.BytesIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break,
@@ -136,7 +139,7 @@ def dump_all(documents, stream=None, Dumper=Dumper,
         default_style=None, default_flow_style=None,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
-        encoding='utf-8', explicit_start=None, explicit_end=None,
+        encoding=None, explicit_start=None, explicit_end=None,
         version=None, tags=None):
     """
     Serialize a sequence of Python objects into a YAML stream.
@@ -144,7 +147,10 @@ def dump_all(documents, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        stream = io.StringIO()
+        if encoding is None:
+            stream = io.StringIO()
+        else:
+            stream = io.BytesIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, default_style=default_style,
             default_flow_style=default_flow_style,

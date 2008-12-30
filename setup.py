@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '3.07'
+VERSION = '3.08'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability and
@@ -81,6 +81,8 @@ if sys.version_info[0] < 3:
         with_pyrex = 'cython'
     except ImportError:
         try:
+            # Pyrex cannot build _yaml.c at the moment,
+            # but it may get fixed eventually.
             from Pyrex.Distutils import Extension as _Extension
             from Pyrex.Distutils import build_ext as _build_ext
             with_pyrex = 'pyrex'
