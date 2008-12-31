@@ -14,7 +14,7 @@ def get_version():
     yaml_get_version(&major, &minor, &patch)
     return (major, minor, patch)
 
-Mark = yaml.error.Mark
+#Mark = yaml.error.Mark
 YAMLError = yaml.error.YAMLError
 ReaderError = yaml.reader.ReaderError
 ScannerError = yaml.scanner.ScannerError
@@ -61,23 +61,23 @@ ScalarNode = yaml.nodes.ScalarNode
 SequenceNode = yaml.nodes.SequenceNode
 MappingNode = yaml.nodes.MappingNode
 
-#cdef class Mark:
-#    cdef readonly object name
-#    cdef readonly int index
-#    cdef readonly int line
-#    cdef readonly int column
-#    cdef readonly buffer
-#    cdef readonly pointer
-#
-#    def __init__(self, object name, int index, int line, int column,
-#            object buffer, object pointer):
-#        self.name = name
-#        self.index = index
-#        self.line = line
-#        self.column = column
-#        self.buffer = buffer
-#        self.pointer = pointer
-#
+cdef class Mark:
+    cdef readonly object name
+    cdef readonly int index
+    cdef readonly int line
+    cdef readonly int column
+    cdef readonly buffer
+    cdef readonly pointer
+
+    def __init__(self, object name, int index, int line, int column,
+            object buffer, object pointer):
+        self.name = name
+        self.index = index
+        self.line = line
+        self.column = column
+        self.buffer = buffer
+        self.pointer = pointer
+
 #    def get_snippet(self):
 #        return None
 #
