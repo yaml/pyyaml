@@ -581,7 +581,9 @@ class Emitter(object):
             return tag
         handle = None
         suffix = tag
-        for prefix in self.tag_prefixes:
+        prefixes = self.tag_prefixes.keys()
+        prefixes.sort()
+        for prefix in prefixes:
             if tag.startswith(prefix)   \
                     and (prefix == u'!' or len(prefix) < len(tag)):
                 handle = self.tag_prefixes[prefix]
