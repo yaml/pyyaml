@@ -78,14 +78,14 @@ cdef class Mark:
         self.buffer = buffer
         self.pointer = pointer
 
-#    def get_snippet(self):
-#        return None
-#
-#    def __str__(self):
-#        where = "  in \"%s\", line %d, column %d"   \
-#                % (self.name, self.line+1, self.column+1)
-#        return where
-#
+    def get_snippet(self):
+        return None
+
+    def __str__(self):
+        where = "  in \"%s\", line %d, column %d"   \
+                % (self.name, self.line+1, self.column+1)
+        return where
+
 #class YAMLError(Exception):
 #    pass
 #
