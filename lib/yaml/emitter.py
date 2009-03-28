@@ -1027,6 +1027,7 @@ class Emitter(object):
             else:
                 if ch is None or ch in u' \n\x85\u2028\u2029':
                     data = text[start:end]
+                    self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
                     self.stream.write(data)
