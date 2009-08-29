@@ -579,7 +579,9 @@ class Emitter:
             return tag
         handle = None
         suffix = tag
-        for prefix in self.tag_prefixes:
+        prefixes = self.tag_prefixes.keys()
+        prefixes.sort()
+        for prefix in prefixes:
             if tag.startswith(prefix)   \
                     and (prefix == '!' or len(prefix) < len(tag)):
                 handle = self.tag_prefixes[prefix]
@@ -1023,6 +1025,7 @@ class Emitter:
             else:
                 if ch is None or ch in ' \n\x85\u2028\u2029':
                     data = text[start:end]
+                    self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
                     self.stream.write(data)
