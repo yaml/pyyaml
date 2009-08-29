@@ -14,7 +14,7 @@ def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
             AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
-            FixedOffset, execute
+            FixedOffset, today, execute
 
     class MyLoader(yaml.Loader):
         pass
@@ -199,6 +199,8 @@ def _make_objects():
             return self.__name
         def dst(self, dt):
             return datetime.timedelta(0)
+
+    today = datetime.date.today()
 
 def _load_code(expression):
     return eval(expression)

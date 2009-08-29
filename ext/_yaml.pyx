@@ -1380,7 +1380,14 @@ cdef class CEmitter:
         anchor_object = self.anchors[node]
         anchor = NULL
         if anchor_object is not None:
-            anchor = PyString_AS_STRING(PyUnicode_AsUTF8String(anchor_object))
+            if PyUnicode_CheckExact(anchor_object):
+                anchor_object = PyUnicode_AsUTF8String(anchor_object)
+            if not PyString_CheckExact(anchor_object):
+                if PY_MAJOR_VERSION < 3:
+                    raise TypeError("anchor must be a string")
+                else:
+                    raise TypeError(u"anchor must be a string")
+            anchor = PyString_AS_STRING(anchor_object)
         if node in self.serialized_nodes:
             if yaml_alias_event_initialize(&event, anchor) == 0:
                 raise MemoryError
