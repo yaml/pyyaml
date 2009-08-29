@@ -374,7 +374,8 @@ class Scanner(object):
         # Set the current intendation to -1.
         self.unwind_indent(-1)
 
-        # Reset everything (not really needed).
+        # Reset simple keys.
+        self.remove_possible_simple_key()
         self.allow_simple_key = False
         self.possible_simple_keys = {}
 
