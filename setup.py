@@ -310,10 +310,6 @@ class test(Command):
 
 if __name__ == '__main__':
 
-    package_dir = {
-            '2': 'lib',
-    }
-
     setup(
         name=NAME,
         version=VERSION,
