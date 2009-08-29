@@ -789,7 +789,7 @@ class Emitter(object):
     def write_stream_start(self):
         # Write BOM if needed.
         if self.encoding and self.encoding.startswith('utf-16'):
-            self.stream.write(u'\xFF\xFE'.encode(self.encoding))
+            self.stream.write(u'\uFEFF'.encode(self.encoding))
 
     def write_stream_end(self):
         self.flush_stream()
