@@ -954,11 +954,12 @@ cdef class CEmitter:
             raise MemoryError
         self.stream = stream
         self.dump_unicode = 0
-        try:
-            if stream.encoding:
+        if PY_MAJOR_VERSION < 3:
+            if hasattr(stream, 'encoding'):
                 self.dump_unicode = 1
-        except AttributeError:
-            pass
+        else:
+            if hasattr(stream, u'encoding'):
+                self.dump_unicode = 1
         self.use_encoding = encoding
         yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)    
         if canonical:

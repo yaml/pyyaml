@@ -156,7 +156,7 @@ class Reader(object):
                     data, converted = self.raw_decode(self.raw_buffer,
                             'strict', self.eof)
                 except UnicodeDecodeError as exc:
-                    character = exc.object[exc.start]
+                    character = self.raw_buffer[exc.start]
                     if self.stream is not None:
                         position = self.stream_pointer-len(self.raw_buffer)+exc.start
                     else:
