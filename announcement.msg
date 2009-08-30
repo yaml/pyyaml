@@ -1,18 +1,17 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net, python-porting@python.org
-Subject: [ANN] PyYAML-3.08: Now with Python 3 support
+Subject: [ANN] PyYAML-3.09: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.08
+ Announcing PyYAML-3.09
 ========================
 
-A new release of PyYAML is now available:
+A new bug fix release of PyYAML is now available:
 
     http://pyyaml.org/wiki/PyYAML
 
-This release features a complete support for Python 3.  For
-compatibility notes between Python 2 and Python 3 versions,
-please see
+Note that PyYAML supports both Python 2 and Python 3.  For
+compatibility notes, please see
 
     http://pyyaml.org/wiki/PyYAMLDocumentation#Python3support
 
@@ -20,12 +19,15 @@ please see
 Changes
 =======
 
-* Python 3 support (Thank to Erick Tryzelaar).
-* Use Cython instead of Pyrex to build LibYAML bindings.  Note
-  that the source package is distributed with a pre-generated
-  '_yaml.c' file so you don't need Cython installed to build
-  LibYAML bindings.
-* Refactored support for unicode and byte input/output streams.
+* Fixed use of uninitialized memory when emitting anchors with
+  LibYAML bindings (Thank to cegner(at)yahoo-inc(dot)com).
+* Fixed emitting incorrect BOM characters for UTF-16 (Thank to
+  Valentin Nechayev)
+* Fixed the emitter for folded scalars not respecting the preferred
+  line width (Thank to Ingy).
+* Fixed a subtle ordering issue with emitting '%TAG' directives
+  (Thank to Andrey Somov).
+* Fixed performance regression with LibYAML bindings.
 
 
 Resources
@@ -34,14 +36,15 @@ Resources
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.08.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.08.zip
+TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.09.tar.gz
+ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.09.zip
 Windows installers:
-    http://pyyaml.org/download/pyyaml/PyYAML-3.08.win32-py2.3.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.08.win32-py2.4.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.08.win32-py2.5.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.08.win32-py2.6.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.08.win32-py3.0.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py2.3.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py2.4.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py2.5.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py2.6.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py3.0.exe
+    http://pyyaml.org/download/pyyaml/PyYAML-3.09.win32-py3.1.exe
 
 PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
 Submit a bug report: http://pyyaml.org/newticket?component=pyyaml

@@ -2,6 +2,22 @@
 For a complete Subversion changelog, see 'http://pyyaml.org/log/pyyaml'.
 
 
+3.09 (2009-08-31)
+-----------------
+
+* Fixed an obscure scanner error not reported when there is
+  no line break at the end of the stream (Thank to Ingy).
+* Fixed use of uninitialized memory when emitting anchors with
+  LibYAML bindings (Thank to cegner(at)yahoo-inc(dot)com).
+* Fixed emitting incorrect BOM characters for UTF-16 (Thank to
+  Valentin Nechayev)
+* Fixed the emitter for folded scalars not respecting the preferred
+  line width (Thank to Ingy).
+* Fixed a subtle ordering issue with emitting '%TAG' directives
+  (Thank to Andrey Somov).
+* Fixed performance regression with LibYAML bindings.
+
+
 3.08 (2008-12-31)
 -----------------
 
