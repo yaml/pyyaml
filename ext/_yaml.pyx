@@ -955,7 +955,7 @@ cdef class CEmitter:
         self.stream = stream
         self.dump_unicode = 0
         if PY_MAJOR_VERSION < 3:
-            if hasattr(stream, 'encoding'):
+            if getattr3(stream, 'encoding', None):
                 self.dump_unicode = 1
         else:
             if hasattr(stream, u'encoding'):
