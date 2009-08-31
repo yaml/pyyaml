@@ -1,5 +1,5 @@
 From: Kirill Simonov <xi@gamma.dn.ua>
-To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net, python-porting@python.org
+To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
 Subject: [ANN] PyYAML-3.09: YAML parser and emitter for Python
 
 ========================
