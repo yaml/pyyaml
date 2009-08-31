@@ -97,6 +97,7 @@ test_unicode_output.unittest = ['.unicode']
 def test_file_output(unicode_filename, verbose=False):
     data = open(unicode_filename, 'rb').read().decode('utf-8')
     handle, filename = tempfile.mkstemp()
+    os.close(handle)
     try:
         stream = io.StringIO()
         yaml.dump(data, stream, allow_unicode=True)
