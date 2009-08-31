@@ -1,6 +1,6 @@
 
 import yaml
-import codecs, StringIO
+import codecs, StringIO, tempfile, os, os.path
 
 def _unicode_open(file, encoding, errors='strict'):
     info = codecs.lookup(encoding)
@@ -94,6 +94,34 @@ def test_unicode_output(unicode_filename, verbose=False):
                 data4.decode(encoding)
 
 test_unicode_output.unittest = ['.unicode']
+
+def test_file_output(unicode_filename, verbose=False):
+    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    handle, filename = tempfile.mkstemp()
+    try:
+        stream = StringIO.StringIO()
+        yaml.dump(data, stream, allow_unicode=True)
+        data1 = stream.getvalue()
+        stream = open(filename, 'wb')
+        yaml.dump(data, stream, allow_unicode=True)
+        stream.close()
+        data2 = open(filename, 'rb').read()
+        stream = open(filename, 'wb')
+        yaml.dump(data, stream, encoding='utf-16-le', allow_unicode=True)
+        stream.close()
+        data3 = open(filename, 'rb').read().decode('utf-16-le')[1:].encode('utf-8')
+        stream = _unicode_open(open(filename, 'wb'), 'utf-8')
+        yaml.dump(data, stream, allow_unicode=True)
+        stream.close()
+        data4 = open(filename, 'rb').read()
+        assert data1 == data2, (data1, data2)
+        assert data1 == data3, (data1, data3)
+        assert data1 == data4, (data1, data4)
+    finally:
+        if os.path.exists(filename):
+            os.unlink(filename)
+
+test_file_output.unittest = ['.unicode']
 
 def test_unicode_transfer(unicode_filename, verbose=False):
     data = open(unicode_filename, 'rb').read().decode('utf-8')
