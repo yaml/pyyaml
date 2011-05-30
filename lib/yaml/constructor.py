@@ -7,11 +7,6 @@ from nodes import *
 
 import datetime
 
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 import binascii, re, sys, types
 
 class ConstructorError(MarkedYAMLError):
@@ -502,11 +497,7 @@ class Constructor(SafeConstructor):
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
         if u'.' in name:
-            # Python 2.4 only
-            #module_name, object_name = name.rsplit('.', 1)
-            items = name.split('.')
-            object_name = items.pop()
-            module_name = '.'.join(items)
+            module_name, object_name = name.rsplit('.', 1)
         else:
             module_name = '__builtin__'
             object_name = name

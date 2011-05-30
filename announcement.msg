@@ -19,6 +19,8 @@ Changes
 * Clear cyclic references in the parser and the emitter
   (Thank to kristjan(at)ccpgames(dot)com).
 * LibYAML bindings are rebuilt with the latest version of Cython.
+* Dropped support for Python 2.3 and 2.4; currently supported versions
+  are 2.5 to 3.2.
 
 
 Resources
