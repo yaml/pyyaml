@@ -32,8 +32,6 @@ PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.10.tar.gz
 ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.10.zip
 Windows installers:
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.3.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.4.exe
     http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.5.exe
     http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.6.exe
     http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py3.0.exe
