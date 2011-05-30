@@ -86,6 +86,11 @@ class Parser:
         self.marks = []
         self.state = self.parse_stream_start
 
+    def dispose(self):
+        # Reset the state attributes (to clear self-references)
+        self.states = []
+        self.state = None
+
     def check_event(self, *choices):
         # Check the type of the next event.
         if self.current_event is None:

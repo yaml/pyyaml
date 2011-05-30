@@ -58,11 +58,11 @@ class BaseConstructor(object):
         return data
 
     def construct_object(self, node, deep=False):
+        if node in self.constructed_objects:
+            return self.constructed_objects[node]
         if deep:
             old_deep = self.deep_construct
             self.deep_construct = True
-        if node in self.constructed_objects:
-            return self.constructed_objects[node]
         if node in self.recursive_objects:
             raise ConstructorError(None, None,
                     "found unconstructable recursive node", node.start_mark)

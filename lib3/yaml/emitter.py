@@ -103,6 +103,11 @@ class Emitter:
         self.analysis = None
         self.style = None
 
+    def dispose(self):
+        # Reset the state attributes (to clear self-references)
+        self.states = []
+        self.state = None
+
     def emit(self, event):
         self.events.append(event)
         while not self.need_more_events():

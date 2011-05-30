@@ -311,6 +311,9 @@ cdef class CParser:
         yaml_parser_delete(&self.parser)
         yaml_event_delete(&self.parsed_event)
 
+    def dispose(self):
+        pass
+
     cdef object _parser_error(self):
         if self.parser.error == YAML_MEMORY_ERROR:
             return MemoryError
@@ -992,6 +995,9 @@ cdef class CEmitter:
 
     def __dealloc__(self):
         yaml_emitter_delete(&self.emitter)
+
+    def dispose(self):
+        pass
 
     cdef object _emitter_error(self):
         if self.emitter.error == YAML_MEMORY_ERROR:

@@ -212,6 +212,9 @@ class CanonicalParser:
         self.events = []
         self.parsed = False
 
+    def dispose(self):
+        pass
+
     # stream: STREAM-START document* STREAM-END
     def parse_stream(self):
         self.get_token(yaml.StreamStartToken)
