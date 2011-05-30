@@ -8,6 +8,7 @@ For a complete Subversion changelog, see 'http://pyyaml.org/log/pyyaml'.
   (Thank to olt(at)bogosoft(dot)com).
 * Clear cyclic references in the parser and the emitter
   (Thank to kristjan(at)ccpgames(dot)com).
+* Dropped support for Python 2.3 and 2.4.
 
 3.09 (2009-08-31)
 -----------------
