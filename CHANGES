@@ -1,6 +1,13 @@
 
 For a complete Subversion changelog, see 'http://pyyaml.org/log/pyyaml'.
 
+3.10 (2011-05-30)
+-----------------
+
+* Do not try to build LibYAML bindings on platforms other than CPython
+  (Thank to olt(at)bogosoft(dot)com).
+* Clear cyclic references in the parser and the emitter
+  (Thank to kristjan(at)ccpgames(dot)com).
 
 3.09 (2009-08-31)
 -----------------

@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '3.09'
+VERSION = '3.10'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
@@ -31,9 +31,11 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 2.4",
     "Programming Language :: Python :: 2.5",
     "Programming Language :: Python :: 2.6",
+    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.0",
     "Programming Language :: Python :: 3.1",
+    "Programming Language :: Python :: 3.2",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup",
 ]
