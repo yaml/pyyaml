@@ -9,4 +9,6 @@ python:
 # command to run tests, e.g. python setup.py test
 install: pip install -r requirements.txt
 
+before_script: python setup.py build_ext
+
 script: python setup.py test
