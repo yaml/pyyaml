@@ -9,6 +9,6 @@ python:
 # command to run tests, e.g. python setup.py test
 install: pip install -r requirements.txt
 
-before_script: python setup.py build_ext
+before_script: cython ext/_yaml.pyx
 
 script: python setup.py test
