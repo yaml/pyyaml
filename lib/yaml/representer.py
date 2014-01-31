@@ -71,6 +71,9 @@ class BaseRepresenter(object):
         #    self.represented_objects[alias_key] = node
         return node
 
+    def represent_key(self, item_key):
+        return self.represent_data(item_key)
+
     def add_representer(cls, data_type, representer):
         if not 'yaml_representers' in cls.__dict__:
             cls.yaml_representers = cls.yaml_representers.copy()
@@ -119,7 +122,7 @@ class BaseRepresenter(object):
             mapping = mapping.items()
             mapping.sort()
         for item_key, item_value in mapping:
-            node_key = self.represent_data(item_key)
+            node_key = self.represent_key(item_key)
             node_value = self.represent_data(item_value)
             if not (isinstance(node_key, ScalarNode) and not node_key.style):
                 best_style = False
