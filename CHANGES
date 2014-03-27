@@ -1,5 +1,12 @@
 
-For a complete Subversion changelog, see 'http://pyyaml.org/log/pyyaml'.
+For a complete Mercurial changelog, see
+'https://bitbucket.org/xi/pyyaml/commits'.
+
+3.11 (2014-03-26)
+-----------------
+
+* Source and binary distributions are rebuilt against the latest
+  versions of Cython and LibYAML.
 
 3.10 (2011-05-30)
 -----------------
