@@ -10,6 +10,13 @@ import collections, datetime, base64, binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+def consume(generator):
+    for dummy in generator:
+        pass
+
+def empty_generator():
+    if False: yield None
+
 class BaseConstructor:
 
     yaml_constructors = {}
@@ -43,8 +50,7 @@ class BaseConstructor:
             state_generators = self.state_generators
             self.state_generators = []
             for generator in state_generators:
-                for dummy in generator:
-                    pass
+                consume(generator)
         self.constructed_objects = {}
         self.recursive_objects = {}
         self.deep_construct = False
@@ -52,7 +58,10 @@ class BaseConstructor:
 
     def construct_object(self, node, deep=False):
         if node in self.constructed_objects:
-            return self.constructed_objects[node]
+            data, generator = self.constructed_objects[node]
+            if deep:
+                consume(generator)
+            return data
         if deep:
             old_deep = self.deep_construct
             self.deep_construct = True
@@ -86,6 +95,7 @@ class BaseConstructor:
             data = constructor(self, node)
         else:
             data = constructor(self, tag_suffix, node)
+        generator = empty_generator()
         if isinstance(data, types.GeneratorType):
             generator = data
             data = next(generator)
@@ -94,7 +104,7 @@ class BaseConstructor:
                     pass
             else:
                 self.state_generators.append(generator)
-        self.constructed_objects[node] = data
+        self.constructed_objects[node] = (data, generator)
         del self.recursive_objects[node]
         if deep:
             self.deep_construct = old_deep
