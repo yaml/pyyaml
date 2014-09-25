@@ -1,4 +1,9 @@
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from error import *
 
 from tokens import *
@@ -72,6 +77,13 @@ def load(stream, Loader=Loader):
     finally:
         loader.dispose()
 
+def loads(s, Loader=Loader):
+    """
+    Parse the first YAML document in a string
+    and produce the corresponding Python object.
+    """
+    return load(StringIO(s), Loader)
+
 def load_all(stream, Loader=Loader):
     """
     Parse all YAML documents in a stream
@@ -83,6 +95,14 @@ def load_all(stream, Loader=Loader):
             yield loader.get_data()
     finally:
         loader.dispose()
+
+def loads_all(s, Loader=Loader):
+    """
+    Parse all YAML documents in a string
+    and produce corresponding Python objects.
+    """
+    for r in load_all(StringIO(s), Loader):
+        yield r
 
 def safe_load(stream):
     """
