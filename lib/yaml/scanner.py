@@ -297,10 +297,6 @@ class Scanner(object):
         # Check if a simple key is required at the current position.
         required = not self.flow_level and self.indent == self.column
 
-        # A simple key is required only if it is the first token in the current
-        # line. Therefore it is always allowed.
-        assert self.allow_simple_key or not required
-
         # The next token might be a simple key. Let's save it's number and
         # position.
         if self.allow_simple_key:
