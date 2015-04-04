@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 NAME = 'PyYAML'
 VERSION = '3.10'
