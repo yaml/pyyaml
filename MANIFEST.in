@@ -1,0 +1,7 @@
+include README LICENSE CHANGES setup.py
+recursive-include lib/yaml *.py
+recursive-include lib3/yaml *.py
+recursive-include examples *.py *.cfg *.yaml
+recursive-include tests/data *
+recursive-include tests/lib *.py
+recursive-include tests/lib3 *.py
