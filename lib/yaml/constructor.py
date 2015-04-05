@@ -17,12 +17,16 @@ class BaseConstructor(object):
     yaml_constructors = {}
     yaml_multi_constructors = {}
 
-    def __init__(self):
+    def __init__(self, object_pairs_hook=dict):
+        self.object_pairs_hook = object_pairs_hook
         self.constructed_objects = {}
         self.recursive_objects = {}
         self.state_generators = []
         self.deep_construct = False
 
+    def create_object_hook(self):
+        return self.object_pairs_hook()
+    
     def check_data(self):
         # If there are more documents available?
         return self.check_node()
@@ -47,8 +51,8 @@ class BaseConstructor(object):
             for generator in state_generators:
                 for dummy in generator:
                     pass
-        self.constructed_objects = {}
-        self.recursive_objects = {}
+        self.constructed_objects = self.create_object_hook()
+        self.recursive_objects = self.create_object_hook()
         self.deep_construct = False
         return data
 
@@ -122,7 +126,7 @@ class BaseConstructor(object):
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
                     node.start_mark)
-        mapping = {}
+        mapping = self.create_object_hook()
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             try:
@@ -393,7 +397,7 @@ class SafeConstructor(BaseConstructor):
         data.extend(self.construct_sequence(node))
 
     def construct_yaml_map(self, node):
-        data = {}
+        data = self.create_object_hook()
         yield data
         value = self.construct_mapping(node)
         data.update(value)
@@ -588,14 +592,14 @@ class Constructor(SafeConstructor):
             kwds = {}
             state = {}
             listitems = []
-            dictitems = {}
+            dictitems = self.create_object_hook()
         else:
             value = self.construct_mapping(node, deep=True)
             args = value.get('args', [])
             kwds = value.get('kwds', {})
             state = value.get('state', {})
             listitems = value.get('listitems', [])
-            dictitems = value.get('dictitems', {})
+            dictitems = value.get('dictitems', self.create_object_hook())
         instance = self.make_python_instance(suffix, node, args, kwds, newobj)
         if state:
             self.set_python_instance_state(instance, state)

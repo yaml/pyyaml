@@ -61,23 +61,23 @@ def compose_all(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def load(stream, Loader=Loader):
+def load(stream, Loader=Loader, **kwds):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
     """
-    loader = Loader(stream)
+    loader = Loader(stream, **kwds)
     try:
         return loader.get_single_data()
     finally:
         loader.dispose()
 
-def load_all(stream, Loader=Loader):
+def load_all(stream, Loader=Loader, **kwds):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
     """
-    loader = Loader(stream)
+    loader = Loader(stream, **kwds)
     try:
         while loader.check_data():
             yield loader.get_data()
