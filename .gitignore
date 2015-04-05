@@ -1,0 +1,6 @@
+*.pyc
+__pycache__
+ext/_yaml.c
+build/
+.project
+.pydevproject
