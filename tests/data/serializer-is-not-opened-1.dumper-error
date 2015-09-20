@@ -1,2 +1,2 @@
-dumper = yaml.Dumper(StringIO())
+dumper = yaml.UnsafeDumper(StringIO())
 dumper.close()

@@ -16,9 +16,9 @@ def _make_objects():
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute
 
-    class MyLoader(yaml.Loader):
+    class MyLoader(yaml.UnsafeLoader):
         pass
-    class MyDumper(yaml.Dumper):
+    class MyDumper(yaml.UnsafeDumper):
         pass
 
     class MyTestClass1:
@@ -228,7 +228,7 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
     native1 = None
     native2 = None
     try:
-        native1 = list(yaml.load_all(open(data_filename, 'rb'), Loader=MyLoader))
+        native1 = list(yaml.unsafe_load_all(open(data_filename, 'rb'), Loader=MyLoader))
         if len(native1) == 1:
             native1 = native1[0]
         native2 = _load_code(open(code_filename, 'rb').read())

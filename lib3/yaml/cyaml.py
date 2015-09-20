@@ -1,15 +1,15 @@
 
-__all__ = ['CBaseLoader', 'CSafeLoader', 'CLoader',
-        'CBaseDumper', 'CSafeDumper', 'CDumper']
+__all__ = ['CBaseLoader', 'CSafeLoader', 'CUnsafeLoader', 'CLoader',
+        'CBaseDumper', 'CSafeDumper', 'CUnsafeDumper', 'CDumper']
 
 from _yaml import CParser, CEmitter
 
 from .constructor import *
-
-from .serializer import *
 from .representer import *
-
 from .resolver import *
+from .serializer import *
+
+from .deprecated import warn_if_instantiated
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
 
@@ -25,12 +25,18 @@ class CSafeLoader(CParser, SafeConstructor, Resolver):
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
-class CLoader(CParser, Constructor, Resolver):
+class CUnsafeLoader(CParser, Constructor, Resolver):
 
     def __init__(self, stream):
         CParser.__init__(self, stream)
         Constructor.__init__(self)
         Resolver.__init__(self)
+
+class CLoader(CUnsafeLoader):
+
+    def __init__(self, stream):
+        warn_if_instantiated('CLoader')
+        CUnsafeLoader.__init__(self, stream)
 
 class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
 
@@ -66,7 +72,7 @@ class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
 
-class CDumper(CEmitter, Serializer, Representer, Resolver):
+class CUnsafeDumper(CEmitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=None,
@@ -83,3 +89,18 @@ class CDumper(CEmitter, Serializer, Representer, Resolver):
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
 
+class CDumper(CUnsafeDumper):
+
+    def __init__(self, stream,
+            default_style=None, default_flow_style=None,
+            canonical=None, indent=None, width=None,
+            allow_unicode=None, line_break=None,
+            encoding=None, explicit_start=None, explicit_end=None,
+            version=None, tags=None):
+        warn_if_instantiated('CDumper')
+        CUnsafeDumper.__init__(self, stream, default_style=default_style,
+            default_flow_style=default_flow_style,
+            canonical=canonical, indent=indent, width=width,
+            allow_unicode=allow_unicode, line_break=line_break,
+            encoding=encoding, explicit_start=explicit_start,
+            explicit_end=explicit_end, version=version, tags=tags)

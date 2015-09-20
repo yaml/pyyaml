@@ -1,5 +1,5 @@
 - !!python/name:str
-- !!python/name:yaml.Loader
+- !!python/name:yaml.UnsafeLoader
 - !!python/name:yaml.dump
 - !!python/name:abs
 - !!python/module:yaml.tokens

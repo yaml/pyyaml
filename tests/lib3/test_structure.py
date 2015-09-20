@@ -36,7 +36,7 @@ def test_structure(data_filename, structure_filename, verbose=False):
     nodes1 = []
     nodes2 = eval(open(structure_filename, 'r').read())
     try:
-        loader = yaml.Loader(open(data_filename, 'rb'))
+        loader = yaml.UnsafeLoader(open(data_filename, 'rb'))
         while loader.check_event():
             if loader.check_event(yaml.StreamStartEvent, yaml.StreamEndEvent,
                                 yaml.DocumentStartEvent, yaml.DocumentEndEvent):
@@ -134,9 +134,9 @@ test_composer.unittest = ['.data', '.canonical']
 def _make_loader():
     global MyLoader
 
-    class MyLoader(yaml.Loader):
+    class MyLoader(yaml.UnsafeLoader):
         def construct_sequence(self, node):
-            return tuple(yaml.Loader.construct_sequence(self, node))
+            return tuple(yaml.UnsafeLoader.construct_sequence(self, node))
         def construct_mapping(self, node):
             pairs = self.construct_pairs(node)
             pairs.sort(key=(lambda i: str(i)))
@@ -169,8 +169,8 @@ def test_constructor(data_filename, canonical_filename, verbose=False):
     native1 = None
     native2 = None
     try:
-        native1 = list(yaml.load_all(open(data_filename, 'rb'), Loader=MyLoader))
-        native2 = list(yaml.load_all(open(canonical_filename, 'rb'), Loader=MyCanonicalLoader))
+        native1 = list(yaml.unsafe_load_all(open(data_filename, 'rb'), Loader=MyLoader))
+        native2 = list(yaml.unsafe_load_all(open(canonical_filename, 'rb'), Loader=MyCanonicalLoader))
         assert native1 == native2, (native1, native2)
     finally:
         if verbose:

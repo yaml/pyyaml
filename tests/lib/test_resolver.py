@@ -24,9 +24,9 @@ test_implicit_resolver.unittest = ['.data', '.detect']
 def _make_path_loader_and_dumper():
     global MyLoader, MyDumper
 
-    class MyLoader(yaml.Loader):
+    class MyLoader(yaml.UnsafeLoader):
         pass
-    class MyDumper(yaml.Dumper):
+    class MyDumper(yaml.UnsafeDumper):
         pass
 
     yaml.add_path_resolver(u'!root', [],

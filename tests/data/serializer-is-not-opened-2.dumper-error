@@ -1,2 +1,2 @@
-dumper = yaml.Dumper(StringIO())
+dumper = yaml.UnsafeDumper(StringIO())
 dumper.serialize(yaml.ScalarNode(tag='!foo', value='bar'))

@@ -349,12 +349,12 @@ def canonical_compose_all(stream):
 yaml.canonical_compose_all = canonical_compose_all
 
 def canonical_load(stream):
-    return yaml.load(stream, Loader=CanonicalLoader)
+    return yaml.unsafe_load(stream, Loader=CanonicalLoader)
 
 yaml.canonical_load = canonical_load
 
 def canonical_load_all(stream):
-    return yaml.load_all(stream, Loader=CanonicalLoader)
+    return yaml.unsafe_load_all(stream, Loader=CanonicalLoader)
 
 yaml.canonical_load_all = canonical_load_all
 

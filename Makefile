@@ -24,13 +24,13 @@ installext:
 	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
 
 test: build
-	${PYTHON} tests/lib/test_build.py ${TEST}
+	${PYTHON} -W error tests/lib/test_build.py ${TEST}
 
 testext: buildext
-	${PYTHON} tests/lib/test_build_ext.py ${TEST}
+	${PYTHON} -W error tests/lib/test_build_ext.py ${TEST}
 
 testall:
-	${PYTHON} setup.py test
+	${PYTHON} -W error setup.py test
 
 dist:
 	${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar

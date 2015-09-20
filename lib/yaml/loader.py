@@ -1,5 +1,5 @@
 
-__all__ = ['BaseLoader', 'SafeLoader', 'Loader']
+__all__ = ['BaseLoader', 'SafeLoader', 'UnsafeLoader', 'Loader']
 
 from reader import *
 from scanner import *
@@ -7,6 +7,8 @@ from parser import *
 from composer import *
 from constructor import *
 from resolver import *
+
+from deprecation import warn_if_instantiated
 
 class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
 
@@ -28,7 +30,7 @@ class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
-class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
+class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -38,3 +40,8 @@ class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
         Constructor.__init__(self)
         Resolver.__init__(self)
 
+class Loader(UnsafeLoader):
+
+    def __init__(self, stream):
+        warn_if_instantiated('Loader')
+        UnsafeLoader.__init__(self, stream)

@@ -35,7 +35,7 @@ def test_loader_error_single(error_filename, verbose=False):
 test_loader_error_single.unittest = ['.single-loader-error']
 
 def test_emitter_error(error_filename, verbose=False):
-    events = list(yaml.load(open(error_filename, 'rb'),
+    events = list(yaml.unsafe_load(open(error_filename, 'rb'),
                     Loader=test_emitter.EventsLoader))
     try:
         yaml.emit(events)
