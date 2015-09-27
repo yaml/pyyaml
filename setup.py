@@ -88,8 +88,8 @@ if sys.version_info[0] < 3:
             from Pyrex.Distutils import build_ext as _build_ext
             with_pyrex = 'pyrex'
         except ImportError:
-            pass
-
+            print ('WARNING: failed to import cython or pyrex, may not be able to '
+                    'compile extensions ')
 
 class Distribution(_Distribution):
 
