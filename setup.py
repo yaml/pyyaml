@@ -57,7 +57,7 @@ int main(void) {
 """
 
 
-import sys, os.path
+import sys, os.path, platform
 
 from distutils import log
 from distutils.core import setup, Command
@@ -122,7 +122,7 @@ class Distribution(_Distribution):
         return False
 
     def ext_status(self, ext):
-        if 'Java' in sys.version or 'IronPython' in sys.version or 'PyPy' in sys.version:
+        if 'Java' in platform.system() or 'IronPython' in sys.version or 'PyPy' in sys.version:
             return False
         if isinstance(ext, Extension):
             with_ext = getattr(self, ext.attr_name)
