@@ -74,21 +74,13 @@ if 'setuptools.extension' in sys.modules:
     sys.modules['distutils.extension'].Extension = _Extension
     sys.modules['distutils.command.build_ext'].Extension = _Extension
 
-with_pyrex = None
-if sys.version_info[0] < 3:
-    try:
-        from Cython.Distutils.extension import Extension as _Extension
-        from Cython.Distutils import build_ext as _build_ext
-        with_pyrex = 'cython'
-    except ImportError:
-        try:
-            # Pyrex cannot build _yaml.c at the moment,
-            # but it may get fixed eventually.
-            from Pyrex.Distutils import Extension as _Extension
-            from Pyrex.Distutils import build_ext as _build_ext
-            with_pyrex = 'pyrex'
-        except ImportError:
-            pass
+with_cython = False
+try:
+    from Cython.Distutils.extension import Extension as _Extension
+    from Cython.Distutils import build_ext as _build_ext
+    with_cython = True
+except ImportError:
+    pass
 
 
 class Distribution(_Distribution):
@@ -135,7 +127,7 @@ class Extension(_Extension):
 
     def __init__(self, name, sources, feature_name, feature_description,
             feature_check, **kwds):
-        if not with_pyrex:
+        if not with_cython:
             for filename in sources[:]:
                 base, ext = os.path.splitext(filename)
                 if ext == '.pyx':
@@ -179,9 +171,7 @@ class build_ext(_build_ext):
         self.check_extensions_list(self.extensions)
         filenames = []
         for ext in self.extensions:
-            if with_pyrex == 'pyrex':
-                self.pyrex_sources(ext.sources, ext)
-            elif with_pyrex == 'cython':
+            if with_cython:
                 self.cython_sources(ext.sources, ext)
             for filename in ext.sources:
                 filenames.append(filename)
@@ -211,9 +201,7 @@ class build_ext(_build_ext):
                 with_ext = self.check_extension_availability(ext)
             if not with_ext:
                 continue
-            if with_pyrex == 'pyrex':
-                ext.sources = self.pyrex_sources(ext.sources, ext)
-            elif with_pyrex == 'cython':
+            if with_cython:
                 ext.sources = self.cython_sources(ext.sources, ext)
             self.build_extension(ext)
 
