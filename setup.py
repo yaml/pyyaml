@@ -66,7 +66,7 @@ from distutils.core import Extension as _Extension
 from distutils.dir_util import mkpath
 from distutils.command.build_ext import build_ext as _build_ext
 from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
-from distutils.errors import CompileError, LinkError, DistutilsPlatformError
+from distutils.errors import DistutilsError, CompileError, LinkError, DistutilsPlatformError
 
 if 'setuptools.extension' in sys.modules:
     _Extension = sys.modules['setuptools.extension']._Extension
@@ -296,7 +296,8 @@ class test(Command):
         else:
             sys.path.insert(0, 'tests/lib3')
         import test_all
-        test_all.main([])
+        if not test_all.main([]):
+            raise DistutilsError("Tests failed")
 
 
 if __name__ == '__main__':
