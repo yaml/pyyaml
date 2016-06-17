@@ -82,6 +82,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from wheel.bdist_wheel import bdist_wheel
+except ImportError:
+    bdist_wheel = None
+
 
 class Distribution(_Distribution):
 
@@ -300,6 +305,15 @@ class test(Command):
             raise DistutilsError("Tests failed")
 
 
+cmdclass = {
+    'build_ext': build_ext,
+    'bdist_rpm': bdist_rpm,
+    'test': test,
+}
+if bdist_wheel:
+    cmdclass['bdist_wheel'] = bdist_wheel
+
+
 if __name__ == '__main__':
 
     setup(
@@ -324,11 +338,6 @@ if __name__ == '__main__':
         ],
 
         distclass=Distribution,
-
-        cmdclass={
-            'build_ext': build_ext,
-            'bdist_rpm': bdist_rpm,
-            'test': test,
-        },
+        cmdclass=cmdclass,
     )
 
