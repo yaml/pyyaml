@@ -132,7 +132,7 @@ class BaseRepresenter:
 class SafeRepresenter(BaseRepresenter):
 
     def ignore_aliases(self, data):
-        if data in [None, ()]:
+        if data is None or data is ():
             return True
         if isinstance(data, (str, bytes, bool, int, float)):
             return True
