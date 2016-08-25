@@ -27,13 +27,10 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.5",
-    "Programming Language :: Python :: 2.6",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.0",
-    "Programming Language :: Python :: 3.1",
-    "Programming Language :: Python :: 3.2",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 3.5",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup",
 ]
@@ -57,7 +54,7 @@ int main(void) {
 """
 
 
-import sys, os.path
+import sys, os.path, platform
 
 from distutils import log
 from distutils.core import setup, Command
@@ -119,7 +116,8 @@ class Distribution(_Distribution):
         return False
 
     def ext_status(self, ext):
-        if 'Java' in sys.version or 'IronPython' in sys.version or 'PyPy' in sys.version:
+        implementation = platform.python_implementation()
+        if implementation != 'CPython':
             return False
         if isinstance(ext, Extension):
             with_ext = getattr(self, ext.attr_name)
