@@ -36,6 +36,7 @@ def parse_arguments(args):
         args.remove('-v')
     if '--verbose' in args:
         verbose = True
+        args.remove('--verbose')
     if 'YAML_TEST_VERBOSE' in os.environ:
         verbose = True
     include_functions = []
