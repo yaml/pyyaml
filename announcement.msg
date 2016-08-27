@@ -1,9 +1,9 @@
 From: Kirill Simonov <xi@resolvent.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.10: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-3.12: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.10
+ Announcing PyYAML-3.12
 ========================
 
 A new bug fix release of PyYAML is now available:
@@ -14,13 +14,12 @@ A new bug fix release of PyYAML is now available:
 Changes
 =======
 
-* Do not try to build LibYAML bindings on platforms other than CPython;
-  this fixed installation under Jython (Thank to olt(at)bogosoft(dot)com).
-* Clear cyclic references in the parser and the emitter
-  (Thank to kristjan(at)ccpgames(dot)com).
-* LibYAML bindings are rebuilt with the latest version of Cython.
-* Dropped support for Python 2.3 and 2.4; currently supported versions
-  are 2.5 to 3.2.
+* Wheel packages for Windows binaries.
+* Adding an implicit resolver to a derived loader should not affect
+  the base loader (fixes issue #57).
+* Uniform representation for OrderedDict across different versions
+  of Python (fixes issue #61).
+* Fixed comparison to None warning (closes issue #64).
 
 
 Resources
@@ -28,18 +27,10 @@ Resources
 
 PyYAML homepage: http://pyyaml.org/wiki/PyYAML
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
+Source and binary installers: https://pypi.python.org/pypi/PyYAML/3.12
 
-TAR.GZ package: http://pyyaml.org/download/pyyaml/PyYAML-3.10.tar.gz
-ZIP package: http://pyyaml.org/download/pyyaml/PyYAML-3.10.zip
-Windows installers:
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.5.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.6.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py3.0.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py3.1.exe
-    http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py3.2.exe
-
-PyYAML SVN repository: http://svn.pyyaml.org/pyyaml
-Submit a bug report: http://pyyaml.org/newticket?component=pyyaml
+PyYAML HG repository: https://bitbucket.org/xi/pyyaml
+Submit a bug report: https://bitbucket.org/xi/pyyaml/issues/new
 
 YAML homepage: http://yaml.org/
 YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
