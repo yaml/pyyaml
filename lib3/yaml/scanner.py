@@ -1286,7 +1286,8 @@ class Scanner:
                 ch = self.peek(length)
                 if ch in '\0 \t\r\n\x85\u2028\u2029'    \
                         or (ch == ':' and
-                                self.peek(length+1) in '\0 \t\r\n\x85\u2028\u2029') \
+                                self.peek(length+1) in '\0 \t\r\n\x85\u2028\u2029'
+                                      + (u',[]{}' if self.flow_level else u''))\
                         or (self.flow_level and ch in ',?[]{}'):
                     break
                 length += 1

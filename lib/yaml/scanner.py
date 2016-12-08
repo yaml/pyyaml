@@ -1292,7 +1292,8 @@ class Scanner(object):
                 ch = self.peek(length)
                 if ch in u'\0 \t\r\n\x85\u2028\u2029'   \
                         or (ch == u':' and
-                                self.peek(length+1) in u'\0 \t\r\n\x85\u2028\u2029') \
+                                self.peek(length+1) in u'\0 \t\r\n\x85\u2028\u2029'
+                                      + (u',[]{}' if self.flow_level else u''))\
                         or (self.flow_level and ch in u',?[]{}'):
                     break
                 length += 1
