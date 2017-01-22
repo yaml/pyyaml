@@ -762,11 +762,11 @@ cdef class CParser:
                         self.parsed_event.start_mark.column,
                         None, None)
                 if PY_MAJOR_VERSION < 3:
-                    raise ComposerError("found duplicate anchor; first occurence",
-                            self.anchors[anchor].start_mark, "second occurence", mark)
+                    raise ComposerError("found duplicate anchor; first occurrence",
+                            self.anchors[anchor].start_mark, "second occurrence", mark)
                 else:
-                    raise ComposerError(u"found duplicate anchor; first occurence",
-                            self.anchors[anchor].start_mark, u"second occurence", mark)
+                    raise ComposerError(u"found duplicate anchor; first occurrence",
+                            self.anchors[anchor].start_mark, u"second occurrence", mark)
         self.descend_resolver(parent, index)
         if self.parsed_event.type == YAML_SCALAR_EVENT:
             node = self._compose_scalar_node(anchor)

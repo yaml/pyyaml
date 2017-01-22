@@ -516,7 +516,7 @@ class Scanner:
         # Block context needs additional checks.
         if not self.flow_level:
 
-            # Are we allowed to start a key (not nessesary a simple)?
+            # Are we allowed to start a key (not necessary a simple)?
             if not self.allow_simple_key:
                 raise ScannerError(None, None,
                         "mapping keys are not allowed here",
@@ -564,7 +564,7 @@ class Scanner:
         else:
             
             # Block context needs additional checks.
-            # (Do we really need them? They will be catched by the parser
+            # (Do we really need them? They will be caught by the parser
             # anyway.)
             if not self.flow_level:
 
@@ -897,7 +897,7 @@ class Scanner:
         # The specification does not restrict characters for anchors and
         # aliases. This may lead to problems, for instance, the document:
         #   [ *alias, value ]
-        # can be interpteted in two ways, as
+        # can be interpreted in two ways, as
         #   [ "value" ]
         # and
         #   [ *alias , "value" ]

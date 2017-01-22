@@ -41,7 +41,7 @@ class Emitter:
         # The stream should have the methods `write` and possibly `flush`.
         self.stream = stream
 
-        # Encoding can be overriden by STREAM-START.
+        # Encoding can be overridden by STREAM-START.
         self.encoding = None
 
         # Emitter is a state machine with a stack of states to handle nested
@@ -652,7 +652,7 @@ class Emitter:
             flow_indicators = True
 
         # First character or preceded by a whitespace.
-        preceeded_by_whitespace = True
+        preceded_by_whitespace = True
 
         # Last character or followed by a whitespace.
         followed_by_whitespace = (len(scalar) == 1 or
@@ -689,7 +689,7 @@ class Emitter:
                     flow_indicators = True
                     if followed_by_whitespace:
                         block_indicators = True
-                if ch == '#' and preceeded_by_whitespace:
+                if ch == '#' and preceded_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
 
@@ -730,7 +730,7 @@ class Emitter:
 
             # Prepare for the next character.
             index += 1
-            preceeded_by_whitespace = (ch in '\0 \t\r\n\x85\u2028\u2029')
+            preceded_by_whitespace = (ch in '\0 \t\r\n\x85\u2028\u2029')
             followed_by_whitespace = (index+1 >= len(scalar) or
                     scalar[index+1] in '\0 \t\r\n\x85\u2028\u2029')
 
