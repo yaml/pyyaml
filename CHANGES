@@ -106,7 +106,7 @@ For a complete Mercurial changelog, see
   as lists of pairs instead of dictionaries.  No longer check
   for duplicate mapping keys as it didn't work correctly anyway.
 * Fix invalid output of single-quoted scalars in cases when a single
-  quote is not escaped when preceeded by whitespaces or line breaks.
+  quote is not escaped when preceded by whitespaces or line breaks.
 * To make porting easier, rewrite Parser not using generators.
 * Fix handling of unexpected block mapping values.
 * Fix a bug in Representer.represent_object: copy_reg.dispatch_table
@@ -142,6 +142,6 @@ For a complete Mercurial changelog, see
 -----------------
 
 * Initial release.  The version number reflects the codename
-  of the project (PyYAML 3000) and differenciates it from
+  of the project (PyYAML 3000) and differentiates it from
   the abandoned PyYaml module. 
 

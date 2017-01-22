@@ -49,7 +49,7 @@ supports standard YAML tags and provides Python-specific tags that allow
 to represent an arbitrary Python object.
 
 PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistance.
+configuration files to object serialization and persistence.
 
 
 Example
@@ -61,9 +61,9 @@ Example
 ... name: PyYAML
 ... description: YAML parser and emitter for Python
 ... homepage: http://pyyaml.org/wiki/PyYAML
-... keywords: [YAML, serialization, configuration, persistance, pickle]
+... keywords: [YAML, serialization, configuration, persistence, pickle]
 ... """)
-{'keywords': ['YAML', 'serialization', 'configuration', 'persistance',
+{'keywords': ['YAML', 'serialization', 'configuration', 'persistence',
 'pickle'], 'homepage': 'http://pyyaml.org/wiki/PyYAML', 'description':
 'YAML parser and emitter for Python', 'name': 'PyYAML'}
 
@@ -71,7 +71,7 @@ Example
 name: PyYAML
 homepage: http://pyyaml.org/wiki/PyYAML
 description: YAML parser and emitter for Python
-keywords: [YAML, serialization, configuration, persistance, pickle]
+keywords: [YAML, serialization, configuration, persistence, pickle]
 
 
 Copyright
