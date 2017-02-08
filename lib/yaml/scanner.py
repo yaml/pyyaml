@@ -1272,7 +1272,7 @@ class Scanner(object):
     def scan_plain(self):
         # See the specification for details.
         # We add an additional restriction for the flow context:
-        #   plain scalars in the flow context cannot contain ',', ':' and '?'.
+        #   plain scalars in the flow context cannot contain ',' or '?'.
         # We also keep track of the `allow_simple_key` flag here.
         # Indentation rules are loosed for the flow context.
         chunks = []
@@ -1291,18 +1291,12 @@ class Scanner(object):
             while True:
                 ch = self.peek(length)
                 if ch in u'\0 \t\r\n\x85\u2028\u2029'   \
-                        or (not self.flow_level and ch == u':' and
-                                self.peek(length+1) in u'\0 \t\r\n\x85\u2028\u2029') \
-                        or (self.flow_level and ch in u',:?[]{}'):
+                        or (ch == u':' and
+                                self.peek(length+1) in u'\0 \t\r\n\x85\u2028\u2029'
+                                      + (u',[]{}' if self.flow_level else u''))\
+                        or (self.flow_level and ch in u',?[]{}'):
                     break
                 length += 1
-            # It's not clear what we should do with ':' in the flow context.
-            if (self.flow_level and ch == u':'
-                    and self.peek(length+1) not in u'\0 \t\r\n\x85\u2028\u2029,[]{}'):
-                self.forward(length)
-                raise ScannerError("while scanning a plain scalar", start_mark,
-                    "found unexpected ':'", self.get_mark(),
-                    "Please check http://pyyaml.org/wiki/YAMLColonInFlowContext for details.")
             if length == 0:
                 break
             self.allow_simple_key = False
