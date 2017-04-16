@@ -19,11 +19,8 @@ matrix:
     - python: 3.6
       env: TOXENV=py36
     - python: pypy
-      env: TOXENV=pypy PYPY_VERSION=5.1
+      env: TOXENV=pypy
 
-install:
-    - ./.travis/install.sh
+install: pip install tox
 
-script:
-  - source ~/.venv/bin/activate
-  - tox
+script: tox
