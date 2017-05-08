@@ -671,7 +671,7 @@ class Emitter:
             # Check for indicators.
             if index == 0:
                 # Leading indicators are special characters.
-                if ch in '#,[]{}&*!|>\'\"%@`': 
+                if ch in '#,[]{}&*!|>\'\"%@`':
                     flow_indicators = True
                     block_indicators = True
                 if ch in '?:':
@@ -698,7 +698,8 @@ class Emitter:
                 line_breaks = True
             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
                 if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
-                        or '\uE000' <= ch <= '\uFFFD') and ch != '\uFEFF':
+                        or '\uE000' <= ch <= '\uFFFD'
+                        or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
@@ -1134,4 +1135,3 @@ class Emitter:
                 spaces = (ch == ' ')
                 breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
-
