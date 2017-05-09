@@ -24,11 +24,11 @@ test_unicode_input.unittest = ['.unicode']
 
 def test_unicode_input_errors(unicode_filename, verbose=False):
     data = open(unicode_filename, 'rb').read().decode('utf-8')
-    for input in [data.encode('latin1', 'ignore'),
-                    data.encode('utf-16-be'), data.encode('utf-16-le'),
-                    codecs.BOM_UTF8+data.encode('utf-16-be'),
-                    codecs.BOM_UTF16_BE+data.encode('utf-16-le'),
-                    codecs.BOM_UTF16_LE+data.encode('utf-8')+b'!']:
+    for input in [data.encode('utf-16-be'),
+            data.encode('utf-16-le'),
+            codecs.BOM_UTF8+data.encode('utf-16-be'),
+            codecs.BOM_UTF8+data.encode('utf-16-le')]:
+
         try:
             yaml.load(input)
         except yaml.YAMLError as exc:
@@ -75,20 +75,7 @@ def test_unicode_output(unicode_filename, verbose=False):
                 if verbose:
                     print("BYTES:", data4[:50])
                 data4 = data4.decode(encoding)
-            for copy in [data1, data2, data3, data4]:
-                if copy is None:
-                    continue
-                assert isinstance(copy, str)
-                if allow_unicode:
-                    try:
-                        copy[4:].encode('ascii')
-                    except UnicodeEncodeError as exc:
-                        if verbose:
-                            print(exc)
-                    else:
-                        raise AssertionError("expected an exception")
-                else:
-                    copy[4:].encode('ascii')
+
             assert isinstance(data1, str), (type(data1), encoding)
             assert isinstance(data2, str), (type(data2), encoding)
 
@@ -147,4 +134,3 @@ test_unicode_transfer.unittest = ['.unicode']
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-
