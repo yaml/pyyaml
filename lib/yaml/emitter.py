@@ -8,8 +8,12 @@
 
 __all__ = ['Emitter', 'EmitterError']
 
+import sys
+
 from error import YAMLError
 from events import *
+
+has_ucs4 = sys.maxunicode > 0xffff
 
 class EmitterError(YAMLError):
     pass
@@ -674,7 +678,7 @@ class Emitter(object):
             # Check for indicators.
             if index == 0:
                 # Leading indicators are special characters.
-                if ch in u'#,[]{}&*!|>\'\"%@`': 
+                if ch in u'#,[]{}&*!|>\'\"%@`':
                     flow_indicators = True
                     block_indicators = True
                 if ch in u'?:':
@@ -701,7 +705,8 @@ class Emitter(object):
                 line_breaks = True
             if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
                 if (ch == u'\x85' or u'\xA0' <= ch <= u'\uD7FF'
-                        or u'\uE000' <= ch <= u'\uFFFD') and ch != u'\uFEFF':
+                        or u'\uE000' <= ch <= u'\uFFFD'
+                        or ((not has_ucs4) or (u'\U00010000' <= ch < u'\U0010ffff'))) and ch != u'\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
