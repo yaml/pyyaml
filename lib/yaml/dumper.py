@@ -41,7 +41,7 @@ class Dumper(Emitter, Serializer, SafeRepresenter, Resolver):
         SafeRepresenter.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
-SafeDumper = Dump
+SafeDumper = Dumper
 
 class DangerDumper(Emitter, Serializer, Representer, Resolver):
 
