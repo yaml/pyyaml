@@ -2,6 +2,14 @@
 For a complete Mercurial changelog, see
 'https://bitbucket.org/xi/pyyaml/commits'.
 
+3.12 (2016-08-28)
+-----------------
+
+* Wheel packages for Windows binaries.
+* Adding an implicit resolver to a derived loader should not affect the base loader.
+* Uniform representation for OrderedDict? across different versions of Python.
+* Fixed comparison to None warning.
+
 3.11 (2014-03-26)
 -----------------
 
