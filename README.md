@@ -2,6 +2,8 @@
 
 ## The next generation YAML parser and emitter for Python
 
+[![Build Status](https://travis-ci.org/yaml/pyyaml.svg?branch=master)](https://travis-ci.org/yaml/pyyaml)
+
 To install, type:
 
 ```bash
