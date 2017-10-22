@@ -18,7 +18,7 @@ AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = 'xi@resolvent.net'
 LICENSE = "MIT"
 PLATFORMS = "Any"
-URL = "http://pyyaml.org/wiki/PyYAML"
+URL = "https://github.com/yaml/pyyaml"
 DOWNLOAD_URL = "http://pyyaml.org/download/pyyaml/%s-%s.tar.gz" % (NAME, VERSION)
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
