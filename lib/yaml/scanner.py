@@ -313,7 +313,7 @@ class Scanner(object):
         # Remove the saved possible key position at the current flow level.
         if self.flow_level in self.possible_simple_keys:
             key = self.possible_simple_keys[self.flow_level]
-            
+
             if key.required:
                 raise ScannerError("while scanning a simple key", key.mark,
                         "could not find expected ':'", self.get_mark())
@@ -362,11 +362,11 @@ class Scanner(object):
 
         # Read the token.
         mark = self.get_mark()
-        
+
         # Add STREAM-START.
         self.tokens.append(StreamStartToken(mark, mark,
             encoding=self.encoding))
-        
+
 
     def fetch_stream_end(self):
 
@@ -380,7 +380,7 @@ class Scanner(object):
 
         # Read the token.
         mark = self.get_mark()
-        
+
         # Add STREAM-END.
         self.tokens.append(StreamEndToken(mark, mark))
 
@@ -388,7 +388,7 @@ class Scanner(object):
         self.done = True
 
     def fetch_directive(self):
-        
+
         # Set the current intendation to -1.
         self.unwind_indent(-1)
 
@@ -515,7 +515,7 @@ class Scanner(object):
         self.tokens.append(BlockEntryToken(start_mark, end_mark))
 
     def fetch_key(self):
-        
+
         # Block context needs additional checks.
         if not self.flow_level:
 
@@ -565,7 +565,7 @@ class Scanner(object):
 
         # It must be a part of a complex key.
         else:
-            
+
             # Block context needs additional checks.
             # (Do we really need them? They will be caught by the parser
             # anyway.)
@@ -919,8 +919,7 @@ class Scanner(object):
         self.forward()
         length = 0
         ch = self.peek(length)
-        while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
-                or ch in u'-_':
+        while ch not in u'\0 \t\r\n\x85\u2028\u2029?:,[]{}%@':
             length += 1
             ch = self.peek(length)
         if not length:
@@ -1023,14 +1022,14 @@ class Scanner(object):
                 # Unfortunately, folding rules are ambiguous.
                 #
                 # This is the folding according to the specification:
-                
+
                 if folded and line_break == u'\n'   \
                         and leading_non_space and self.peek() not in u' \t':
                     if not breaks:
                         chunks.append(u' ')
                 else:
                     chunks.append(line_break)
-                
+
                 # This is Clark Evans's interpretation (also in the spec
                 # examples):
                 #
@@ -1442,3 +1441,9 @@ class Scanner(object):
             self.forward()
             return ch
         return u''
+
+#try:
+#    import psyco
+#    psyco.bind(Scanner)
+#except ImportError:
+#    pass
