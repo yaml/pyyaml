@@ -919,7 +919,7 @@ class Scanner(object):
         self.forward()
         length = 0
         ch = self.peek(length)
-        while ch not in u'\0 \t\r\n\x85\u2028\u2029?:,[]{}%@':
+        while ch not in u'\0 \t\r\n\x85\u2028\u2029?:,[]{}%@=':
             length += 1
             ch = self.peek(length)
         if not length:
@@ -929,7 +929,7 @@ class Scanner(object):
         value = self.prefix(length)
         self.forward(length)
         ch = self.peek()
-        if ch not in u'\0 \t\r\n\x85\u2028\u2029?:,]}%@`':
+        if ch not in u'\0 \t\r\n\x85\u2028\u2029?:,]}%@=`':
             raise ScannerError("while scanning an %s" % name, start_mark,
                     "expected alphabetic or numeric character, but found %r"
                     % ch.encode('utf-8'), self.get_mark())
