@@ -173,7 +173,7 @@ def dump_all(documents, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
         encoding='utf-8', explicit_start=None, explicit_end=None,
-        version=None, tags=None):
+        version=None, tags=None, ignore_aliases=None):
     """
     Serialize a sequence of Python objects into a YAML stream.
     If stream is None, return the produced string instead.
@@ -192,6 +192,11 @@ def dump_all(documents, stream=None, Dumper=Dumper,
             allow_unicode=allow_unicode, line_break=line_break,
             encoding=encoding, version=version, tags=tags,
             explicit_start=explicit_start, explicit_end=explicit_end)
+
+    # ignore aliases/anchors if flag is set
+    if ignore_aliases:
+        dumper.ignore_aliases = lambda x: True
+
     try:
         dumper.open()
         for data in documents:
