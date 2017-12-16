@@ -186,9 +186,3 @@ class Reader(object):
             self.stream_pointer += len(data)
         else:
             self.eof = True
-
-#try:
-#    import psyco
-#    psyco.bind(Reader)
-#except ImportError:
-#    pass
