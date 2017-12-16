@@ -1432,10 +1432,3 @@ class Scanner:
             self.forward()
             return ch
         return ''
-
-#try:
-#    import psyco
-#    psyco.bind(Scanner)
-#except ImportError:
-#    pass
-
