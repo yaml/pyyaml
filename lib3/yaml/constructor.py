@@ -336,9 +336,15 @@ class SafeConstructor(BaseConstructor):
             delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
             if values['tz_sign'] == '-':
                 delta = -delta
-        data = datetime.datetime(year, month, day, hour, minute, second, fraction)
-        if delta:
-            data -= delta
+        data = None
+        # If we are correcting to UTC, we can make the datetime object
+        # timezone-aware
+        if delta is not None:
+            data = datetime.datetime(year, month, day, hour, minute, second, fraction, datetime.timezone.utc)
+            if delta:
+                data -= delta
+        else:
+            data = datetime.datetime(year, month, day, hour, minute, second, fraction)
         return data
 
     def construct_yaml_omap(self, node):
