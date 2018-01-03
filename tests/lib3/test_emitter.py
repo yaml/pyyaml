@@ -10,7 +10,7 @@ def _compare_events(events1, events2):
         if isinstance(event1, yaml.CollectionStartEvent):
             assert event1.tag == event2.tag, (event1, event2)
         if isinstance(event1, yaml.ScalarEvent):
-            if True not in event1.implicit+event2.implicit:
+            if True not in tuple(event1.implicit)+tuple(event2.implicit):
                 assert event1.tag == event2.tag, (event1, event2)
             assert event1.value == event2.value, (event1, event2)
 
@@ -86,13 +86,16 @@ class EventsLoader(yaml.Loader):
 EventsLoader.add_constructor(None, EventsLoader.construct_event)
 
 def test_emitter_events(events_filename, verbose=False):
-    events = list(yaml.load(open(events_filename, 'rb'), Loader=EventsLoader))
+    events = tuple(yaml.load(open(events_filename, 'rb'), Loader=EventsLoader))
     output = yaml.emit(events)
     if verbose:
-        print("OUTPUT:")
+        print("OUTPUT:", events_filename)
         print(output)
     new_events = list(yaml.parse(output))
-    _compare_events(events, new_events)
+    no_comments = filter(lambda e: not isinstance(e, yaml.CommentEvent), events)
+    _compare_events(list(no_comments), new_events)
+
+test_emitter_events.unittest = ['.events']
 
 if __name__ == '__main__':
     import test_appliance
