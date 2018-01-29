@@ -19,9 +19,8 @@ __all__ = ['Reader', 'ReaderError']
 
 from error import YAMLError, Mark
 
-import codecs, re, sys
+import codecs, unicodedata
 
-has_ucs4 = sys.maxunicode > 0xffff
 
 class ReaderError(YAMLError):
 
@@ -136,16 +135,12 @@ class Reader(object):
                 self.encoding = 'utf-8'
         self.update(1)
 
-    if has_ucs4:
-        NON_PRINTABLE = re.compile(u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]')
-    else:
-        NON_PRINTABLE = re.compile(u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]')
     def check_printable(self, data):
-        match = self.NON_PRINTABLE.search(data)
-        if match:
-            character = match.group()
-            position = self.index+(len(self.buffer)-self.pointer)+match.start()
-            raise ReaderError(self.name, position, ord(character),
+        for pos, ch in enumerate(data):
+            cat = unicodedata.category(ch)
+            if ord(ch) not in [0x09, 0x0A, 0x0D, 0x85] and cat == "Cc":
+                position = self.index+(len(self.buffer)-self.pointer)+pos
+                raise ReaderError(self.name, position, ord(ch),
                     'unicode', "special characters are not allowed")
 
     def update(self, length):
