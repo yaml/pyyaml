@@ -11,6 +11,7 @@ from test_emitter import *
 from test_representer import *
 from test_recursive import *
 from test_input_output import *
+from test_sort_keys import *
 
 if __name__ == '__main__':
     import test_appliance
