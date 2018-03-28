@@ -126,8 +126,7 @@ class Scanner(object):
         # Return the next token, but do not delete if from the queue.
         while self.need_more_tokens():
             self.fetch_more_tokens()
-        if self.tokens:
-            return self.tokens[0]
+        return self.tokens[0]
 
     def get_token(self):
         # Return the next token.
