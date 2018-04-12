@@ -2,7 +2,8 @@
 import yaml
 
 def test_marks(marks_filename, verbose=False):
-    inputs = open(marks_filename, 'r').read().split('---\n')[1:]
+    with open(marks_filename, 'r') as fp:
+        inputs = fp.read().split('---\n')[1:]
     for input in inputs:
         index = 0
         line = 0

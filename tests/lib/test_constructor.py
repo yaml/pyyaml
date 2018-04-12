@@ -243,10 +243,12 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
     native1 = None
     native2 = None
     try:
-        native1 = list(yaml.load_all(open(data_filename, 'rb'), Loader=MyLoader))
+        with open(data_filename, 'rb') as fp:
+            native1 = list(yaml.load_all(fp, Loader=MyLoader))
         if len(native1) == 1:
             native1 = native1[0]
-        native2 = _load_code(open(code_filename, 'rb').read())
+        with open(code_filename, 'rb') as fp:
+            native2 = _load_code(fp.read())
         try:
             if native1 == native2:
                 return
