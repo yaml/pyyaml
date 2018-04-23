@@ -18,6 +18,23 @@ class NodeEvent(Event):
         self.start_mark = start_mark
         self.end_mark = end_mark
 
+
+class CommentEvent(NodeEvent):
+    # - Comment events are currently expected only before each key/value pair in 
+    # a map, and before each item in a sequence. 
+    # - These must be created directly in an event stream, there is no 
+    # way to designate them directly dumping python objects. 
+
+    def __init__(self, value):
+        self.anchor = None
+        self.tag = None
+        self.implicit = None
+        self.value = value
+        self.start_mark = None
+        self.end_mark = None
+        self.style = None
+
+
 class CollectionStartEvent(NodeEvent):
     def __init__(self, anchor, tag, implicit, start_mark=None, end_mark=None,
             flow_style=None):
