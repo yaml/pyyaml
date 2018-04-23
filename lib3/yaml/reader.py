@@ -15,11 +15,13 @@
 #   reader.index - the number of the current character.
 #   reader.line, stream.column - the line and the column of the current character.
 
+from __future__ import unicode_literals, division, print_function
+
 __all__ = ['Reader', 'ReaderError']
 
 from .error import YAMLError, Mark
 
-import codecs, re
+import codecs, re, sys
 
 class ReaderError(YAMLError):
 

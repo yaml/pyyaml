@@ -291,11 +291,13 @@ class YAMLObjectMetaclass(type):
             cls.yaml_loader.add_constructor(cls.yaml_tag, cls.from_yaml)
             cls.yaml_dumper.add_representer(cls, cls.to_yaml)
 
-class YAMLObject(metaclass=YAMLObjectMetaclass):
+class YAMLObject:
     """
     An object that can dump itself to a YAML stream
     and load itself from a YAML stream.
     """
+
+    __metaclass__ = YAMLObjectMetaclass
 
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 

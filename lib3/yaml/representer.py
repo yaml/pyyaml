@@ -1,3 +1,4 @@
+from __future__ import unicode_literals, division, print_function
 
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
     'RepresenterError']
@@ -5,7 +6,13 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, sys, copyreg, types, base64, collections
+import datetime, sys, types, base64, collections
+
+if sys.version_info[0] == 2:
+    import copy_reg as copyreg
+else:
+    import copyreg
+
 
 class RepresenterError(YAMLError):
     pass
