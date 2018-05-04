@@ -17,6 +17,8 @@ NewArgsWithState(1, 'two', [3,3,3]),
 Reduce(1, 'two', [3,3,3]),
 ReduceWithState(1, 'two', [3,3,3]),
 
+Slots(1, 'two', [3,3,3]),
+
 MyInt(3),
 MyList(3),
 MyDict(3),

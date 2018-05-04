@@ -13,7 +13,7 @@ def execute(code):
 def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
             AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
-            NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
+            NewArgs, NewArgsWithState, Reduce, ReduceWithState, Slots, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute
 
     class MyLoader(yaml.DangerLoader):
@@ -171,6 +171,17 @@ def _make_objects():
             return self.__class__, (self.foo, self.bar), self.baz
         def __setstate__(self, state):
             self.baz = state
+
+    class Slots:
+        __slots__ = ("foo", "bar", "baz")
+        def __init__(self, foo=None, bar=None, baz=None):
+            self.foo = foo
+            self.bar = bar
+            self.baz = baz
+
+        def __eq__(self, other):
+            return type(self) is type(other) and \
+                (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
 
     class MyInt(int):
         def __eq__(self, other):

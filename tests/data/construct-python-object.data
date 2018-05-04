@@ -16,6 +16,8 @@
 - !!python/object/apply:test_constructor.Reduce [1, two, [3,3,3]]
 - !!python/object/apply:test_constructor.ReduceWithState { args: [1, two], state: [3,3,3] }
 
+- !!python/object/new:test_constructor.Slots { state: !!python/tuple [null, { foo: 1, bar: 'two', baz: [3,3,3] } ] }
+
 - !!python/object/new:test_constructor.MyInt [3]
 - !!python/object/new:test_constructor.MyList { listitems: [~, ~, ~] }
 - !!python/object/new:test_constructor.MyDict { dictitems: {0, 1, 2} }
