@@ -329,23 +329,16 @@ class SafeConstructor(BaseConstructor):
             while len(fraction) < 6:
                 fraction += '0'
             fraction = int(fraction)
-        delta = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])
             tz_minute = int(values['tz_minute'] or 0)
             delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
             if values['tz_sign'] == '-':
                 delta = -delta
-        data = None
-        # If we are correcting to UTC, we can make the datetime object
-        # timezone-aware
-        if delta is not None:
-            data = datetime.datetime(year, month, day, hour, minute, second, fraction, datetime.timezone.utc)
-            if delta:
-                data -= delta
+            return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                     tzinfo=datetime.timezone(delta))
         else:
-            data = datetime.datetime(year, month, day, hour, minute, second, fraction)
-        return data
+            return datetime.datetime(year, month, day, hour, minute, second, fraction)
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
