@@ -293,7 +293,7 @@ class SafeConstructor(BaseConstructor):
             return str(value).decode('base64')
         except (binascii.Error, UnicodeEncodeError), exc:
             raise ConstructorError(None, None,
-                    "failed to decode base64 data: %s" % exc, node.start_mark) 
+                    "failed to decode base64 data: %s" % exc, node.start_mark)
 
     timestamp_regexp = re.compile(
             ur'''^(?P<year>[0-9][0-9][0-9][0-9])
@@ -306,6 +306,13 @@ class SafeConstructor(BaseConstructor):
                 (?:\.(?P<fraction>[0-9]*))?
                 (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
                 (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
+
+    def timezone(self, offset):
+        class tz(datetime.tzinfo):
+            def utcoffset(self, dt=None):
+                return offset
+
+        return tz()
 
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
@@ -325,17 +332,16 @@ class SafeConstructor(BaseConstructor):
             while len(fraction) < 6:
                 fraction += '0'
             fraction = int(fraction)
-        delta = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])
             tz_minute = int(values['tz_minute'] or 0)
             delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
             if values['tz_sign'] == '-':
                 delta = -delta
-        data = datetime.datetime(year, month, day, hour, minute, second, fraction)
-        if delta:
-            data -= delta
-        return data
+            return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                     tzinfo=self.timezone(delta))
+        else:
+            return datetime.datetime(year, month, day, hour, minute, second, fraction)
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
