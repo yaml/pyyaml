@@ -496,6 +496,8 @@ class Emitter:
             self.analysis = self.analyze_scalar(self.event.value)
         if self.event.style == '"' or self.canonical:
             return '"'
+        if self.event.style and self.event.force_style:
+            return self.event.style
         if not self.event.style and self.event.implicit[0]:
             if (not (self.simple_key_context and
                     (self.analysis.empty or self.analysis.multiline))

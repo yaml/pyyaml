@@ -87,7 +87,7 @@ class Serializer:
                 default_tag = self.resolve(ScalarNode, node.value, (False, True))
                 implicit = (node.tag == detected_tag), (node.tag == default_tag)
                 self.emit(ScalarEvent(alias, node.tag, implicit, node.value,
-                    style=node.style))
+                    style=node.style, force_style=node.force_style))
             elif isinstance(node, SequenceNode):
                 implicit = (node.tag
                             == self.resolve(SequenceNode, node.value, True))

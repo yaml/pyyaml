@@ -63,7 +63,7 @@ class AliasEvent(NodeEvent):
 
 class ScalarEvent(NodeEvent):
     def __init__(self, anchor, tag, implicit, value,
-            start_mark=None, end_mark=None, style=None):
+            start_mark=None, end_mark=None, style=None, force_style=False):
         self.anchor = anchor
         self.tag = tag
         self.implicit = implicit
@@ -71,6 +71,7 @@ class ScalarEvent(NodeEvent):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.style = style
+        self.force_style = force_style
 
 class SequenceStartEvent(CollectionStartEvent):
     pass

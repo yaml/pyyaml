@@ -25,12 +25,13 @@ class Node(object):
 class ScalarNode(Node):
     id = 'scalar'
     def __init__(self, tag, value,
-            start_mark=None, end_mark=None, style=None):
+            start_mark=None, end_mark=None, style=None, force_style=False):
         self.tag = tag
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.style = style
+        self.force_style = force_style
 
 class CollectionNode(Node):
     def __init__(self, tag, value,
