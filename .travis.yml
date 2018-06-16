@@ -1,26 +1,25 @@
-# dist: xenial
+conditions: v1
 
 language: python
+python:
+- "2.6"
+- "2.7"
+- "3.4"
+- "3.5"
+- "3.6"
+# This is broken on travis as of 2019/03/12
+# - pypy
+- "pypy2.7-5.10.0"
+- "pypy3.5-5.10.1"
 
 sudo: false
 
-cache: pip
-
-matrix:
-  include:
-    - python: 2.7
-      env: TOXENV=py27
-    - python: 3.4
-      env: TOXENV=py34
-    - python: 3.5
-      env: TOXENV=py35
-    - python: 3.6
-      env: TOXENV=py36
-    - python: 3.7-dev
-      env: TOXENV=py37
-    # This is broken on travis as of 2019/03/12
-    # - python: pypy
-    # env: TOXENV=pypy
+cache:
+  pip: true
+  directories:
+  - $HOME/.cache/pre-commit
+  - $HOME/.pre-commit
+  - $HOME/Library/Caches/Homebrew
 
 # build libyaml
 before_script:
@@ -35,6 +34,66 @@ before_script:
 - sudo ldconfig
 - popd
 
-install: pip install cython tox
+install:
+- python -m pip.__main__ install cython tox
 
-script: tox
+script:
+- python -m tox.__main__
+
+.mixtures:
+- &osx_python
+  os: osx
+  osx_image: xcode9.4
+  language: generic
+  before_install:
+  - brew install zlib readline
+  - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/cac0ae5/Formula/pyenv.rb || brew upgrade pyenv
+  - &ensure_pyenv_preloaded eval "$(pyenv init -)"
+  - &select_specific_python |
+      if [[ ! "$TRAVIS_PYTHON_VERSION" =~ "dev" ]]
+      then
+        export TRAVIS_PYTHON_VERSION=$(\
+          pyenv install --list | \
+          grep -E '\s\s'"$TRAVIS_PYTHON_VERSION" | grep -vE 'dev|rc' | \
+          tail -n 1 | tr -d '[:space:]'\
+        )
+      fi
+  - &install_python pyenv install --skip-existing --keep --verbose "$TRAVIS_PYTHON_VERSION"
+  - &switch_python pyenv shell "$TRAVIS_PYTHON_VERSION"
+  - &python_version python --version
+  before_cache:
+  - brew --cache
+
+jobs:
+  include:
+  - python: "3.7"
+    dist: xenial
+    sudo: required
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "2.6"
+    python: "2.6"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "2.7"
+    python: "2.7"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "3.4"
+    python: "3.4"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "3.5"
+    python: "3.5"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "3.6"
+    python: "3.6"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "3.7.0"
+    python: "3.7.0"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
+    python: "pypy3.5-5.10.1"
