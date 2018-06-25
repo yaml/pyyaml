@@ -19,7 +19,7 @@ PyYAML includes a comprehensive test suite.  To run the tests,
 type 'python setup.py test'.
 
 For more information, check the PyYAML homepage:
-'http://pyyaml.org/wiki/PyYAML'.
+'https://github.com/yaml/pyyaml'.
 
 For PyYAML tutorial and reference, see:
 'http://pyyaml.org/wiki/PyYAMLDocumentation'.

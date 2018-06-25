@@ -1175,6 +1175,7 @@ class Scanner(object):
         u' ':   u'\x20',
         u'\"':  u'\"',
         u'\\':  u'\\',
+        u'/':   u'/',
         u'N':   u'\x85',
         u'_':   u'\xA0',
         u'L':   u'\u2028',

@@ -1,36 +1,49 @@
-From: Kirill Simonov <xi@resolvent.net>
+From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-3.12: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-4.01: YAML parser and emitter for Python
 
 ========================
- Announcing PyYAML-3.12
+ Announcing PyYAML-4.01
 ========================
 
-A new bug fix release of PyYAML is now available:
+A new release of PyYAML is now available:
 
-    http://pyyaml.org/wiki/PyYAML
+    https://pypi.org/project/PyYAML/
 
 
 Changes
 =======
 
-* Wheel packages for Windows binaries.
-* Adding an implicit resolver to a derived loader should not affect
-  the base loader (fixes issue #57).
-* Uniform representation for OrderedDict across different versions
-  of Python (fixes issue #61).
-* Fixed comparison to None warning (closes issue #64).
+* https://github.com/yaml/pyyaml/pull/35  -- Some modernization of the test running
+* https://github.com/yaml/pyyaml/pull/42  -- Install tox in a virtualenv
+* https://github.com/yaml/pyyaml/pull/45  -- Allow colon in a plain scalar in a flow context
+* https://github.com/yaml/pyyaml/pull/48  -- Fix typos
+* https://github.com/yaml/pyyaml/pull/55  -- Improve RepresenterError creation
+* https://github.com/yaml/pyyaml/pull/59  -- Resolves #57, update readme issues link
+* https://github.com/yaml/pyyaml/pull/60  -- Document and test Python 3.6 support
+* https://github.com/yaml/pyyaml/pull/61  -- Use Travis CI built in pip cache support
+* https://github.com/yaml/pyyaml/pull/62  -- Remove tox workaround for Travis CI
+* https://github.com/yaml/pyyaml/pull/63  -- Adding support to Unicode characters over codepoint 0xffff
+* https://github.com/yaml/pyyaml/pull/65  -- Support unicode literals over codepoint 0xffff
+* https://github.com/yaml/pyyaml/pull/74  -- Make pyyaml safe by default.
+* https://github.com/yaml/pyyaml/pull/75  -- add 3.12 changelog
+* https://github.com/yaml/pyyaml/pull/76  -- Fallback to Pure Python if Compilation fails
+* https://github.com/yaml/pyyaml/pull/84  -- Drop unsupported Python 3.3
+* https://github.com/yaml/pyyaml/pull/111 -- Remove commented out Psyco code
+* https://github.com/yaml/pyyaml/pull/149 -- Test on Python 3.7-dev
+* https://github.com/yaml/pyyaml/pull/158 -- Support escaped slash in double quotes "\/"
 
 
 Resources
 =========
 
-PyYAML homepage: http://pyyaml.org/wiki/PyYAML
+PyYAML IRC Channel: #pyyaml on irc.freenode.net
+PyYAML homepage: https://github.com/yaml/pyyaml
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 Source and binary installers: https://pypi.python.org/pypi/PyYAML/3.12
 
-PyYAML HG repository: https://bitbucket.org/xi/pyyaml
-Submit a bug report: https://bitbucket.org/xi/pyyaml/issues/new
+PyYAML GitHub repository: https://github.com/yaml/pyyaml/
+Submit a bug report: https://github.com/yaml/pyyaml/issues
 
 YAML homepage: http://yaml.org/
 YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
@@ -40,16 +53,16 @@ About PyYAML
 ============
 
 YAML is a data serialization format designed for human readability and
-interaction with scripting languages.  PyYAML is a YAML parser and
-emitter for Python.
+interaction with scripting languages. PyYAML is a YAML parser and emitter for
+Python.
 
-PyYAML features a complete YAML 1.1 parser, Unicode support, pickle
-support, capable extension API, and sensible error messages.  PyYAML
-supports standard YAML tags and provides Python-specific tags that allow
-to represent an arbitrary Python object.
+PyYAML features a complete YAML 1.1 parser, Unicode support, pickle support,
+capable extension API, and sensible error messages. PyYAML supports standard
+YAML tags and provides Python-specific tags that allow to represent an
+arbitrary Python object.
 
-PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistence.
+PyYAML is applicable for a broad range of tasks from complex configuration
+files to object serialization and persistence.
 
 
 Example
@@ -60,24 +73,43 @@ Example
 >>> yaml.load("""
 ... name: PyYAML
 ... description: YAML parser and emitter for Python
-... homepage: http://pyyaml.org/wiki/PyYAML
+... homepage: https://github.com/yaml/pyyaml
 ... keywords: [YAML, serialization, configuration, persistence, pickle]
 ... """)
 {'keywords': ['YAML', 'serialization', 'configuration', 'persistence',
-'pickle'], 'homepage': 'http://pyyaml.org/wiki/PyYAML', 'description':
+'pickle'], 'homepage': 'https://github.com/yaml/pyyaml', 'description':
 'YAML parser and emitter for Python', 'name': 'PyYAML'}
 
 >>> print yaml.dump(_)
 name: PyYAML
-homepage: http://pyyaml.org/wiki/PyYAML
+homepage: https://github.com/yaml/pyyaml
 description: YAML parser and emitter for Python
 keywords: [YAML, serialization, configuration, persistence, pickle]
+
+
+Maintainers
+===========
+
+The following people are responsible for maintaining PyYAML:
+
+* Kirill Simonov
+* Ian Cordasco
+* Ingy döt Net
+* Donald Stufft
+* Tina Mueller
+* Alex Gaynor
+
+and many thanks to all who have contribributed!
+See: https://github.com/yaml/pyyaml/pulls
 
 
 Copyright
 =========
 
-The PyYAML module is written by Kirill Simonov <xi@resolvent.net>.
+Copyright (c) 2017-2018 Ingy döt Net <ingy@ingy.net>
+Copyright (c) 2006-2016 Kirill Simonov <xi@resolvent.net>
+
+The PyYAML module was written by Kirill Simonov <xi@resolvent.net>.
+It is currently maintained by the YAML and Python communities.
 
 PyYAML is released under the MIT license.
-
