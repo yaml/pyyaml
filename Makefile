@@ -33,7 +33,9 @@ testall:
 	${PYTHON} setup.py test
 
 dist:
-	${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
+	@# No longer uploading a zip file to pypi
+	@# ${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
+	${PYTHON} setup.py --with-libyaml sdist --formats=gztar
 
 windist:
 	${PYTHON} setup.py --with-libyaml bdist_wininst
