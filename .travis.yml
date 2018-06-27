@@ -108,3 +108,17 @@ jobs:
     env:
       TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
     python: "pypy3.5-5.10.1"
+
+
+  # This placeholder can be extended to do actual upload of a dist to
+  # PYPI, it will only appear if the current commit is tagged:
+  - stage: Deploy to PYPI (placeholder)
+    if: tag IS present
+    install: []
+    script: []
+    deploy:
+      provider: pypi
+      skip-cleanup: true
+      user: PLACEHOLDER
+      password:
+        secure: PLACEHOLDER
