@@ -65,6 +65,7 @@ script:
   - brew --cache
 
 jobs:
+  fast_finish: true
   include:
   - python: "3.7"
     dist: xenial
