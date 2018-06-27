@@ -4,6 +4,12 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+4.2 (unreleased)
+----------------
+
+* Fixed deprecation warning on Python 3.7 by importing from collections.abc
+  instead of collections.
+
 4.1 (2018-06-26)
 ----------------
 
