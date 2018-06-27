@@ -1,14 +1,26 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-4.01: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-4.1: YAML parser and emitter for Python
 
-========================
- Announcing PyYAML-4.01
-========================
+=======================
+ Announcing PyYAML-4.1
+=======================
 
-A new release of PyYAML is now available:
+A new MAJOR RELEASE of PyYAML is now available:
+https://pypi.org/project/PyYAML/
 
-    https://pypi.org/project/PyYAML/
+This is the first release of PyYAML under a new maintenance team. In August
+2016, maintenance of PyYAML and LibYAML was turned over from the original
+author, Kirill Simonov, to Ian Cordasco and Ingy döt Net.
+
+The canonical source repo moved:
+
+    from: https://bitbucket.org/xi/pyyaml/
+    to:   https://github.com/yaml/pyyaml
+
+The PyYAML project is now maintained by the YAML and Python communities.
+Planning happens on the #yaml-dev, #pyyaml and #libyaml IRC channels on
+irc.freenode.net.
 
 
 Changes
@@ -40,10 +52,9 @@ Resources
 PyYAML IRC Channel: #pyyaml on irc.freenode.net
 PyYAML homepage: https://github.com/yaml/pyyaml
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
-Source and binary installers: https://pypi.python.org/pypi/PyYAML/3.12
-
-PyYAML GitHub repository: https://github.com/yaml/pyyaml/
-Submit a bug report: https://github.com/yaml/pyyaml/issues
+Source and binary installers: https://pypi.org/project/PyYAML/
+GitHub repository: https://github.com/yaml/pyyaml/
+Bug tracking: https://github.com/yaml/pyyaml/issues
 
 YAML homepage: http://yaml.org/
 YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
@@ -92,12 +103,12 @@ Maintainers
 
 The following people are responsible for maintaining PyYAML:
 
-* Kirill Simonov
-* Ian Cordasco
 * Ingy döt Net
-* Donald Stufft
+* Ian Cordasco
 * Tina Mueller
 * Alex Gaynor
+* Donald Stufft
+* Matt Davis
 
 and many thanks to all who have contribributed!
 See: https://github.com/yaml/pyyaml/pulls
@@ -113,3 +124,4 @@ The PyYAML module was written by Kirill Simonov <xi@resolvent.net>.
 It is currently maintained by the YAML and Python communities.
 
 PyYAML is released under the MIT license.
+See the file LICENSE for more details.
