@@ -5,7 +5,7 @@ __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
 from .error import *
 from .nodes import *
 
-import collections, datetime, base64, binascii, re, sys, types
+import collections.abc, datetime, base64, binascii, re, sys, types
 
 class ConstructorError(MarkedYAMLError):
     pass
@@ -123,7 +123,7 @@ class BaseConstructor:
         mapping = {}
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
-            if not isinstance(key, collections.Hashable):
+            if not isinstance(key, collections.abc.Hashable):
                 raise ConstructorError("while constructing a mapping", node.start_mark,
                         "found unhashable key", key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
