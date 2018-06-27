@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 NAME = 'PyYAML'
 VERSION = '4.1'
 DESCRIPTION = "YAML parser and emitter for Python"
@@ -82,7 +84,8 @@ try:
     from Cython.Distutils import build_ext as _build_ext
     with_cython = True
 except ImportError:
-    pass
+    print('WARNING: failed to import cython, may not be able compile extensions', file=sys.stderr)
+
 
 try:
     from wheel.bdist_wheel import bdist_wheel
