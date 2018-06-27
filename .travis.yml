@@ -66,6 +66,16 @@ script:
 
 jobs:
   fast_finish: true
+  allow_failures:
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: "2.6"
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: "2.7"
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
   include:
   - python: "3.7"
     dist: xenial
