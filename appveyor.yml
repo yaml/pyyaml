@@ -1,0 +1,25 @@
+version: 4.1.{build}
+
+image:
+- Visual Studio 2015
+- Visual Studio 2013
+
+environment:
+  matrix:
+    - PYTHON_VER: Python27
+    - PYTHON_VER: Python27-x64
+    - PYTHON_VER: Python33
+    - PYTHON_VER: Python33-x64
+
+build_script:
+- cd
+- git clone https://github.com/yaml/libyaml.git
+- mkdir %PYTHON_VER%
+- cd %PYTHON_VER%
+- cmake.exe ..\libyaml
+- cmake.exe --build . --config Release --clean-first
+- cd ..
+- C:\%PYTHON_VER%\python.exe -m pip install wheel
+- C:\%PYTHON_VER%\python.exe -m pip install cython
+- C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I .\libyaml\include -L .\%PYTHON_VER%\build;.\%PYTHON_VER%\build\Release -D YAML_DECLARE_STATIC build test bdist_wininst bdist_wheel
+
