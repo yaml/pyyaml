@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 
 import yaml
 import pprint
@@ -22,7 +23,7 @@ def _make_objects():
     class MyDumper(yaml.DangerDumper):
         pass
 
-    class MyTestClass1:
+    class MyTestClass1(object):
         def __init__(self, x, y=0, z=0):
             self.x = x
             self.y = y
@@ -101,7 +102,7 @@ def _make_objects():
             else:
                 return False
 
-    class AnObject:
+    class AnObject(object):
         def __new__(cls, foo=None, bar=None, baz=None):
             self = object.__new__(cls)
             self.foo = foo
@@ -115,7 +116,7 @@ def _make_objects():
             return type(self) is type(other) and    \
                     (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
 
-    class AnInstance:
+    class AnInstance(object):
         def __init__(self, foo=None, bar=None, baz=None):
             self.foo = foo
             self.bar = bar

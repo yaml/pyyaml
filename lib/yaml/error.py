@@ -1,7 +1,8 @@
+from builtins import object
 
 __all__ = ['Mark', 'YAMLError', 'MarkedYAMLError']
 
-class Mark:
+class Mark(object):
 
     def __init__(self, name, index, line, column, buffer, pointer):
         self.name = name

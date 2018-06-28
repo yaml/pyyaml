@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
     'ConstructorError']
@@ -11,7 +12,7 @@ import collections, datetime, base64, binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
-class BaseConstructor:
+class BaseConstructor(object):
 
     yaml_constructors = {}
     yaml_multi_constructors = {}

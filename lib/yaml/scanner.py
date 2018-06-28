@@ -25,6 +25,7 @@
 #
 
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['Scanner', 'ScannerError']
 
@@ -34,7 +35,7 @@ from .tokens import *
 class ScannerError(MarkedYAMLError):
     pass
 
-class SimpleKey:
+class SimpleKey(object):
     # See below simple keys treatment.
 
     def __init__(self, token_number, required, index, line, column, mark):
@@ -45,7 +46,7 @@ class SimpleKey:
         self.column = column
         self.mark = mark
 
-class Scanner:
+class Scanner(object):
 
     def __init__(self):
         """Initialize the scanner."""

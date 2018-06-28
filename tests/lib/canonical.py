@@ -1,10 +1,11 @@
+from builtins import object
 
 import yaml, yaml.composer, yaml.constructor, yaml.resolver
 
 class CanonicalError(yaml.YAMLError):
     pass
 
-class CanonicalScanner:
+class CanonicalScanner(object):
 
     def __init__(self, data):
         if isinstance(data, bytes):
@@ -206,7 +207,7 @@ class CanonicalScanner:
             else:
                 found = True
 
-class CanonicalParser:
+class CanonicalParser(object):
 
     def __init__(self):
         self.events = []

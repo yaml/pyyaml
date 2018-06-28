@@ -1,8 +1,9 @@
 from __future__ import print_function
+from builtins import object
 
 import yaml
 
-class AnInstance:
+class AnInstance(object):
 
     def __init__(self, foo, bar):
         self.foo = foo

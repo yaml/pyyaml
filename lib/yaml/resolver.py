@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['BaseResolver', 'Resolver']
 
@@ -10,7 +11,7 @@ import re
 class ResolverError(YAMLError):
     pass
 
-class BaseResolver:
+class BaseResolver(object):
 
     DEFAULT_SCALAR_TAG = 'tag:yaml.org,2002:str'
     DEFAULT_SEQUENCE_TAG = 'tag:yaml.org,2002:seq'

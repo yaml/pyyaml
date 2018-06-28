@@ -60,6 +60,7 @@
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['Parser', 'ParserError']
 
@@ -71,7 +72,7 @@ from .scanner import *
 class ParserError(MarkedYAMLError):
     pass
 
-class Parser:
+class Parser(object):
     # Since writing a recursive-descendant parser is a straightforward task, we
     # do not give many comments here.
 

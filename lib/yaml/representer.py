@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
     'RepresenterError']
@@ -11,7 +12,7 @@ import datetime, sys, copyreg, types, base64, collections
 class RepresenterError(YAMLError):
     pass
 
-class BaseRepresenter:
+class BaseRepresenter(object):
 
     yaml_representers = {}
     yaml_multi_representers = {}

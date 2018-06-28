@@ -7,6 +7,7 @@
 # mapping ::= MAPPING-START (node node)* MAPPING-END
 
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['Emitter', 'EmitterError']
 
@@ -16,7 +17,7 @@ from .events import *
 class EmitterError(YAMLError):
     pass
 
-class ScalarAnalysis:
+class ScalarAnalysis(object):
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
@@ -30,7 +31,7 @@ class ScalarAnalysis:
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
 
-class Emitter:
+class Emitter(object):
 
     DEFAULT_TAG_PREFIXES = {
         '!' : '!',

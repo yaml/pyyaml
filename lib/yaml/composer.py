@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['Composer', 'ComposerError']
 
@@ -9,7 +10,7 @@ from .nodes import *
 class ComposerError(MarkedYAMLError):
     pass
 
-class Composer:
+class Composer(object):
 
     def __init__(self):
         self.anchors = {}

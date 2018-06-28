@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 
 __all__ = ['Serializer', 'SerializerError']
 
@@ -9,7 +10,7 @@ from .nodes import *
 class SerializerError(YAMLError):
     pass
 
-class Serializer:
+class Serializer(object):
 
     ANCHOR_TEMPLATE = 'id%03d'
 
