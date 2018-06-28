@@ -77,12 +77,18 @@ if 'setuptools.extension' in sys.modules:
     sys.modules['distutils.command.build_ext'].Extension = _Extension
 
 with_cython = False
+if 'sdist' in sys.argv:
+    # we need cython here
+    with_cython = True
 try:
     from Cython.Distutils.extension import Extension as _Extension
     from Cython.Distutils import build_ext as _build_ext
     with_cython = True
 except ImportError:
-    pass
+    if with_cython:
+        raise
+    else:
+        log.warn("WARNING: failed to import cython, may not be able compile extensions")
 
 try:
     from wheel.bdist_wheel import bdist_wheel
