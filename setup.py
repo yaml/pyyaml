@@ -88,7 +88,7 @@ except ImportError:
     if with_cython:
         raise
     else:
-        pass
+        log.warn("WARNING: failed to import cython, may not be able compile extensions")
 
 try:
     from wheel.bdist_wheel import bdist_wheel
