@@ -1,6 +1,6 @@
 
-__all__ = ['CBaseLoader', 'CSafeLoader', 'CLoader', 'CDangerLoader',
-        'CBaseDumper', 'CSafeDumper', 'CDumper', 'CDangerDumper']
+__all__ = ['CBaseLoader', 'CSafeLoader', 'CPythonLoader', 'CLoader',
+        'CBaseDumper', 'CSafeDumper', 'CPythonDumper', 'CDumper']
 
 from _yaml import CParser, CEmitter
 
@@ -18,20 +18,23 @@ class CBaseLoader(CParser, BaseConstructor, BaseResolver):
         BaseConstructor.__init__(self)
         BaseResolver.__init__(self)
 
-class CLoader(CParser, SafeConstructor, Resolver):
+class CSafeLoader(CParser, SafeConstructor, Resolver):
 
     def __init__(self, stream):
         CParser.__init__(self, stream)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
-CSafeLoader = CLoader
 
-class CDangerLoader(CParser, Constructor, Resolver):
+class CPythonLoader(CParser, Constructor, Resolver):
 
     def __init__(self, stream):
         CParser.__init__(self, stream)
         Constructor.__init__(self)
         Resolver.__init__(self)
+
+CLoader = CSafeLoader
+
+
 
 class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
 
@@ -50,7 +53,7 @@ class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
 
-class CDumper(CEmitter, SafeRepresenter, Resolver):
+class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=None,
@@ -66,9 +69,8 @@ class CDumper(CEmitter, SafeRepresenter, Resolver):
         SafeRepresenter.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
-CSafeDumper = CDumper
 
-class CDangerDumper(CEmitter, Serializer, Representer, Resolver):
+class CPythonDumper(CEmitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=None,
@@ -84,3 +86,5 @@ class CDangerDumper(CEmitter, Serializer, Representer, Resolver):
         Representer.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
+
+CDumper = CPythonDumper

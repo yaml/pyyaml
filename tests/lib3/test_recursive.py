@@ -30,9 +30,9 @@ def test_recursive(recursive_filename, verbose=False):
     value2 = None
     output2 = None
     try:
-        output1 = yaml.danger_dump(value1)
-        value2 = yaml.danger_load(output1)
-        output2 = yaml.danger_dump(value2)
+        output1 = yaml.python_dump(value1)
+        value2 = yaml.python_load(output1)
+        output2 = yaml.python_dump(value2)
         assert output1 == output2, (output1, output2)
     finally:
         if verbose:

@@ -61,28 +61,22 @@ def compose_all(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def load(stream, Loader=Loader):
+# Generic load() and load_all() default to SafeLoader.
+def load(stream, Loader=SafeLoader):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
-
-    By default resolve only basic YAML tags, if an alternate Loader is
-    provided, may be dangerous.
     """
     loader = Loader(stream)
     try:
         return loader.get_single_data()
     finally:
         loader.dispose()
-safe_load = load
 
-def load_all(stream, Loader=Loader):
+def load_all(stream, Loader=SafeLoader):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
-
-    By default resolve only basic YAML tags, if an alternate Loader is
-    provided, may be dangerous.
     """
     loader = Loader(stream)
     try:
@@ -90,23 +84,41 @@ def load_all(stream, Loader=Loader):
             yield loader.get_data()
     finally:
         loader.dispose()
-safe_load_all = load_all
 
-def danger_load(stream):
+def safe_load(stream):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
-    When used on untrusted input, can result in arbitrary code execution.
     """
-    return load(stream, DangerLoader)
+    return load(stream, Loader=SafeLoader)
 
-def danger_load_all(stream):
+def safe_load_all(stream):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
-    When used on untrusted input, can result in arbitrary code execution.
     """
-    return load_all(stream, DangerLoader)
+    return load_all(stream, Loader=SafeLoader)
+
+# Note: Using an alternate Loader (like PythonLoader) may be dangerous.
+def python_load(stream):
+    """
+    Parse the first YAML document in a stream
+    and produce the corresponding Python object.
+
+    Warning: When used on untrusted input, can result in arbitrary code
+    execution.
+    """
+    return load(stream, Loader=PythonLoader)
+
+def python_load_all(stream):
+    """
+    Parse all YAML documents in a stream
+    and produce corresponding Python objects.
+
+    Warning: When used on untrusted input, can result in arbitrary code
+    execution.
+    """
+    return load_all(stream, Loader=PythonLoader)
 
 def emit(events, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
@@ -168,7 +180,8 @@ def serialize(node, stream=None, Dumper=Dumper, **kwds):
     """
     return serialize_all([node], stream, Dumper=Dumper, **kwds)
 
-def dump_all(documents, stream=None, Dumper=Dumper,
+# All the top level dump functions call this:
+def _dump_all(documents, stream=None, Dumper=None,
         default_style=None, default_flow_style=None,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
@@ -201,31 +214,49 @@ def dump_all(documents, stream=None, Dumper=Dumper,
         dumper.dispose()
     if getvalue:
         return getvalue()
-safe_dump_all = dump_all
 
-def danger_dump_all(documents, stream=None, **kwds):
+def dump(data, stream=None, Dumper=PythonDumper, **kwds):
+    """
+    Serialize a Python object into a YAML stream.
+    Produce only basic YAML tags.
+    """
+    return _dump_all([data], stream, Dumper=Dumper, **kwds)
+
+def dump_all(documents, stream=None, Dumper=PythonDumper, **kwds):
     """
     Serialize a sequence of Python objects into a YAML stream.
     Produce only basic YAML tags.
-    If stream is None, return the produced string instead.
     """
-    return dump_all(documents, stream, Dumper=DangerDumper, **kwds)
+    return _dump_all(documents, stream, Dumper=Dumper, **kwds)
 
-def dump(data, stream=None, Dumper=Dumper, **kwds):
-    """
-    Serialize a Python object into a YAML stream.
-    If stream is None, return the produced string instead.
-    """
-    return dump_all([data], stream, Dumper=Dumper, **kwds)
-safe_dump = dump
-
-def danger_dump(data, stream=None, **kwds):
+# The safe_dump* functions can be used to create YAML that should always be
+# loadable by the safe_load* functions. There should be nothing "unsafe" about
+# dumping any object.
+def safe_dump(data, stream=None, **kwds):
     """
     Serialize a Python object into a YAML stream.
     Produce only basic YAML tags.
-    If stream is None, return the produced string instead.
     """
-    return dump_all([data], stream, Dumper=DangerDumper, **kwds)
+    return _dump_all([data], stream, Dumper=SafeDumper, **kwds)
+
+def safe_dump_all(documents, stream=None, **kwds):
+    """
+    Serialize a sequence of Python objects into a YAML stream.
+    Produce only basic YAML tags.
+    """
+    return _dump_all(documents, stream, Dumper=SafeDumper, **kwds)
+
+def python_dump(data, stream=None, **kwds):
+    """
+    Serialize a Python object into a YAML stream.
+    """
+    return _dump_all([data], stream, Dumper=PythonDumper, **kwds)
+
+def python_dump_all(documents, stream=None, **kwds):
+    """
+    Serialize a sequence of Python objects into a YAML stream.
+    """
+    return _dump_all(documents, stream, Dumper=PythonDumper, **kwds)
 
 def add_implicit_resolver(tag, regexp, first=None,
         Loader=Loader, Dumper=Dumper):
