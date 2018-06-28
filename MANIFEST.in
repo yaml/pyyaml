@@ -1,4 +1,4 @@
-include README LICENSE CHANGES setup.py
+include README.rst LICENSE CHANGES setup.py
 recursive-include lib/yaml *.py
 recursive-include lib3/yaml *.py
 recursive-include examples *.py *.cfg *.yaml
