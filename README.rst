@@ -10,19 +10,25 @@ supports standard YAML tags and provides Python-specific tags that
 allow to represent an arbitrary Python object.
 
 PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistence."""
+configuration files to object serialization and persistence.
 
-To install, type 'python setup.py install'.
+To install, type ``python setup.py install``.
 
 By default, the setup.py script checks whether LibYAML is installed
 and if so, builds and installs LibYAML bindings.  To skip the check
-and force installation of LibYAML bindings, use the option '--with-libyaml':
-'python setup.py --with-libyaml install'.  To disable the check and
-skip building and installing LibYAML bindings, use '--without-libyaml':
-'python setup.py --without-libyaml install'.
+and force installation of LibYAML bindings, use the option ``--with-libyaml``:
+``python setup.py --with-libyaml install``.  To disable the check and
+skip building and installing LibYAML bindings, use ``--without-libyaml``:
+
+
+.. code-block:: shell
+
+    python setup.py --without-libyaml install
 
 When LibYAML bindings are installed, you may use fast LibYAML-based
 parser and emitter as follows:
+
+.. code-block:: python
 
     >>> yaml.load(stream, Loader=yaml.CLoader)
     >>> yaml.dump(data, Dumper=yaml.CDumper)
@@ -32,7 +38,7 @@ If you don't trust the input stream, you should use:
     >>> yaml.safe_load(stream)
 
 PyYAML includes a comprehensive test suite.  To run the tests,
-type 'python setup.py test'.
+type ``python setup.py test``.
 
 For more information, check the PyYAML homepage:
 'https://github.com/yaml/pyyaml'.
@@ -41,7 +47,7 @@ For PyYAML tutorial and reference, see:
 'http://pyyaml.org/wiki/PyYAMLDocumentation'.
 
 Discuss PyYAML with the maintainers in IRC #pyyaml irc.freenode.net.
-
+ZZ
 You may also use the YAML-Core mailing list:
 'http://lists.sourceforge.net/lists/listinfo/yaml-core'.
 
