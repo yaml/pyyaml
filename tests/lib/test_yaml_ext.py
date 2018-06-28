@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import _yaml, yaml
 import types, pprint
