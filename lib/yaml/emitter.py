@@ -6,6 +6,8 @@
 # sequence ::= SEQUENCE-START node* SEQUENCE-END
 # mapping ::= MAPPING-START (node node)* MAPPING-END
 
+from __future__ import absolute_import
+
 __all__ = ['Emitter', 'EmitterError']
 
 from .error import YAMLError

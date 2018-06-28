@@ -24,6 +24,8 @@
 # Read comments in the Scanner code for more details.
 #
 
+from __future__ import absolute_import
+
 __all__ = ['Scanner', 'ScannerError']
 
 from .error import MarkedYAMLError
