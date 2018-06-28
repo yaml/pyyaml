@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from future.utils import with_metaclass
 
 from .error import *
 
@@ -292,7 +293,7 @@ class YAMLObjectMetaclass(type):
             cls.yaml_loader.add_constructor(cls.yaml_tag, cls.from_yaml)
             cls.yaml_dumper.add_representer(cls, cls.to_yaml)
 
-class YAMLObject(metaclass=YAMLObjectMetaclass):
+class YAMLObject(with_metaclass(YAMLObjectMetaclass)):
     """
     An object that can dump itself to a YAML stream
     and load itself from a YAML stream.
