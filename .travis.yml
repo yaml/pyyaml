@@ -21,6 +21,6 @@ matrix:
     - python: pypy
       env: TOXENV=pypy
 
-install: pip install tox
+install: pip install cython tox
 
 script: tox
