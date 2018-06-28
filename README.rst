@@ -3,6 +3,9 @@ PyYAML - The next generation YAML parser and emitter for Python.
 .. image:: https://travis-ci.org/yaml/pyyaml.svg?branch=master
     :target: https://travis-ci.org/yaml/pyyaml
 
+.. image:: https://badge.fury.io/py/PyYAML.svg
+    :target: https://badge.fury.io/py/PyYAML
+
 YAML is a data serialization format designed for human readability
 and interaction with scripting languages.  PyYAML is a YAML parser
 and emitter for Python.
