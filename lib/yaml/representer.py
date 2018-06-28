@@ -142,27 +142,27 @@ class SafeRepresenter(BaseRepresenter):
             return True
 
     def represent_none(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:null', 'null')
+        return self.represent_scalar(u'tag:yaml.org,2002:null', u'null')
 
     def represent_str(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:str', data)
+        return self.represent_scalar(u'tag:yaml.org,2002:str', data)
 
     def represent_binary(self, data):
         if hasattr(base64, 'encodebytes'):
             data = base64.encodebytes(data).decode('ascii')
         else:
             data = base64.encodestring(data).decode('ascii')
-        return self.represent_scalar('tag:yaml.org,2002:binary', data, style='|')
+        return self.represent_scalar(u'tag:yaml.org,2002:binary', data, style='|')
 
     def represent_bool(self, data):
         if data:
-            value = 'true'
+            value = u'true'
         else:
-            value = 'false'
-        return self.represent_scalar('tag:yaml.org,2002:bool', value)
+            value = u'false'
+        return self.represent_scalar(u'tag:yaml.org,2002:bool', value)
 
     def represent_int(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:int', str(data))
+        return self.represent_scalar(u'tag:yaml.org,2002:int', str(data))
 
     inf_value = 1e300
     while repr(inf_value) != repr(inf_value*inf_value):
@@ -170,11 +170,11 @@ class SafeRepresenter(BaseRepresenter):
 
     def represent_float(self, data):
         if data != data or (data == 0.0 and data == 1.0):
-            value = '.nan'
+            value = u'.nan'
         elif data == self.inf_value:
-            value = '.inf'
+            value = u'.inf'
         elif data == -self.inf_value:
-            value = '-.inf'
+            value = u'-.inf'
         else:
             value = repr(data).lower()
             # Note that in some cases `repr(data)` represents a float number
@@ -184,9 +184,9 @@ class SafeRepresenter(BaseRepresenter):
             # Unfortunately, this is not a valid float representation according
             # to the definition of the `!!float` tag.  We fix this by adding
             # '.0' before the 'e' symbol.
-            if '.' not in value and 'e' in value:
-                value = value.replace('e', '.0e', 1)
-        return self.represent_scalar('tag:yaml.org,2002:float', value)
+            if u'.' not in value and u'e' in value:
+                value = value.replace(u'e', u'.0e', 1)
+        return self.represent_scalar(u'tag:yaml.org,2002:float', value)
 
     def represent_list(self, data):
         #pairs = (len(data) > 0 and isinstance(data, list))
@@ -196,7 +196,7 @@ class SafeRepresenter(BaseRepresenter):
         #            pairs = False
         #            break
         #if not pairs:
-            return self.represent_sequence('tag:yaml.org,2002:seq', data)
+            return self.represent_sequence(u'tag:yaml.org,2002:seq', data)
         #value = []
         #for item_key, item_value in data:
         #    value.append(self.represent_mapping(u'tag:yaml.org,2002:map',
@@ -204,21 +204,21 @@ class SafeRepresenter(BaseRepresenter):
         #return SequenceNode(u'tag:yaml.org,2002:pairs', value)
 
     def represent_dict(self, data):
-        return self.represent_mapping('tag:yaml.org,2002:map', data)
+        return self.represent_mapping(u'tag:yaml.org,2002:map', data)
 
     def represent_set(self, data):
         value = {}
         for key in data:
             value[key] = None
-        return self.represent_mapping('tag:yaml.org,2002:set', value)
+        return self.represent_mapping(u'tag:yaml.org,2002:set', value)
 
     def represent_date(self, data):
         value = data.isoformat()
-        return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
+        return self.represent_scalar(u'tag:yaml.org,2002:timestamp', value)
 
     def represent_datetime(self, data):
         value = data.isoformat(' ')
-        return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
+        return self.represent_scalar(u'tag:yaml.org,2002:timestamp', value)
 
     def represent_yaml_object(self, tag, data, cls, flow_style=None):
         if hasattr(data, '__getstate__'):
@@ -273,25 +273,25 @@ class Representer(SafeRepresenter):
 
     def represent_complex(self, data):
         if data.imag == 0.0:
-            data = '%r' % data.real
+            data = u'%r' % data.real
         elif data.real == 0.0:
-            data = '%rj' % data.imag
+            data = u'%rj' % data.imag
         elif data.imag > 0:
-            data = '%r+%rj' % (data.real, data.imag)
+            data = u'%r+%rj' % (data.real, data.imag)
         else:
-            data = '%r%rj' % (data.real, data.imag)
-        return self.represent_scalar('tag:yaml.org,2002:python/complex', data)
+            data = u'%r%rj' % (data.real, data.imag)
+        return self.represent_scalar(u'tag:yaml.org,2002:python/complex', data)
 
     def represent_tuple(self, data):
-        return self.represent_sequence('tag:yaml.org,2002:python/tuple', data)
+        return self.represent_sequence(u'tag:yaml.org,2002:python/tuple', data)
 
     def represent_name(self, data):
-        name = '%s.%s' % (data.__module__, data.__name__)
-        return self.represent_scalar('tag:yaml.org,2002:python/name:'+name, '')
+        name = u'%s.%s' % (data.__module__, data.__name__)
+        return self.represent_scalar(u'tag:yaml.org,2002:python/name:'+name, u'')
 
     def represent_module(self, data):
         return self.represent_scalar(
-                'tag:yaml.org,2002:python/module:'+data.__name__, '')
+                u'tag:yaml.org,2002:python/module:'+data.__name__, u'')
 
     def represent_object(self, data):
         # We use __reduce__ API to save the data. data.__reduce__ returns
@@ -331,16 +331,16 @@ class Representer(SafeRepresenter):
         if function.__name__ == '__newobj__':
             function = args[0]
             args = args[1:]
-            tag = 'tag:yaml.org,2002:python/object/new:'
+            tag = u'tag:yaml.org,2002:python/object/new:'
             newobj = True
         else:
-            tag = 'tag:yaml.org,2002:python/object/apply:'
+            tag = u'tag:yaml.org,2002:python/object/apply:'
             newobj = False
-        function_name = '%s.%s' % (function.__module__, function.__name__)
+        function_name = u'%s.%s' % (function.__module__, function.__name__)
         if not args and not listitems and not dictitems \
                 and isinstance(state, dict) and newobj:
             return self.represent_mapping(
-                    'tag:yaml.org,2002:python/object:'+function_name, state)
+                    u'tag:yaml.org,2002:python/object:'+function_name, state)
         if not listitems and not dictitems  \
                 and isinstance(state, dict) and not state:
             return self.represent_sequence(tag+function_name, args)
@@ -358,7 +358,7 @@ class Representer(SafeRepresenter):
     def represent_ordered_dict(self, data):
         # Provide uniform representation across different Python versions.
         data_type = type(data)
-        tag = 'tag:yaml.org,2002:python/object/apply:%s.%s' \
+        tag = u'tag:yaml.org,2002:python/object/apply:%s.%s' \
                 % (data_type.__module__, data_type.__name__)
         items = [[key, value] for key, value in data.items()]
         return self.represent_sequence(tag, [items])

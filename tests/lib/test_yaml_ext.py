@@ -211,8 +211,8 @@ def _compare_emitters(data, verbose):
                 value = getattr(event, attribute, None)
                 py_value = getattr(py_event, attribute, None)
                 c_value = getattr(c_event, attribute, None)
-                if attribute == 'tag' and value in [None, '!'] \
-                        and py_value in [None, '!'] and c_value in [None, '!']:
+                if attribute == 'tag' and value in [None, u'!'] \
+                        and py_value in [None, u'!'] and c_value in [None, u'!']:
                     continue
                 if attribute == 'explicit' and (py_value or c_value):
                     continue

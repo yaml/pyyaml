@@ -145,7 +145,7 @@ def _make_loader():
         def construct_undefined(self, node):
             return self.construct_scalar(node)
 
-    MyLoader.add_constructor('tag:yaml.org,2002:map', MyLoader.construct_mapping)
+    MyLoader.add_constructor(u'tag:yaml.org,2002:map', MyLoader.construct_mapping)
     MyLoader.add_constructor(None, MyLoader.construct_undefined)
 
 def _make_canonical_loader():
@@ -161,7 +161,7 @@ def _make_canonical_loader():
         def construct_undefined(self, node):
             return self.construct_scalar(node)
 
-    MyCanonicalLoader.add_constructor('tag:yaml.org,2002:map', MyCanonicalLoader.construct_mapping)
+    MyCanonicalLoader.add_constructor(u'tag:yaml.org,2002:map', MyCanonicalLoader.construct_mapping)
     MyCanonicalLoader.add_constructor(None, MyCanonicalLoader.construct_undefined)
 
 def test_constructor(data_filename, canonical_filename, verbose=False):

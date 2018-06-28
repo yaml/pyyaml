@@ -63,7 +63,7 @@ class Reader(object):
         self.stream = None
         self.stream_pointer = 0
         self.eof = True
-        self.buffer = ''
+        self.buffer = u''
         self.pointer = 0
         self.raw_buffer = None
         self.raw_decode = None
@@ -74,7 +74,7 @@ class Reader(object):
         if isinstance(stream, str):
             self.name = "<unicode string>"
             self.check_printable(stream)
-            self.buffer = stream+'\0'
+            self.buffer = stream+u'\0'
         elif isinstance(stream, bytes):
             self.name = "<byte string>"
             self.raw_buffer = stream
@@ -105,11 +105,11 @@ class Reader(object):
             ch = self.buffer[self.pointer]
             self.pointer += 1
             self.index += 1
-            if ch in '\n\x85\u2028\u2029'  \
-                    or (ch == '\r' and self.buffer[self.pointer] != '\n'):
+            if ch in u'\n\x85\u2028\u2029'  \
+                    or (ch == u'\r' and self.buffer[self.pointer] != u'\n'):
                 self.line += 1
                 self.column = 0
-            elif ch != '\uFEFF':
+            elif ch != u'\uFEFF':
                 self.column += 1
             length -= 1
 
@@ -136,7 +136,7 @@ class Reader(object):
                 self.encoding = 'utf-8'
         self.update(1)
 
-    NON_PRINTABLE = re.compile('[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]')
+    NON_PRINTABLE = re.compile(u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]')
     def check_printable(self, data):
         match = self.NON_PRINTABLE.search(data)
         if match:
@@ -172,7 +172,7 @@ class Reader(object):
             self.buffer += data
             self.raw_buffer = self.raw_buffer[converted:]
             if self.eof:
-                self.buffer += '\0'
+                self.buffer += u'\0'
                 self.raw_buffer = None
                 break
 

@@ -161,7 +161,7 @@ class SafeConstructor(BaseConstructor):
     def construct_scalar(self, node):
         if isinstance(node, MappingNode):
             for key_node, value_node in node.value:
-                if key_node.tag == 'tag:yaml.org,2002:value':
+                if key_node.tag == u'tag:yaml.org,2002:value':
                     return self.construct_scalar(value_node)
         return super(SafeConstructor, self).construct_scalar(node)
 
@@ -170,7 +170,7 @@ class SafeConstructor(BaseConstructor):
         index = 0
         while index < len(node.value):
             key_node, value_node = node.value[index]
-            if key_node.tag == 'tag:yaml.org,2002:merge':
+            if key_node.tag == u'tag:yaml.org,2002:merge':
                 del node.value[index]
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
@@ -192,8 +192,8 @@ class SafeConstructor(BaseConstructor):
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
                             % value_node.id, value_node.start_mark)
-            elif key_node.tag == 'tag:yaml.org,2002:value':
-                key_node.tag = 'tag:yaml.org,2002:str'
+            elif key_node.tag == u'tag:yaml.org,2002:value':
+                key_node.tag = u'tag:yaml.org,2002:str'
                 index += 1
             else:
                 index += 1
@@ -210,12 +210,12 @@ class SafeConstructor(BaseConstructor):
         return None
 
     bool_values = {
-        'yes':      True,
-        'no':       False,
-        'true':     True,
-        'false':    False,
-        'on':       True,
-        'off':      False,
+        u'yes':     True,
+        u'no':      False,
+        u'true':    True,
+        u'false':   False,
+        u'on':      True,
+        u'off':     False,
     }
 
     def construct_yaml_bool(self, node):
@@ -305,7 +305,7 @@ class SafeConstructor(BaseConstructor):
                 :(?P<second>[0-9][0-9])
                 (?:\.(?P<fraction>[0-9]*))?
                 (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
-                (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
+                (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X | re.UNICODE)
 
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
@@ -416,51 +416,51 @@ class SafeConstructor(BaseConstructor):
                 node.start_mark)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:null',
+        u'tag:yaml.org,2002:null',
         SafeConstructor.construct_yaml_null)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:bool',
+        u'tag:yaml.org,2002:bool',
         SafeConstructor.construct_yaml_bool)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:int',
+        u'tag:yaml.org,2002:int',
         SafeConstructor.construct_yaml_int)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:float',
+        u'tag:yaml.org,2002:float',
         SafeConstructor.construct_yaml_float)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:binary',
+        u'tag:yaml.org,2002:binary',
         SafeConstructor.construct_yaml_binary)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:timestamp',
+        u'tag:yaml.org,2002:timestamp',
         SafeConstructor.construct_yaml_timestamp)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:omap',
+        u'tag:yaml.org,2002:omap',
         SafeConstructor.construct_yaml_omap)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:pairs',
+        u'tag:yaml.org,2002:pairs',
         SafeConstructor.construct_yaml_pairs)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:set',
+        u'tag:yaml.org,2002:set',
         SafeConstructor.construct_yaml_set)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:str',
+        u'tag:yaml.org,2002:str',
         SafeConstructor.construct_yaml_str)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:seq',
+        u'tag:yaml.org,2002:seq',
         SafeConstructor.construct_yaml_seq)
 
 SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:map',
+        u'tag:yaml.org,2002:map',
         SafeConstructor.construct_yaml_map)
 
 SafeConstructor.add_constructor(None,
@@ -514,7 +514,7 @@ class Constructor(SafeConstructor):
         if not name:
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
-        if '.' in name:
+        if u'.' in name:
             module_name, object_name = name.rsplit('.', 1)
         else:
             module_name = 'builtins'
@@ -619,70 +619,70 @@ class Constructor(SafeConstructor):
         return self.construct_python_object_apply(suffix, node, newobj=True)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/none',
+    u'tag:yaml.org,2002:python/none',
     Constructor.construct_yaml_null)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/bool',
+    u'tag:yaml.org,2002:python/bool',
     Constructor.construct_yaml_bool)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/str',
+    u'tag:yaml.org,2002:python/str',
     Constructor.construct_python_str)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/unicode',
+    u'tag:yaml.org,2002:python/unicode',
     Constructor.construct_python_unicode)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/bytes',
+    u'tag:yaml.org,2002:python/bytes',
     Constructor.construct_python_bytes)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/int',
+    u'tag:yaml.org,2002:python/int',
     Constructor.construct_yaml_int)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/long',
+    u'tag:yaml.org,2002:python/long',
     Constructor.construct_python_long)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/float',
+    u'tag:yaml.org,2002:python/float',
     Constructor.construct_yaml_float)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/complex',
+    u'tag:yaml.org,2002:python/complex',
     Constructor.construct_python_complex)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/list',
+    u'tag:yaml.org,2002:python/list',
     Constructor.construct_yaml_seq)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/tuple',
+    u'tag:yaml.org,2002:python/tuple',
     Constructor.construct_python_tuple)
 
 Constructor.add_constructor(
-    'tag:yaml.org,2002:python/dict',
+    u'tag:yaml.org,2002:python/dict',
     Constructor.construct_yaml_map)
 
 Constructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/name:',
+    u'tag:yaml.org,2002:python/name:',
     Constructor.construct_python_name)
 
 Constructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/module:',
+    u'tag:yaml.org,2002:python/module:',
     Constructor.construct_python_module)
 
 Constructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object:',
+    u'tag:yaml.org,2002:python/object:',
     Constructor.construct_python_object)
 
 Constructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object/apply:',
+    u'tag:yaml.org,2002:python/object/apply:',
     Constructor.construct_python_object_apply)
 
 Constructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object/new:',
+    u'tag:yaml.org,2002:python/object/new:',
     Constructor.construct_python_object_new)
 

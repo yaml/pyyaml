@@ -5,7 +5,7 @@ import yaml.reader
 def _run_reader(data, verbose):
     try:
         stream = yaml.reader.Reader(data)
-        while stream.peek() != '\0':
+        while stream.peek() != u'\0':
             stream.forward()
     except yaml.reader.ReaderError as exc:
         if verbose:

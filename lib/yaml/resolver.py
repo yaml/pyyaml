@@ -13,9 +13,9 @@ class ResolverError(YAMLError):
 
 class BaseResolver(object):
 
-    DEFAULT_SCALAR_TAG = 'tag:yaml.org,2002:str'
-    DEFAULT_SEQUENCE_TAG = 'tag:yaml.org,2002:seq'
-    DEFAULT_MAPPING_TAG = 'tag:yaml.org,2002:map'
+    DEFAULT_SCALAR_TAG = u'tag:yaml.org,2002:str'
+    DEFAULT_SEQUENCE_TAG = u'tag:yaml.org,2002:seq'
+    DEFAULT_MAPPING_TAG = u'tag:yaml.org,2002:map'
 
     yaml_implicit_resolvers = {}
     yaml_path_resolvers = {}
@@ -144,8 +144,8 @@ class BaseResolver(object):
 
     def resolve(self, kind, value, implicit):
         if kind is ScalarNode and implicit[0]:
-            if value == '':
-                resolvers = self.yaml_implicit_resolvers.get('', [])
+            if value == u'':
+                resolvers = self.yaml_implicit_resolvers.get(u'', [])
             else:
                 resolvers = self.yaml_implicit_resolvers.get(value[0], [])
             resolvers += self.yaml_implicit_resolvers.get(None, [])
@@ -170,60 +170,60 @@ class Resolver(BaseResolver):
     pass
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:bool',
+        u'tag:yaml.org,2002:bool',
         re.compile(r'''^(?:yes|Yes|YES|no|No|NO
                     |true|True|TRUE|false|False|FALSE
-                    |on|On|ON|off|Off|OFF)$''', re.X),
-        list('yYnNtTfFoO'))
+                    |on|On|ON|off|Off|OFF)$''', re.X | re.UNICODE),
+        list(u'yYnNtTfFoO'))
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:float',
+        u'tag:yaml.org,2002:float',
         re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
                     |\.[0-9_]+(?:[eE][-+][0-9]+)?
                     |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
                     |[-+]?\.(?:inf|Inf|INF)
-                    |\.(?:nan|NaN|NAN))$''', re.X),
-        list('-+0123456789.'))
+                    |\.(?:nan|NaN|NAN))$''', re.X | re.UNICODE),
+        list(u'-+0123456789.'))
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:int',
+        u'tag:yaml.org,2002:int',
         re.compile(r'''^(?:[-+]?0b[0-1_]+
                     |[-+]?0[0-7_]+
                     |[-+]?(?:0|[1-9][0-9_]*)
                     |[-+]?0x[0-9a-fA-F_]+
-                    |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
-        list('-+0123456789'))
+                    |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X | re.UNICODE),
+        list(u'-+0123456789'))
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:merge',
-        re.compile(r'^(?:<<)$'),
-        ['<'])
+        u'tag:yaml.org,2002:merge',
+        re.compile(r'^(?:<<)$', re.UNICODE),
+        [u'<'])
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:null',
+        u'tag:yaml.org,2002:null',
         re.compile(r'''^(?: ~
                     |null|Null|NULL
-                    | )$''', re.X),
-        ['~', 'n', 'N', ''])
+                    | )$''', re.X | re.UNICODE),
+        [u'~', u'n', u'N', u''])
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:timestamp',
+        u'tag:yaml.org,2002:timestamp',
         re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
                     |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
                      (?:[Tt]|[ \t]+)[0-9][0-9]?
                      :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
-                     (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
-        list('0123456789'))
+                     (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X | re.UNICODE),
+        list(u'0123456789'))
 
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:value',
-        re.compile(r'^(?:=)$'),
-        ['='])
+        u'tag:yaml.org,2002:value',
+        re.compile(r'^(?:=)$', re.UNICODE),
+        [u'='])
 
 # The following resolver is only for documentation purposes. It cannot work
 # because plain scalars cannot start with '!', '&', or '*'.
 Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:yaml',
-        re.compile(r'^(?:!|&|\*)$'),
-        list('!&*'))
+        u'tag:yaml.org,2002:yaml',
+        re.compile(r'^(?:!|&|\*)$', re.UNICODE),
+        list(u'!&*'))
 

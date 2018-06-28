@@ -115,7 +115,7 @@ def test_unicode_transfer(unicode_filename, verbose=False):
     for encoding in [None, 'utf-8', 'utf-16-be', 'utf-16-le']:
         input = data
         if encoding is not None:
-            input = ('\ufeff'+input).encode(encoding)
+            input = (u'\ufeff'+input).encode(encoding)
         output1 = yaml.emit(yaml.parse(input), allow_unicode=True)
         if encoding is None:
             stream = io.StringIO()
