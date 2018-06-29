@@ -1,9 +1,11 @@
+import codecs
+
 
 NAME = 'PyYAML'
 VERSION = '5.3.1'
 DESCRIPTION = "YAML parser and emitter for Python"
 
-with open('README.rst', encoding='utf-8') as f:
+with codecs.open('README.rst', encoding='utf-8') as f:
     LONG_DESCRIPTION = f.read()
 
 AUTHOR = "Kirill Simonov"
