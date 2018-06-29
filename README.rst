@@ -18,7 +18,14 @@ allow to represent an arbitrary Python object.
 PyYAML is applicable for a broad range of tasks from complex
 configuration files to object serialization and persistence.
 
-To install, type ``python setup.py install``.
+To install, type following:
+
+.. code-block:: shell
+
+    # recommended
+    pip install PyYAML
+    # or
+    python setup.py install
 
 By default, the setup.py script checks whether LibYAML is installed
 and if so, builds and installs LibYAML bindings.  To skip the check
@@ -29,7 +36,12 @@ skip building and installing LibYAML bindings, use ``--without-libyaml``:
 
 .. code-block:: shell
 
+    # recommended
+    pip install pyyaml --install-option=--without-libyaml
+    # or
     python setup.py --without-libyaml install
+    # Ref: pip.pypa.io/en/stable/reference/pip_install/#per-requirement-overrides
+
 
 When LibYAML bindings are installed, you may use fast LibYAML-based
 parser and emitter as follows:
@@ -53,7 +65,7 @@ For PyYAML tutorial and reference, see:
 'http://pyyaml.org/wiki/PyYAMLDocumentation'.
 
 Discuss PyYAML with the maintainers in IRC #pyyaml irc.freenode.net.
-ZZ
+
 You may also use the YAML-Core mailing list:
 'http://lists.sourceforge.net/lists/listinfo/yaml-core'.
 
