@@ -18,8 +18,9 @@ build_script:
 - cd %PYTHON_VER%
 - cmake.exe ..\libyaml
 - cmake.exe --build . --config Release --clean-first
+- C:\cygwin\bin\sh -c "export PATH=/usr/bin:/usr/local/bin:$PATH && find . -name \*.lib"
 - cd ..
 - C:\%PYTHON_VER%\python.exe -m pip install wheel
 - C:\%PYTHON_VER%\python.exe -m pip install cython
-- C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I .\libyaml\include -L .\%PYTHON_VER%\build;.\%PYTHON_VER%\build\Release -D YAML_DECLARE_STATIC build test bdist_wininst bdist_wheel
+- C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I C:\projects\pyyaml\libyaml\include -L C:\projects\pyyaml\%PYTHON_VER%\;C:\projects\pyyaml\%PYTHON_VER%\Release -D YAML_DECLARE_STATIC build test bdist_wininst bdist_wheel
 
