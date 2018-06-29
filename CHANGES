@@ -4,7 +4,7 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
-4.1 (2018-06-26)
+5.1 (2019-02-24)
 ----------------
 
 * https://github.com/yaml/pyyaml/pull/35  -- Some modernization of the test running
@@ -18,13 +18,23 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/62  -- Remove tox workaround for Travis CI
 * https://github.com/yaml/pyyaml/pull/63  -- Adding support to Unicode characters over codepoint 0xffff
 * https://github.com/yaml/pyyaml/pull/65  -- Support unicode literals over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/74  -- Make pyyaml safe by default.
 * https://github.com/yaml/pyyaml/pull/75  -- add 3.12 changelog
 * https://github.com/yaml/pyyaml/pull/76  -- Fallback to Pure Python if Compilation fails
 * https://github.com/yaml/pyyaml/pull/84  -- Drop unsupported Python 3.3
+* https://github.com/yaml/pyyaml/pull/102 -- Include license file in the generated wheel package
+* https://github.com/yaml/pyyaml/pull/105 -- Removed Python 2.6 & 3.3 support
 * https://github.com/yaml/pyyaml/pull/111 -- Remove commented out Psyco code
+* https://github.com/yaml/pyyaml/pull/129 -- Remove call to `ord` in lib3 emitter code
+* https://github.com/yaml/pyyaml/pull/143 -- Allow to turn off sorting keys in Dumper
 * https://github.com/yaml/pyyaml/pull/149 -- Test on Python 3.7-dev
 * https://github.com/yaml/pyyaml/pull/158 -- Support escaped slash in double quotes "\/"
+* https://github.com/yaml/pyyaml/pull/256 -- Make default_flow_style=False
+* https://github.com/yaml/pyyaml/pull/257 -- Deprecate yaml.load and add FullLoader and UnsafeLoader classes
+
+3.13 (2018-07-05)
+-----------------
+
+* Resolved issues around PyYAML working in Python 3.7.
 
 3.12 (2016-08-28)
 -----------------
@@ -175,5 +185,5 @@ For a complete changelog, see:
 
 * Initial release.  The version number reflects the codename
   of the project (PyYAML 3000) and differentiates it from
-  the abandoned PyYaml module. 
+  the abandoned PyYaml module.
 
