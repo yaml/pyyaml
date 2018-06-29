@@ -1,9 +1,9 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-4.1: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-4.2: YAML parser and emitter for Python
 
 =======================
- Announcing PyYAML-4.1
+ Announcing PyYAML-4.2
 =======================
 
 A new MAJOR RELEASE of PyYAML is now available:
