@@ -1,5 +1,5 @@
 
-__all__ = ['BaseLoader', 'SafeLoader', 'Loader', 'DangerLoader']
+__all__ = ['BaseLoader', 'SafeLoader', 'Loader']
 
 from .reader import *
 from .scanner import *
@@ -18,7 +18,7 @@ class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolve
         BaseConstructor.__init__(self)
         BaseResolver.__init__(self)
 
-class Loader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
+class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -27,9 +27,8 @@ class Loader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
         Composer.__init__(self)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
-SafeLoader = Loader
 
-class DangerLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
+class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -38,3 +37,4 @@ class DangerLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
         Composer.__init__(self)
         Constructor.__init__(self)
         Resolver.__init__(self)
+

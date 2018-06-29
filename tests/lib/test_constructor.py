@@ -19,9 +19,9 @@ def _make_objects():
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute
 
-    class MyLoader(yaml.DangerLoader):
+    class MyLoader(yaml.Loader):
         pass
-    class MyDumper(yaml.DangerDumper):
+    class MyDumper(yaml.Dumper):
         pass
 
     class MyTestClass1:
@@ -272,3 +272,4 @@ if __name__ == '__main__':
     sys.modules['test_constructor'] = sys.modules['__main__']
     import test_appliance
     test_appliance.run(globals())
+
