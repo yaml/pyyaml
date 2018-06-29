@@ -1,5 +1,5 @@
 
-__all__ = ['BaseDumper', 'SafeDumper', 'Dumper', 'DangerDumper']
+__all__ = ['BaseDumper', 'SafeDumper', 'Dumper']
 
 from .emitter import *
 from .serializer import *
@@ -24,7 +24,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
 
-class Dumper(Emitter, Serializer, SafeRepresenter, Resolver):
+class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=None,
@@ -41,9 +41,8 @@ class Dumper(Emitter, Serializer, SafeRepresenter, Resolver):
         SafeRepresenter.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
-SafeDumper = Dumper
 
-class DangerDumper(Emitter, Serializer, Representer, Resolver):
+class Dumper(Emitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=None,
@@ -60,3 +59,4 @@ class DangerDumper(Emitter, Serializer, Representer, Resolver):
         Representer.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style)
         Resolver.__init__(self)
+
