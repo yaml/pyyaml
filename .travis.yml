@@ -30,6 +30,7 @@ before_script:
   && ./bootstrap
   && ./configure
   && make
+  && make test-all
   && sudo make install
   && sudo ldconfig
   && cd "$TRAVIS_BUILD_DIR"
