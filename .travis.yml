@@ -30,6 +30,8 @@ before_script:
   && ./bootstrap
   && ./configure
   && make
+  && sudo make install
+  && sudo ldconfig
   && cd "$TRAVIS_BUILD_DIR"
 
 install: pip install cython tox
