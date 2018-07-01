@@ -74,7 +74,19 @@ def load(stream, Loader=Loader):
         return loader.get_single_data()
     finally:
         loader.dispose()
-safe_load = load
+
+def safe_load(stream):
+    """
+    Parse the first YAML document in a stream
+    and produce the corresponding Python object.
+
+    By default resolve only basic YAML tags
+    """
+    loader = SafeLoader(stream)
+    try:
+        return loader.get_single_data()
+    finally:
+        loader.dispose()
 
 def load_all(stream, Loader=Loader):
     """
@@ -90,7 +102,20 @@ def load_all(stream, Loader=Loader):
             yield loader.get_data()
     finally:
         loader.dispose()
-safe_load_all = load_all
+
+def safe_load_all(stream):
+    """
+    Parse all YAML documents in a stream
+    and produce corresponding Python objects.
+
+    By default resolve only basic YAML tags
+    """
+    loader = SafeLoader(stream)
+    try:
+        while loader.check_data():
+            yield loader.get_data()
+    finally:
+        loader.dispose()
 
 def danger_load(stream):
     """
