@@ -7,15 +7,19 @@ environment:
   matrix:
     - platform: x86
       ARCH: x86
+      GENERATOR: "Visual Studio 14 2015"
       PYTHON_VER: Python27
     - platform: x86
       ARCH: x86
+      GENERATOR: "Visual Studio 14 2015"
       PYTHON_VER: Python34
     - platform: x64
       ARCH: amd64
+      GENERATOR: "Visual Studio 14 2015 Win64"
       PYTHON_VER: Python27-x64
     - platform: x64
       ARCH: amd64
+      GENERATOR: "Visual Studio 14 2015 Win64"
       PYTHON_VER: Python34-x64
 
 before_build:
@@ -27,7 +31,7 @@ before_build:
 build_script:
 - mkdir %PYTHON_VER%
 - cd %PYTHON_VER%
-- cmake.exe -DBUILD_SHARED_LIBS=ON ..\libyaml
+- cmake.exe -G"%GENERATOR%" -DBUILD_SHARED_LIBS=ON ..\libyaml
 - cmake.exe --build . --config Release --clean-first
 - cd ..
 - C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I C:\projects\pyyaml\libyaml\include -L C:\projects\pyyaml\%PYTHON_VER%\;C:\projects\pyyaml\%PYTHON_VER%\Release build bdist_wininst bdist_wheel
