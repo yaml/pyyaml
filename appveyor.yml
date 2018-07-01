@@ -2,25 +2,31 @@ version: 4.1.{build}
 
 image:
 - Visual Studio 2015
-- Visual Studio 2013
 
 environment:
   matrix:
-    - PYTHON_VER: Python27
-    - PYTHON_VER: Python27-x64
-    - PYTHON_VER: Python33
-    - PYTHON_VER: Python33-x64
+    - platform: x86
+      PYTHON_VER: Python27
+      PYTHON_VER: Python34
+    - platform: x64
+      PYTHON_VER: Python27-x64
+      PYTHON_VER: Python34-x64
+
+before_build:
+- git clone https://github.com/yaml/libyaml.git
+- C:\%PYTHON_VER%\python.exe -m pip install cython wheel
 
 build_script:
-- cd
-- git clone https://github.com/yaml/libyaml.git
 - mkdir %PYTHON_VER%
 - cd %PYTHON_VER%
 - cmake.exe -DBUILD_SHARED_LIBS=ON ..\libyaml
 - cmake.exe --build . --config Release --clean-first
-- C:\cygwin\bin\sh -c "export PATH=/usr/bin:/usr/local/bin:$PATH && find . -name \*.lib"
 - cd ..
-- C:\%PYTHON_VER%\python.exe -m pip install wheel
-- C:\%PYTHON_VER%\python.exe -m pip install cython
-- C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I C:\projects\pyyaml\libyaml\include -L C:\projects\pyyaml\%PYTHON_VER%\;C:\projects\pyyaml\%PYTHON_VER%\Release build test bdist_wininst bdist_wheel
+- C:\%PYTHON_VER%\python.exe setup.py --with-libyaml build_ext -I C:\projects\pyyaml\libyaml\include -L C:\projects\pyyaml\%PYTHON_VER%\;C:\projects\pyyaml\%PYTHON_VER%\Release build bdist_wininst bdist_wheel
 
+after_build:
+- C:\%PYTHON_VER%\python.exe setup.py bdist_wininst bdist_wheel
+- C:\cygwin64\bin\sh -c "export PATH=/usr/bin:/usr/local/bin:$PATH && ls dist"
+
+test_script:
+- C:\%PYTHON_VER%\python.exe setup.py test
