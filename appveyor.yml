@@ -43,3 +43,8 @@ after_build:
 
 # test_script:
 # - C:\%PYTHON_VER%\python.exe setup.py test
+artifacts:
+ - path: 'dist\*.whl'
+ - path: 'dist\*.exe'
+ - path: '**\*.dll'
+ - path: '**\*.lib'
