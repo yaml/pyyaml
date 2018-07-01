@@ -7,9 +7,11 @@ environment:
   matrix:
     - platform: x86
       PYTHON_VER: Python27
+    - platform: x86
       PYTHON_VER: Python34
     - platform: x64
       PYTHON_VER: Python27-x64
+    - platform: x64
       PYTHON_VER: Python34-x64
 
 before_build:
