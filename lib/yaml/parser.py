@@ -59,12 +59,15 @@
 # flow_sequence_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 # flow_mapping_entry: { ALIAS ANCHOR TAG SCALAR FLOW-SEQUENCE-START FLOW-MAPPING-START KEY }
 
+from __future__ import absolute_import
+from builtins import object
+
 __all__ = ['Parser', 'ParserError']
 
-from error import MarkedYAMLError
-from tokens import *
-from events import *
-from scanner import *
+from .error import MarkedYAMLError
+from .tokens import *
+from .events import *
+from .scanner import *
 
 class ParserError(MarkedYAMLError):
     pass
@@ -233,7 +236,7 @@ class Parser(object):
                 handle, prefix = token.value
                 if handle in self.tag_handles:
                     raise ParserError(None, None,
-                            "duplicate tag handle %r" % handle.encode('utf-8'),
+                            "duplicate tag handle %r" % handle,
                             token.start_mark)
                 self.tag_handles[handle] = prefix
         if self.tag_handles:
@@ -303,7 +306,7 @@ class Parser(object):
                 if handle is not None:
                     if handle not in self.tag_handles:
                         raise ParserError("while parsing a node", start_mark,
-                                "found undefined tag handle %r" % handle.encode('utf-8'),
+                                "found undefined tag handle %r" % handle,
                                 tag_mark)
                     tag = self.tag_handles[handle]+suffix
                 else:

@@ -1,16 +1,19 @@
+from builtins import object
 
 import yaml, yaml.composer, yaml.constructor, yaml.resolver
 
 class CanonicalError(yaml.YAMLError):
     pass
 
-class CanonicalScanner:
+class CanonicalScanner(object):
 
     def __init__(self, data):
-        try:
-            self.data = unicode(data, 'utf-8')+u'\0'
-        except UnicodeDecodeError:
-            raise CanonicalError("utf-8 stream is expected")
+        if isinstance(data, bytes):
+            try:
+                data = data.decode('utf-8')
+            except UnicodeDecodeError:
+                raise CanonicalError("utf-8 stream is expected")
+        self.data = data+'\0'
         self.index = 0
         self.tokens = []
         self.scanned = False
@@ -149,7 +152,6 @@ class CanonicalScanner:
         u'P': u'\u2029',
         u'_': u'_',
         u'0': u'\x00',
-
     }
 
     def scan_scalar(self):
@@ -169,7 +171,7 @@ class CanonicalScanner:
                 elif ch in self.QUOTE_CODES:
                     length = self.QUOTE_CODES[ch]
                     code = int(self.data[self.index:self.index+length], 16)
-                    chunks.append(unichr(code))
+                    chunks.append(chr(code))
                     self.index += length
                 else:
                     if ch not in self.QUOTE_REPLACES:
@@ -205,7 +207,7 @@ class CanonicalScanner:
             else:
                 found = True
 
-class CanonicalParser:
+class CanonicalParser(object):
 
     def __init__(self):
         self.events = []

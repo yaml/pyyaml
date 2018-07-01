@@ -1,3 +1,4 @@
+from builtins import object
 
 __all__ = ['Mark', 'YAMLError', 'MarkedYAMLError']
 
@@ -30,7 +31,7 @@ class Mark(object):
                 tail = ' ... '
                 end -= 5
                 break
-        snippet = self.buffer[start:end].encode('utf-8')
+        snippet = self.buffer[start:end]
         return ' '*indent + head + snippet + tail + '\n'  \
                 + ' '*(indent+self.pointer-start+len(head)) + '^'
 

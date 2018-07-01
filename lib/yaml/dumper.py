@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 
 __all__ = ['BaseDumper', 'SafeDumper', 'Dumper', 'DangerDumper']
 
-from emitter import *
-from serializer import *
-from representer import *
-from resolver import *
+from .emitter import *
+from .serializer import *
+from .representer import *
+from .resolver import *
 
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 

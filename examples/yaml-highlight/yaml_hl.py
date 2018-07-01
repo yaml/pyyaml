@@ -2,7 +2,7 @@
 
 import yaml, codecs, sys, os.path, optparse
 
-class Style:
+class Style(object):
 
     def __init__(self, header=None, footer=None,
             tokens=None, events=None, replaces=None):
@@ -34,7 +34,7 @@ yaml.add_path_resolver(u'tag:yaml.org,2002:python/object:__main__.Style',
 yaml.add_path_resolver(u'tag:yaml.org,2002:pairs',
         [None, u'replaces'], list)
 
-class YAMLHighlight:
+class YAMLHighlight(object):
 
     def __init__(self, options):
         config = yaml.load(file(options.config, 'rb').read())
