@@ -6,16 +6,22 @@ image:
 environment:
   matrix:
     - platform: x86
+      ARCH: x86
       PYTHON_VER: Python27
     - platform: x86
+      ARCH: x86
       PYTHON_VER: Python34
     - platform: x64
+      ARCH: amd64
       PYTHON_VER: Python27-x64
     - platform: x64
+      ARCH: amd64
       PYTHON_VER: Python34-x64
 
 before_build:
 - git clone https://github.com/yaml/libyaml.git
+- call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %ARCH%
+- set PATH=C:\%PYTHON_VER%\Scripts;%PATH%
 - C:\%PYTHON_VER%\python.exe -m pip install cython wheel
 
 build_script:
@@ -28,7 +34,8 @@ build_script:
 
 after_build:
 - C:\%PYTHON_VER%\python.exe setup.py bdist_wininst bdist_wheel
-- C:\cygwin64\bin\sh -c "export PATH=/usr/bin:/usr/local/bin:$PATH && ls dist"
+- dir %PYTHON_VER%\Release
+- dir dist
 
-test_script:
-- C:\%PYTHON_VER%\python.exe setup.py test
+# test_script:
+# - C:\%PYTHON_VER%\python.exe setup.py test
