@@ -8,7 +8,7 @@ def myconstructor(loader, node):
 
 yaml.Loader.add_constructor(u'!hello', myconstructor)
 
-trusted_yaml = "mag: !hello world"
+trusted_yaml = "msg: !hello world"
 
 print("============ Loading trusted YAML")
 
@@ -17,7 +17,7 @@ print(data)
 
 
 # somewhere else in your application
-untrusted_yaml = "mag: !hello evil"
+untrusted_yaml = "msg: !hello evil"
 
 print("============ Loading untrusted YAML")
 try:
