@@ -117,22 +117,6 @@ def safe_load_all(stream):
     finally:
         loader.dispose()
 
-def danger_load(stream):
-    """
-    Parse the first YAML document in a stream
-    and produce the corresponding Python object.
-    When used on untrusted input, can result in arbitrary code execution.
-    """
-    return load(stream, DangerLoader)
-
-def danger_load_all(stream):
-    """
-    Parse all YAML documents in a stream
-    and produce corresponding Python objects.
-    When used on untrusted input, can result in arbitrary code execution.
-    """
-    return load_all(stream, DangerLoader)
-
 def emit(events, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None):
@@ -228,14 +212,6 @@ def dump_all(documents, stream=None, Dumper=Dumper,
         return getvalue()
 safe_dump_all = dump_all
 
-def danger_dump_all(documents, stream=None, **kwds):
-    """
-    Serialize a sequence of Python objects into a YAML stream.
-    Produce only basic YAML tags.
-    If stream is None, return the produced string instead.
-    """
-    return dump_all(documents, stream, Dumper=DangerDumper, **kwds)
-
 def dump(data, stream=None, Dumper=Dumper, **kwds):
     """
     Serialize a Python object into a YAML stream.
@@ -243,14 +219,6 @@ def dump(data, stream=None, Dumper=Dumper, **kwds):
     """
     return dump_all([data], stream, Dumper=Dumper, **kwds)
 safe_dump = dump
-
-def danger_dump(data, stream=None, **kwds):
-    """
-    Serialize a Python object into a YAML stream.
-    Produce only basic YAML tags.
-    If stream is None, return the produced string instead.
-    """
-    return dump_all([data], stream, Dumper=DangerDumper, **kwds)
 
 def add_implicit_resolver(tag, regexp, first=None,
         Loader=Loader, Dumper=Dumper):
