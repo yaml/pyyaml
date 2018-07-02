@@ -24,18 +24,16 @@ matrix:
 
 # build libyaml
 before_script:
-- >-
-  cd /tmp
-  && git clone https://github.com/yaml/libyaml.git libyaml
-  && cd libyaml
-  && git reset --hard 0.2.2
-  && ./bootstrap
-  && ./configure
-  && make
-  && make test-all
-  && sudo make install
-  && sudo ldconfig
-  && cd "$TRAVIS_BUILD_DIR"
+- pushd /tmp
+- git clone https://github.com/yaml/libyaml.git -b 0.2.2 libyaml
+- cd libyaml
+- ./bootstrap
+- ./configure
+- make
+- make test-all
+- sudo make install
+- sudo ldconfig
+- popd
 
 install: pip install cython tox
 
