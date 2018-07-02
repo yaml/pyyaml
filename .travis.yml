@@ -1,40 +1,133 @@
+conditions: v1
+
+dist: xenial
 language: python
+python:
+- '3.7'
+- '2.7'
+- pypy3.5-6.0.0
+- '3.6'
+- '3.5'
+- '3.4'
+- pypy2.7-6.0.0
 
-sudo: false
+cache:
+  pip: true
+  directories:
+  - $HOME/.cache/pre-commit
+  - $HOME/.pre-commit
+  - $HOME/Library/Caches/Homebrew
 
-cache: pip
-
-matrix:
-  include:
-    - python: 2.6
-      env: TOXENV=py26
-    - python: 2.7
-      env: TOXENV=py27
-    - python: 3.4
-      env: TOXENV=py34
-    - python: 3.5
-      env: TOXENV=py35
-    - python: 3.6
-      env: TOXENV=py36
-    - python: 3.7-dev
-      env: TOXENV=py37
-    - python: pypy
-      env: TOXENV=pypy
+install:
+- python -m pip.__main__ install cython tox
 
 # build libyaml
+- pushd /tmp
+- set -e
+- git clone https://github.com/yaml/libyaml.git -b "${LIBYAML_VERSION}" libyaml
+- cd libyaml
+- ./bootstrap
+- ./configure
+- make
+- make test-all
+- sudo make install
+- set +e
+- popd
+
 before_script:
-- >-
-  cd /tmp
-  && git clone https://github.com/yaml/libyaml.git -b 0.2.2-pre1 libyaml
-  && cd libyaml
-  && ./bootstrap
-  && ./configure
-  && make
-  && make test-all
-  && sudo make install
-  && sudo ldconfig
-  && cd "$TRAVIS_BUILD_DIR"
+- sudo ldconfig
 
-install: pip install cython tox
+script:
+- python -m tox.__main__
 
-script: tox
+.mixtures:
+- &osx_python
+  if: type IN (api, cron) OR tag IS present
+  os: osx
+  osx_image: xcode9.4
+  language: generic
+  before_install:
+  - brew install zlib readline
+  - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/pyenv.rb || brew upgrade pyenv
+  - &ensure_pyenv_preloaded eval "$(pyenv init -)"
+  - &select_specific_python |
+      if [[ ! "$TRAVIS_PYTHON_VERSION" =~ "dev" ]]
+      then
+        export TRAVIS_PYTHON_VERSION=$(\
+          pyenv install --list | \
+          grep -E '\s\s'"$TRAVIS_PYTHON_VERSION" | grep -vE 'dev|rc' | \
+          tail -n 1 | tr -d '[:space:]'\
+        )
+      fi
+  - &install_python |
+      pyenv install --skip-existing --keep --verbose "$TRAVIS_PYTHON_VERSION" | \
+      tee pyenv-install.log | tail -n 50
+  - &switch_python pyenv shell "$TRAVIS_PYTHON_VERSION"
+  - &python_version python --version
+  after_failure:
+  - cat pyenv-install.log
+  before_script: []
+  before_cache:
+  - brew --cache
+
+env:
+  global:
+    LIBYAML_VERSION: 0.2.2-pre1
+    TOXENV: python
+jobs:
+  fast_finish: true
+  allow_failures:
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: '2.6'
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: '2.7'
+  - os: osx
+    env:
+      TRAVIS_PYTHON_VERSION: &pypy3-osx-version pypy3.6-7.0.0
+  include:
+  - python: '2.6'
+    dist: trusty
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '3.7'
+    python: '3.7'
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '2.7'
+    python: '2.7'
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: *pypy3-osx-version
+    python: *pypy3-osx-version
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '3.6'
+    python: '3.6'
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '3.5'
+    python: '3.5'
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '3.4'
+    python: '3.4'
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: '2.6'
+    python: '2.6'
+
+
+  # This placeholder can be extended to do actual upload of a dist to
+  # PYPI, it will only appear if the current commit is tagged:
+  - stage: Deploy to PYPI (placeholder)
+    if: tag IS present
+    install: []
+    script: []
+    deploy:
+      provider: pypi
+      skip-cleanup: true
+      user: PLACEHOLDER
+      password:
+        secure: PLACEHOLDER
