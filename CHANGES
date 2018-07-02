@@ -18,7 +18,6 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/62  -- Remove tox workaround for Travis CI
 * https://github.com/yaml/pyyaml/pull/63  -- Adding support to Unicode characters over codepoint 0xffff
 * https://github.com/yaml/pyyaml/pull/65  -- Support unicode literals over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/74  -- Make pyyaml safe by default.
 * https://github.com/yaml/pyyaml/pull/75  -- add 3.12 changelog
 * https://github.com/yaml/pyyaml/pull/76  -- Fallback to Pure Python if Compilation fails
 * https://github.com/yaml/pyyaml/pull/84  -- Drop unsupported Python 3.3
@@ -175,5 +174,5 @@ For a complete changelog, see:
 
 * Initial release.  The version number reflects the codename
   of the project (PyYAML 3000) and differentiates it from
-  the abandoned PyYaml module. 
+  the abandoned PyYaml module.
 
