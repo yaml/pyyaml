@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '3.13b1'
+VERSION = '3.13rc1'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
