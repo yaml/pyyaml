@@ -1,7 +1,7 @@
 
 For a complete changelog, see https://github.com/yaml/pyyaml/commits/
 
-3.13 (2018-07-02)
+3.13 (2018-07-05)
 -----------------
 
 * Rebuilt with the latest Cython to support the new Python 3.7 release.
