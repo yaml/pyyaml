@@ -61,8 +61,9 @@ int main(void) {
 
 import sys, os.path, platform
 
+from setuptools import setup
 from distutils import log
-from distutils.core import setup, Command
+from distutils.core import Command
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
 from distutils.dir_util import mkpath
@@ -87,11 +88,6 @@ try:
 except ImportError:
     if with_cython:
         raise
-
-try:
-    from wheel.bdist_wheel import bdist_wheel
-except ImportError:
-    bdist_wheel = None
 
 
 class Distribution(_Distribution):
@@ -270,8 +266,6 @@ cmdclass = {
     'bdist_rpm': bdist_rpm,
     'test': test,
 }
-if bdist_wheel:
-    cmdclass['bdist_wheel'] = bdist_wheel
 
 
 if __name__ == '__main__':
