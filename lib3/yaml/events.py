@@ -1,4 +1,3 @@
-
 # Abstract classes.
 
 class Event(object):
@@ -83,4 +82,3 @@ class MappingStartEvent(CollectionStartEvent):
 
 class MappingEndEvent(CollectionEndEvent):
     pass
-

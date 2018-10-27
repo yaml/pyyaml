@@ -1,4 +1,3 @@
-
 import _yaml, yaml
 import types, pprint
 
@@ -274,4 +273,3 @@ wrap_ext([test_tokens, test_structure, test_errors, test_resolver, test_construc
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

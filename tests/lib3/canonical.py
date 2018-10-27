@@ -1,4 +1,3 @@
-
 import yaml, yaml.composer, yaml.constructor, yaml.resolver
 
 class CanonicalError(yaml.YAMLError):
@@ -358,4 +357,3 @@ def canonical_load_all(stream):
     return yaml.load_all(stream, Loader=CanonicalLoader)
 
 yaml.canonical_load_all = canonical_load_all
-

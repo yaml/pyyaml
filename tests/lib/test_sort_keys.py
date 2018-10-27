@@ -25,4 +25,3 @@ test_sort_keys.unittest = ['.sort', '.sorted']
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

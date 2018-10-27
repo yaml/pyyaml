@@ -1,4 +1,3 @@
-
 #
 # Examples from the Preview section of the YAML specification
 # (http://yaml.org/spec/1.2/#Preview)
@@ -299,4 +298,3 @@ Stack:
     line: 58
     code: |-
       foo = bar
-

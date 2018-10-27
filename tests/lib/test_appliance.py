@@ -1,4 +1,3 @@
-
 import sys, os, os.path, types, traceback, pprint
 
 DATA = 'tests/data'
@@ -154,4 +153,3 @@ def run(collections, args=None):
             result = execute(function, [], verbose)
             results.append(result)
     return display(results, verbose=verbose)
-

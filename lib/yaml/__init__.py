@@ -1,4 +1,3 @@
-
 from error import *
 
 from tokens import *
@@ -403,4 +402,3 @@ class YAMLObject(object):
         return dumper.represent_yaml_object(cls.yaml_tag, data, cls,
                 flow_style=cls.yaml_flow_style)
     to_yaml = classmethod(to_yaml)
-

@@ -1,4 +1,3 @@
-
 import yaml.reader
 import codecs
 
@@ -32,4 +31,3 @@ test_stream_error.unittest = ['.stream-error']
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

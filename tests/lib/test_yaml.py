@@ -1,4 +1,3 @@
-
 from test_mark import *
 from test_reader import *
 from test_canonical import *
@@ -16,4 +15,3 @@ from test_sort_keys import *
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

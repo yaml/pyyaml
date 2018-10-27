@@ -1,4 +1,3 @@
-
 import yaml, canonical
 
 def test_canonical_scanner(canonical_filename, verbose=False):
@@ -37,4 +36,3 @@ test_canonical_error.skip = ['.empty']
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-
