@@ -697,7 +697,8 @@ class Emitter:
             if ch in '\n\x85\u2028\u2029':
                 line_breaks = True
             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
-                if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
+                if (ch == '\x85' or ch == '\u001B'
+                        or '\xA0' <= ch <= '\uD7FF'
                         or '\uE000' <= ch <= '\uFFFD'
                         or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
                     unicode_characters = True
