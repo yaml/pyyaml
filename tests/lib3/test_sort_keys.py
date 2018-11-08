@@ -8,6 +8,7 @@ def test_sort_keys(input_filename, sorted_filename, verbose=False):
     data = yaml.load(input)
     dump_sorted = yaml.dump(data, default_flow_style=False, sort_keys=True)
     dump_unsorted = yaml.dump(data, default_flow_style=False, sort_keys=False)
+    dump_unsorted_safe = yaml.dump(data, default_flow_style=False, sort_keys=False, Dumper=SafeDumper)
     if verbose:
         print("INPUT:")
         print(input)
@@ -18,6 +19,7 @@ def test_sort_keys(input_filename, sorted_filename, verbose=False):
 
     if sys.version_info>=(3,7):
         assert dump_unsorted == input
+        assert dump_unsorted_safe == input
 
 test_sort_keys.unittest = ['.sort', '.sorted']
 
