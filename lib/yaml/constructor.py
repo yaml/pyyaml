@@ -224,6 +224,8 @@ class SafeConstructor(BaseConstructor):
         u'false':   False,
         u'on':      True,
         u'off':     False,
+        u'y':       True,
+        u'n':       False,
     }
 
     def construct_yaml_bool(self, node):

@@ -169,7 +169,7 @@ class Resolver(BaseResolver):
 
 Resolver.add_implicit_resolver(
         u'tag:yaml.org,2002:bool',
-        re.compile(ur'''^(?:yes|Yes|YES|no|No|NO
+        re.compile(ur'''^(?:y|Y|n|N|yes|Yes|YES|no|No|NO
                     |true|True|TRUE|false|False|FALSE
                     |on|On|ON|off|Off|OFF)$''', re.X),
         list(u'yYnNtTfFoO'))
