@@ -9,6 +9,22 @@ import datetime
 
 import binascii, re, sys, types
 
+
+class timezone(datetime.tzinfo):
+    def __init__(self, offset):
+        self.__offset = offset
+        self.__name = str(offset)
+
+    def utcoffset(self, dt):
+        return self.__offset
+
+    def tzname(self, dt):
+        return self.__name
+
+    def dst(self, dt):
+        return datetime.timedelta(0)
+
+
 class ConstructorError(MarkedYAMLError):
     pass
 
@@ -287,7 +303,7 @@ class SafeConstructor(BaseConstructor):
             return str(value).decode('base64')
         except (binascii.Error, UnicodeEncodeError), exc:
             raise ConstructorError(None, None,
-                    "failed to decode base64 data: %s" % exc, node.start_mark) 
+                    "failed to decode base64 data: %s" % exc, node.start_mark)
 
     timestamp_regexp = re.compile(
             ur'''^(?P<year>[0-9][0-9][0-9][0-9])
@@ -319,17 +335,17 @@ class SafeConstructor(BaseConstructor):
             while len(fraction) < 6:
                 fraction += '0'
             fraction = int(fraction)
-        delta = None
+
+        tzinfo = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])
             tz_minute = int(values['tz_minute'] or 0)
             delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
             if values['tz_sign'] == '-':
                 delta = -delta
-        data = datetime.datetime(year, month, day, hour, minute, second, fraction)
-        if delta:
-            data -= delta
-        return data
+            tzinfo =  timezone(delta)
+
+        return datetime.datetime(year, month, day, hour, minute, second, fraction, tzinfo=tzinfo)
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
