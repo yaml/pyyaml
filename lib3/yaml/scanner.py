@@ -1016,14 +1016,14 @@ class Scanner:
                 # Unfortunately, folding rules are ambiguous.
                 #
                 # This is the folding according to the specification:
-
+                
                 if folded and line_break == '\n'    \
                         and leading_non_space and self.peek() not in ' \t':
                     if not breaks:
                         chunks.append(' ')
                 else:
                     chunks.append(line_break)
-
+                
                 # This is Clark Evans's interpretation (also in the spec
                 # examples):
                 #
@@ -1432,9 +1432,3 @@ class Scanner:
             self.forward()
             return ch
         return ''
-
-#try:
-#    import psyco
-#    psyco.bind(Scanner)
-#except ImportError:
-#    pass
