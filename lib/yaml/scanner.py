@@ -313,6 +313,7 @@ class Scanner(object):
         # Remove the saved possible key position at the current flow level.
         if self.flow_level in self.possible_simple_keys:
             key = self.possible_simple_keys[self.flow_level]
+            
             if key.required:
                 raise ScannerError("while scanning a simple key", key.mark,
                         "could not find expected ':'", self.get_mark())
@@ -361,12 +362,14 @@ class Scanner(object):
 
         # Read the token.
         mark = self.get_mark()
+        
         # Add STREAM-START.
         self.tokens.append(StreamStartToken(mark, mark,
             encoding=self.encoding))
-
+        
 
     def fetch_stream_end(self):
+
         # Set the current intendation to -1.
         self.unwind_indent(-1)
 
@@ -377,6 +380,7 @@ class Scanner(object):
 
         # Read the token.
         mark = self.get_mark()
+        
         # Add STREAM-END.
         self.tokens.append(StreamEndToken(mark, mark))
 
@@ -384,6 +388,7 @@ class Scanner(object):
         self.done = True
 
     def fetch_directive(self):
+        
         # Set the current intendation to -1.
         self.unwind_indent(-1)
 
@@ -510,7 +515,7 @@ class Scanner(object):
         self.tokens.append(BlockEntryToken(start_mark, end_mark))
 
     def fetch_key(self):
-
+        
         # Block context needs additional checks.
         if not self.flow_level:
 
@@ -560,7 +565,7 @@ class Scanner(object):
 
         # It must be a part of a complex key.
         else:
-
+            
             # Block context needs additional checks.
             # (Do we really need them? They will be caught by the parser
             # anyway.)
