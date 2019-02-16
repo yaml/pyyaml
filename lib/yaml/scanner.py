@@ -1029,7 +1029,7 @@ class Scanner(object):
                         chunks.append(u' ')
                 else:
                     chunks.append(line_break)
-
+                
                 # This is Clark Evans's interpretation (also in the spec
                 # examples):
                 #
