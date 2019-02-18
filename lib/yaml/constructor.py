@@ -1,6 +1,12 @@
 
-__all__ = ['BaseConstructor', 'SafeConstructor', 'Constructor',
-    'ConstructorError']
+__all__ = [
+    'BaseConstructor',
+    'SafeConstructor',
+    'FullConstructor',
+    'UnsafeConstructor',
+    'Constructor',
+    'ConstructorError'
+]
 
 from error import *
 from nodes import *
@@ -464,7 +470,7 @@ SafeConstructor.add_constructor(
 SafeConstructor.add_constructor(None,
         SafeConstructor.construct_undefined)
 
-class Constructor(SafeConstructor):
+class FullConstructor(SafeConstructor):
 
     def construct_python_str(self, node):
         return self.construct_scalar(node).encode('utf-8')
@@ -481,18 +487,22 @@ class Constructor(SafeConstructor):
     def construct_python_tuple(self, node):
         return tuple(self.construct_sequence(node))
 
-    def find_python_module(self, name, mark):
+    def find_python_module(self, name, mark, unsafe=False):
         if not name:
             raise ConstructorError("while constructing a Python module", mark,
                     "expected non-empty name appended to the tag", mark)
-        try:
-            __import__(name)
-        except ImportError, exc:
+        if unsafe:
+            try:
+                __import__(name)
+            except ImportError, exc:
+                raise ConstructorError("while constructing a Python module", mark,
+                        "cannot find module %r (%s)" % (name.encode('utf-8'), exc), mark)
+        if not name in sys.modules:
             raise ConstructorError("while constructing a Python module", mark,
-                    "cannot find module %r (%s)" % (name.encode('utf-8'), exc), mark)
+                    "module %r is not imported" % name.encode('utf-8'), mark)
         return sys.modules[name]
 
-    def find_python_name(self, name, mark):
+    def find_python_name(self, name, mark, unsafe=False):
         if not name:
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
@@ -501,11 +511,15 @@ class Constructor(SafeConstructor):
         else:
             module_name = '__builtin__'
             object_name = name
-        try:
-            __import__(module_name)
-        except ImportError, exc:
+        if unsafe:
+            try:
+                __import__(module_name)
+            except ImportError, exc:
+                raise ConstructorError("while constructing a Python object", mark,
+                        "cannot find module %r (%s)" % (module_name.encode('utf-8'), exc), mark)
+        if not module_name in sys.modules:
             raise ConstructorError("while constructing a Python object", mark,
-                    "cannot find module %r (%s)" % (module_name.encode('utf-8'), exc), mark)
+                    "module %r is not imported" % module_name.encode('utf-8'), mark)
         module = sys.modules[module_name]
         if not hasattr(module, object_name):
             raise ConstructorError("while constructing a Python object", mark,
@@ -532,12 +546,16 @@ class Constructor(SafeConstructor):
     class classobj: pass
 
     def make_python_instance(self, suffix, node,
-            args=None, kwds=None, newobj=False):
+            args=None, kwds=None, newobj=False, unsafe=False):
         if not args:
             args = []
         if not kwds:
             kwds = {}
         cls = self.find_python_name(suffix, node.start_mark)
+        if not (unsafe or isinstance(cls, type) or isinstance(cls, type(self.classobj))):
+            raise ConstructorError("while constructing a Python instance", node.start_mark,
+                    "expected a class, but found %r" % type(cls),
+                    node.start_mark)
         if newobj and isinstance(cls, type(self.classobj))  \
                 and not args and not kwds:
             instance = self.classobj()
@@ -609,67 +627,83 @@ class Constructor(SafeConstructor):
     def construct_python_object_new(self, suffix, node):
         return self.construct_python_object_apply(suffix, node, newobj=True)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/none',
-    Constructor.construct_yaml_null)
+    FullConstructor.construct_yaml_null)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/bool',
-    Constructor.construct_yaml_bool)
+    FullConstructor.construct_yaml_bool)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/str',
-    Constructor.construct_python_str)
+    FullConstructor.construct_python_str)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/unicode',
-    Constructor.construct_python_unicode)
+    FullConstructor.construct_python_unicode)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/int',
-    Constructor.construct_yaml_int)
+    FullConstructor.construct_yaml_int)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/long',
-    Constructor.construct_python_long)
+    FullConstructor.construct_python_long)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/float',
-    Constructor.construct_yaml_float)
+    FullConstructor.construct_yaml_float)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/complex',
-    Constructor.construct_python_complex)
+    FullConstructor.construct_python_complex)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/list',
-    Constructor.construct_yaml_seq)
+    FullConstructor.construct_yaml_seq)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/tuple',
-    Constructor.construct_python_tuple)
+    FullConstructor.construct_python_tuple)
 
-Constructor.add_constructor(
+FullConstructor.add_constructor(
     u'tag:yaml.org,2002:python/dict',
-    Constructor.construct_yaml_map)
+    FullConstructor.construct_yaml_map)
 
-Constructor.add_multi_constructor(
+FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/name:',
-    Constructor.construct_python_name)
+    FullConstructor.construct_python_name)
 
-Constructor.add_multi_constructor(
+FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/module:',
-    Constructor.construct_python_module)
+    FullConstructor.construct_python_module)
 
-Constructor.add_multi_constructor(
+FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/object:',
-    Constructor.construct_python_object)
+    FullConstructor.construct_python_object)
 
-Constructor.add_multi_constructor(
+FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/object/apply:',
-    Constructor.construct_python_object_apply)
+    FullConstructor.construct_python_object_apply)
 
-Constructor.add_multi_constructor(
+FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/object/new:',
-    Constructor.construct_python_object_new)
+    FullConstructor.construct_python_object_new)
 
+class UnsafeConstructor(FullConstructor):
+
+    def find_python_module(self, name, mark):
+        return super(UnsafeConstructor, self).find_python_module(name, mark, unsafe=True)
+
+    def find_python_name(self, name, mark):
+        return super(UnsafeConstructor, self).find_python_name(name, mark, unsafe=True)
+
+    def make_python_instance(self, suffix, node, args=None, kwds=None, newobj=False):
+        return super(UnsafeConstructor, self).make_python_instance(
+            suffix, node, args, kwds, newobj, unsafe=True)
+
+# Constructor is same as UnsafeConstructor. Need to leave this in place in case
+# people have extended it directly.
+class Constructor(UnsafeConstructor):
+    pass

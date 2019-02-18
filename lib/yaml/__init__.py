@@ -8,7 +8,7 @@ from nodes import *
 from loader import *
 from dumper import *
 
-__version__ = '4.1'
+__version__ = '3.13'
 
 try:
     from cyaml import *
@@ -16,6 +16,44 @@ try:
 except ImportError:
     __with_libyaml__ = False
 
+
+#------------------------------------------------------------------------------
+# Warnings control
+#------------------------------------------------------------------------------
+
+# 'Global' warnings state:
+_warnings_enabled = {
+    'YAMLLoadWarning': True,
+}
+
+# Get or set global warnings' state
+def warnings(settings=None):
+    if settings is None:
+        return _warnings_enabled
+
+    if type(settings) is dict:
+        for key in settings:
+            if key in _warnings_enabled:
+                _warnings_enabled[key] = settings[key]
+
+# Warn when load() is called without Loader=...
+class YAMLLoadWarning(RuntimeWarning):
+    pass
+
+def load_warning(method):
+    if _warnings_enabled['YAMLLoadWarning'] is False:
+        return
+
+    import warnings
+
+    message = "\n\
+  *** Calling yaml.%s() without Loader=... is deprecated.\n\
+  *** The default Loader is unsafe.\n\
+  *** Please read https://msg.pyyaml.org/load for full details." % method
+
+    warnings.warn(message, YAMLLoadWarning, stacklevel=3)
+
+#------------------------------------------------------------------------------
 def scan(stream, Loader=Loader):
     """
     Scan a YAML stream and produce scanning tokens.
@@ -61,22 +99,30 @@ def compose_all(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def load(stream, Loader=Loader):
+def load(stream, Loader=None):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
     """
+    if Loader is None:
+        load_warning('load')
+        Loader = FullLoader
+
     loader = Loader(stream)
     try:
         return loader.get_single_data()
     finally:
         loader.dispose()
 
-def load_all(stream, Loader=Loader):
+def load_all(stream, Loader=None):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
     """
+    if Loader is None:
+        load_warning('load_all')
+        Loader = FullLoader
+
     loader = Loader(stream)
     try:
         while loader.check_data():
@@ -84,11 +130,33 @@ def load_all(stream, Loader=Loader):
     finally:
         loader.dispose()
 
+def full_load(stream):
+    """
+    Parse the first YAML document in a stream
+    and produce the corresponding Python object.
+
+    Resolve all tags except those known to be
+    unsafe on untrusted input.
+    """
+    return load(stream, FullLoader)
+
+def full_load_all(stream):
+    """
+    Parse all YAML documents in a stream
+    and produce corresponding Python objects.
+
+    Resolve all tags except those known to be
+    unsafe on untrusted input.
+    """
+    return load_all(stream, FullLoader)
+
 def safe_load(stream):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
-    Resolve only basic YAML tags.
+
+    Resolve only basic YAML tags. This is known
+    to be safe for untrusted input.
     """
     return load(stream, SafeLoader)
 
@@ -96,9 +164,31 @@ def safe_load_all(stream):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
-    Resolve only basic YAML tags.
+
+    Resolve only basic YAML tags. This is known
+    to be safe for untrusted input.
     """
     return load_all(stream, SafeLoader)
+
+def unsafe_load(stream):
+    """
+    Parse the first YAML document in a stream
+    and produce the corresponding Python object.
+
+    Resolve all tags, even those known to be
+    unsafe on untrusted input.
+    """
+    return load(stream, UnsafeLoader)
+
+def unsafe_load_all(stream):
+    """
+    Parse all YAML documents in a stream
+    and produce corresponding Python objects.
+
+    Resolve all tags, even those known to be
+    unsafe on untrusted input.
+    """
+    return load_all(stream, UnsafeLoader)
 
 def emit(events, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
