@@ -1,6 +1,8 @@
 
-__all__ = ['CBaseLoader', 'CSafeLoader', 'CLoader',
-        'CBaseDumper', 'CSafeDumper', 'CDumper']
+__all__ = [
+    'CBaseLoader', 'CSafeLoader', 'CFullLoader', 'CUnsafeLoader', 'CLoader',
+    'CBaseDumper', 'CSafeDumper', 'CDumper'
+]
 
 from _yaml import CParser, CEmitter
 
@@ -23,6 +25,20 @@ class CSafeLoader(CParser, SafeConstructor, Resolver):
     def __init__(self, stream):
         CParser.__init__(self, stream)
         SafeConstructor.__init__(self)
+        Resolver.__init__(self)
+
+class CFullLoader(CParser, FullConstructor, Resolver):
+
+    def __init__(self, stream):
+        CParser.__init__(self, stream)
+        FullConstructor.__init__(self)
+        Resolver.__init__(self)
+
+class CUnsafeLoader(CParser, UnsafeConstructor, Resolver):
+
+    def __init__(self, stream):
+        CParser.__init__(self, stream)
+        UnsafeConstructor.__init__(self)
         Resolver.__init__(self)
 
 class CLoader(CParser, Constructor, Resolver):
