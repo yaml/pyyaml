@@ -3,16 +3,16 @@ conditions: v1
 dist: xenial
 language: python
 python:
-- "2.6"
-- "2.7"
-- "3.4"
-- "3.5"
-- "3.6"
 - "3.7"
+- "2.7"
+- "pypy3.5-6.0.0"
+- "3.6"
+- "3.5"
+- "3.4"
+- "pypy2.7-6.0.0"
+- "2.6"
 # This is broken on travis as of 2019/03/12
 # - pypy
-- "pypy2.7-6.0.0"
-- "pypy3.5-6.0.0"
 
 cache:
   pip: true
@@ -87,32 +87,32 @@ jobs:
   include:
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "2.6"
-    python: "2.6"
+      TRAVIS_PYTHON_VERSION: "3.7.0"
+    python: "3.7.0"
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "2.7"
     python: "2.7"
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "3.4"
-    python: "3.4"
-  - <<: *osx_python
-    env:
-      TRAVIS_PYTHON_VERSION: "3.5"
-    python: "3.5"
+      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
+    python: "pypy3.5-5.10.1"
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "3.6"
     python: "3.6"
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "3.7.0"
-    python: "3.7.0"
+      TRAVIS_PYTHON_VERSION: "3.5"
+    python: "3.5"
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
-    python: "pypy3.5-5.10.1"
+      TRAVIS_PYTHON_VERSION: "3.4"
+    python: "3.4"
+  - <<: *osx_python
+    env:
+      TRAVIS_PYTHON_VERSION: "2.6"
+    python: "2.6"
 
 
   # This placeholder can be extended to do actual upload of a dist to
