@@ -22,11 +22,11 @@ cache:
   - $HOME/Library/Caches/Homebrew
 
 install:
-- set -e
 - python -m pip.__main__ install cython tox
 
 # build libyaml
 - pushd /tmp
+- set -e
 - git clone https://github.com/yaml/libyaml.git -b "${LIBYAML_VERSION}" libyaml
 - cd libyaml
 - ./bootstrap
@@ -34,8 +34,8 @@ install:
 - make
 - make test-all
 - sudo make install
-- popd
 - set +e
+- popd
 
 before_script:
 - sudo ldconfig
