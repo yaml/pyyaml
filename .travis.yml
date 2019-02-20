@@ -51,7 +51,7 @@ script:
   language: generic
   before_install:
   - brew install zlib readline
-  - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/cac0ae5/Formula/pyenv.rb || brew upgrade pyenv
+  - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/pyenv.rb || brew upgrade pyenv
   - &ensure_pyenv_preloaded eval "$(pyenv init -)"
   - &select_specific_python |
       if [[ ! "$TRAVIS_PYTHON_VERSION" =~ "dev" ]]
@@ -88,8 +88,8 @@ jobs:
   include:
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "3.7.2"
-    python: "3.7.2"
+      TRAVIS_PYTHON_VERSION: "3.7"
+    python: "3.7"
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "2.7"
