@@ -69,6 +69,9 @@ script:
   before_cache:
   - brew --cache
 
+env:
+  global:
+    TOXENV: python
 jobs:
   fast_finish: true
   allow_failures:
