@@ -83,20 +83,20 @@ jobs:
       TRAVIS_PYTHON_VERSION: "2.7"
   - os: osx
     env:
-      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
+      TRAVIS_PYTHON_VERSION: &pypy3-osx-version "pypy3.5-7.0.0"
   include:
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "3.7.0"
-    python: "3.7.0"
+      TRAVIS_PYTHON_VERSION: "3.7.2"
+    python: "3.7.2"
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "2.7"
     python: "2.7"
   - <<: *osx_python
     env:
-      TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
-    python: "pypy3.5-5.10.1"
+      TRAVIS_PYTHON_VERSION: *pypy3-osx-version
+    python: *pypy3-osx-version
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "3.6"
