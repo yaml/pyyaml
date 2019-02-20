@@ -62,9 +62,13 @@ script:
           tail -n 1 | tr -d '[:space:]'\
         )
       fi
-  - &install_python pyenv install --skip-existing --keep --verbose "$TRAVIS_PYTHON_VERSION"
+  - &install_python |
+      pyenv install --skip-existing --keep --verbose "$TRAVIS_PYTHON_VERSION" | \
+      tee pyenv-install.log | tail -n 50
   - &switch_python pyenv shell "$TRAVIS_PYTHON_VERSION"
   - &python_version python --version
+  after_failure:
+  - cat pyenv-install.log
   before_script: []
   before_cache:
   - brew --cache
