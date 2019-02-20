@@ -1,5 +1,6 @@
 conditions: v1
 
+dist: xenial
 language: python
 python:
 - "2.6"
@@ -7,10 +8,11 @@ python:
 - "3.4"
 - "3.5"
 - "3.6"
+- "3.7"
 # This is broken on travis as of 2019/03/12
 # - pypy
-- "pypy2.7-5.10.0"
-- "pypy3.5-5.10.1"
+- "pypy2.7-6.0.0"
+- "pypy3.5-6.0.0"
 
 cache:
   pip: true
@@ -83,8 +85,6 @@ jobs:
     env:
       TRAVIS_PYTHON_VERSION: "pypy3.5-5.10.1"
   include:
-  - python: "3.7"
-    dist: xenial
   - <<: *osx_python
     env:
       TRAVIS_PYTHON_VERSION: "2.6"
