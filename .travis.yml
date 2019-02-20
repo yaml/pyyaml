@@ -12,8 +12,6 @@ python:
 - "pypy2.7-5.10.0"
 - "pypy3.5-5.10.1"
 
-sudo: false
-
 cache:
   pip: true
   directories:
