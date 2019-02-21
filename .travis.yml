@@ -25,7 +25,8 @@ install:
 
 # build libyaml
 - pushd /tmp
-- set -e
+- >
+    [ $(uname -s) != "Darwin" ] && set -e
 - git clone https://github.com/yaml/libyaml.git -b "${LIBYAML_VERSION}" libyaml
 - cd libyaml
 - ./bootstrap
@@ -33,7 +34,8 @@ install:
 - make
 - make test-all
 - sudo make install
-- set +e
+- >
+    [ $(uname -s) != "Darwin" ] && set +e
 - popd
 
 before_script:
