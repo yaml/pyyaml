@@ -43,6 +43,8 @@ install:
       set +e
     fi
 - popd
+# pre-populate virtualenv separately from the actual testing (script step):
+- python -m tox.__main__ --notest
 
 before_script:
 - sudo ldconfig
