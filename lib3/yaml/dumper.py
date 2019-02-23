@@ -9,7 +9,7 @@ from .resolver import *
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
@@ -27,7 +27,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
@@ -45,7 +45,7 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 class Dumper(Emitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,

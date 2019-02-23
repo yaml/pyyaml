@@ -250,7 +250,7 @@ def serialize(node, stream=None, Dumper=Dumper, **kwds):
     return serialize_all([node], stream, Dumper=Dumper, **kwds)
 
 def dump_all(documents, stream=None, Dumper=Dumper,
-        default_style=None, default_flow_style=None,
+        default_style=None, default_flow_style=False,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
         encoding=None, explicit_start=None, explicit_end=None,
