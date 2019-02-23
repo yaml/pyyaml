@@ -17,7 +17,7 @@ class BaseRepresenter(object):
     yaml_representers = {}
     yaml_multi_representers = {}
 
-    def __init__(self, default_style=None, default_flow_style=None):
+    def __init__(self, default_style=None, default_flow_style=False):
         self.default_style = default_style
         self.default_flow_style = default_flow_style
         self.represented_objects = {}

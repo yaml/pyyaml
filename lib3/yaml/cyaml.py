@@ -35,7 +35,7 @@ class CLoader(CParser, Constructor, Resolver):
 class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
@@ -52,7 +52,7 @@ class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
 class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
@@ -69,7 +69,7 @@ class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
 class CDumper(CEmitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
-            default_style=None, default_flow_style=None,
+            default_style=None, default_flow_style=False,
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
