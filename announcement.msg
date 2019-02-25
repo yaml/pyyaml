@@ -3,8 +3,14 @@ To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourcefo
 Subject: [ANN] PyYAML-5.1: YAML parser and emitter for Python
 
 =======================
- Announcing PyYAML-5.1
+ Announcing PyYAML-5.1b2 (First beta release)
 =======================
+
+The first beta release of PyYAML-5.1 has been uploaded to pypi.org. The final
+release is expected to land in the next 2 weeks. Normally we would only
+announce the final release, but this one has been a long time coming and has
+major changes, so we want people to know about the release process early on.
+
 
 A new MAJOR RELEASE of PyYAML is now available:
 https://pypi.org/project/PyYAML/
