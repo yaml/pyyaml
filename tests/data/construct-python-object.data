@@ -7,6 +7,8 @@
 - !!python/object:test_constructor.AState { _foo: 1, _bar: two, _baz: [3,3,3] }
 - !!python/object/new:test_constructor.ACustomState { state: !!python/tuple [1, two, [3,3,3]] }
 
+- !!python/object/new:test_constructor.AnInstanceWithSlots {state: !!python/tuple [null, {bar: two, baz: [3, 3, 3], foo: 1}]}
+
 - !!python/object/new:test_constructor.InitArgs [1, two, [3,3,3]]
 - !!python/object/new:test_constructor.InitArgsWithState { args: [1, two], state: [3,3,3] }
 

@@ -12,7 +12,7 @@ def execute(code):
 
 def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
-            AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
+            AnObject, AnInstance, AState, ACustomState, AnInstanceWithSlots, InitArgs, InitArgsWithState,    \
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute
 
@@ -143,6 +143,22 @@ def _make_objects():
             return (self.foo, self.bar, self.baz)
         def __setstate__(self, state):
             self.foo, self.bar, self.baz = state
+
+    class AnInstanceWithSlots(object):
+        __slots__ = ('foo', 'bar', 'baz')
+
+        def __init__(self, foo=None, bar=None, baz=None):
+            self.foo = foo
+            self.bar = bar
+            self.baz = baz
+
+        def __cmp__(self, other):
+            return cmp((type(self), self.foo, self.bar, self.baz),
+                    (type(other), other.foo, other.bar, other.baz))
+
+        def __eq__(self, other):
+            return type(self) is type(other) and    \
+                    (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
 
     class NewArgs(AnObject):
         def __getnewargs__(self):
