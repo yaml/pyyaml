@@ -23,7 +23,7 @@ matrix:
 before_script:
 - >-
   cd /tmp
-  && git clone https://github.com/yaml/libyaml.git -b 0.2.2-pre1 libyaml
+  && git clone https://github.com/yaml/libyaml.git -b 0.2.2-pre2 libyaml
   && cd libyaml
   && ./bootstrap
   && ./configure
