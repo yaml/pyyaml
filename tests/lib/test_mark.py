@@ -1,8 +1,9 @@
-
+from __future__ import unicode_literals
+import six
 import yaml
 
 def test_marks(marks_filename, verbose=False):
-    inputs = open(marks_filename, 'rb').read().split('---\n')[1:]
+    inputs = open(marks_filename, 'r').read().split('---\n')[1:]
     for input in inputs:
         index = 0
         line = 0
@@ -14,11 +15,11 @@ def test_marks(marks_filename, verbose=False):
             else:
                 column += 1
             index += 1
-        mark = yaml.Mark(marks_filename, index, line, column, unicode(input), index)
+        mark = yaml.Mark(marks_filename, index, line, column, input, index)
         snippet = mark.get_snippet(indent=2, max_length=79)
         if verbose:
-            print snippet
-        assert isinstance(snippet, str), type(snippet)
+            print(snippet)
+        assert isinstance(snippet, six.text_type), type(snippet)
         assert snippet.count('\n') == 1, snippet.count('\n')
         data, pointer = snippet.split('\n')
         assert len(data) < 82, len(data)
@@ -29,4 +30,3 @@ test_marks.unittest = ['.marks']
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

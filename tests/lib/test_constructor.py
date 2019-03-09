@@ -1,16 +1,14 @@
-
+from __future__ import unicode_literals
+import six
 import yaml
 import pprint
 
 import datetime
-try:
-    set
-except NameError:
-    from sets import Set as set
 import yaml.tokens
 
 def execute(code):
-    exec code
+    global value
+    exec(code)
     return value
 
 def _make_objects():
@@ -24,7 +22,7 @@ def _make_objects():
     class MyDumper(yaml.Dumper):
         pass
 
-    class MyTestClass1:
+    class MyTestClass1(object):
         def __init__(self, x, y=0, z=0):
             self.x = x
             self.y = y
@@ -53,7 +51,7 @@ def _make_objects():
             return cls(x=x)
         from_yaml = classmethod(from_yaml)
         def to_yaml(cls, representer, native):
-            return representer.represent_scalar(cls.yaml_tag, str(native.x))
+            return representer.represent_scalar(cls.yaml_tag, six.text_type(native.x))
         to_yaml = classmethod(to_yaml)
 
     class MyTestClass3(MyTestClass2):
@@ -117,7 +115,7 @@ def _make_objects():
             return type(self) is type(other) and    \
                     (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
 
-    class AnInstance:
+    class AnInstance(object):
         def __init__(self, foo=None, bar=None, baz=None):
             self.foo = foo
             self.bar = bar
@@ -147,20 +145,6 @@ def _make_objects():
         def __setstate__(self, state):
             self.foo, self.bar, self.baz = state
 
-    class InitArgs(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar, self.baz)
-        def __getstate__(self):
-            return {}
-
-    class InitArgsWithState(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar)
-        def __getstate__(self):
-            return self.baz
-        def __setstate__(self, state):
-            self.baz = state
-
     class NewArgs(AnObject):
         def __getnewargs__(self):
             return (self.foo, self.bar, self.baz)
@@ -174,6 +158,10 @@ def _make_objects():
             return self.baz
         def __setstate__(self, state):
             self.baz = state
+
+    InitArgs = NewArgs
+
+    InitArgsWithState = NewArgsWithState
 
     class Reduce(AnObject):
         def __reduce__(self):
@@ -231,12 +219,10 @@ def _serialize_value(data):
         return '{%s}' % ', '.join(items)
     elif isinstance(data, datetime.datetime):
         return repr(data.utctimetuple())
-    elif isinstance(data, unicode):
-        return data.encode('utf-8')
     elif isinstance(data, float) and data != data:
         return '?'
     else:
-        return str(data)
+        return six.text_type(data)
 
 def test_constructor_types(data_filename, code_filename, verbose=False):
     _make_objects()
@@ -253,16 +239,16 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
         except TypeError:
             pass
         if verbose:
-            print "SERIALIZED NATIVE1:"
-            print _serialize_value(native1)
-            print "SERIALIZED NATIVE2:"
-            print _serialize_value(native2)
+            print("SERIALIZED NATIVE1:")
+            print(_serialize_value(native1))
+            print("SERIALIZED NATIVE2:")
+            print(_serialize_value(native2))
         assert _serialize_value(native1) == _serialize_value(native2), (native1, native2)
     finally:
         if verbose:
-            print "NATIVE1:"
+            print("NATIVE1:")
             pprint.pprint(native1)
-            print "NATIVE2:"
+            print("NATIVE2:")
             pprint.pprint(native2)
 
 test_constructor_types.unittest = ['.data', '.code']
@@ -272,4 +258,3 @@ if __name__ == '__main__':
     sys.modules['test_constructor'] = sys.modules['__main__']
     import test_appliance
     test_appliance.run(globals())
-

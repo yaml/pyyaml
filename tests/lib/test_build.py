@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 if __name__ == '__main__':
     import sys, os, distutils.util
@@ -7,4 +8,3 @@ if __name__ == '__main__':
     sys.path.insert(0, build_lib_ext)
     import test_yaml, test_appliance
     test_appliance.run(test_yaml)
-

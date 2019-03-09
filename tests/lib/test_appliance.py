@@ -1,9 +1,9 @@
+from __future__ import unicode_literals
 
+import io
 import sys, os, os.path, types, traceback, pprint
 
 DATA = 'tests/data'
-
-has_ucs4 = sys.maxunicode > 0xffff
 
 def find_test_functions(collections):
     if not isinstance(collections, list):
@@ -12,9 +12,7 @@ def find_test_functions(collections):
     for collection in collections:
         if not isinstance(collection, dict):
             collection = vars(collection)
-        keys = collection.keys()
-        keys.sort()
-        for key in keys:
+        for key in sorted(collection):
             value = collection[key]
             if isinstance(value, types.FunctionType) and hasattr(value, 'unittest'):
                 functions.append(value)
@@ -25,13 +23,8 @@ def find_test_filenames(directory):
     for filename in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, filename)):
             base, ext = os.path.splitext(filename)
-            if base.endswith('-py3'):
-                continue
-            if not has_ucs4 and base.find('-ucs4-') > -1:
-                continue
             filenames.setdefault(base, []).append(ext)
-    filenames = filenames.items()
-    filenames.sort()
+    filenames = sorted(filenames.items())
     return filenames
 
 def parse_arguments(args):
@@ -58,16 +51,13 @@ def parse_arguments(args):
     return include_functions, include_filenames, verbose
 
 def execute(function, filenames, verbose):
-    if hasattr(function, 'unittest_name'):
-        name = function.unittest_name
-    else:
-        name = function.func_name
+    name = function.__name__
     if verbose:
         sys.stdout.write('='*75+'\n')
         sys.stdout.write('%s(%s)...\n' % (name, ', '.join(filenames)))
     try:
         function(verbose=verbose, *filenames)
-    except Exception, exc:
+    except Exception as exc:
         info = sys.exc_info()
         if isinstance(exc, AssertionError):
             kind = 'FAILURE'
@@ -113,7 +103,7 @@ def display(results, verbose):
         for filename in filenames:
             sys.stdout.write('-'*75+'\n')
             sys.stdout.write('%s:\n' % filename)
-            data = open(filename, 'rb').read()
+            data = io.open(filename, errors='replace').read()
             sys.stdout.write(data)
             if data and data[-1] != '\n':
                 sys.stdout.write('\n')
@@ -131,7 +121,7 @@ def run(collections, args=None):
     include_functions, include_filenames, verbose = parse_arguments(args)
     results = []
     for function in test_functions:
-        if include_functions and function.func_name not in include_functions:
+        if include_functions and function.__name__ not in include_functions:
             continue
         if function.unittest:
             for base, exts in test_filenames:
@@ -154,4 +144,3 @@ def run(collections, args=None):
             result = execute(function, [], verbose)
             results.append(result)
     return display(results, verbose=verbose)
-

@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+import six
 
 __all__ = ['Mark', 'YAMLError', 'MarkedYAMLError']
 
@@ -16,7 +19,7 @@ class Mark(object):
             return None
         head = ''
         start = self.pointer
-        while start > 0 and self.buffer[start-1] not in u'\0\r\n\x85\u2028\u2029':
+        while start > 0 and self.buffer[start-1] not in '\0\r\n\x85\u2028\u2029':
             start -= 1
             if self.pointer-start > max_length/2-1:
                 head = ' ... '
@@ -24,13 +27,13 @@ class Mark(object):
                 break
         tail = ''
         end = self.pointer
-        while end < len(self.buffer) and self.buffer[end] not in u'\0\r\n\x85\u2028\u2029':
+        while end < len(self.buffer) and self.buffer[end] not in '\0\r\n\x85\u2028\u2029':
             end += 1
             if end-self.pointer > max_length/2-1:
                 tail = ' ... '
                 end -= 5
                 break
-        snippet = self.buffer[start:end].encode('utf-8')
+        snippet = self.buffer[start:end]
         return ' '*indent + head + snippet + tail + '\n'  \
                 + ' '*(indent+self.pointer-start+len(head)) + '^'
 
@@ -64,12 +67,11 @@ class MarkedYAMLError(YAMLError):
                     or self.context_mark.name != self.problem_mark.name
                     or self.context_mark.line != self.problem_mark.line
                     or self.context_mark.column != self.problem_mark.column):
-            lines.append(str(self.context_mark))
+            lines.append(six.text_type(self.context_mark))
         if self.problem is not None:
             lines.append(self.problem)
         if self.problem_mark is not None:
-            lines.append(str(self.problem_mark))
+            lines.append(six.text_type(self.problem_mark))
         if self.note is not None:
             lines.append(self.note)
         return '\n'.join(lines)
-

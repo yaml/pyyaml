@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 __all__ = [
     'CBaseLoader', 'CSafeLoader', 'CFullLoader', 'CUnsafeLoader', 'CLoader',
@@ -6,12 +7,12 @@ __all__ = [
 
 from _yaml import CParser, CEmitter
 
-from constructor import *
+from .constructor import *
 
-from serializer import *
-from representer import *
+from .serializer import *
+from .representer import *
 
-from resolver import *
+from .resolver import *
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
 
@@ -98,4 +99,3 @@ class CDumper(CEmitter, Serializer, Representer, Resolver):
         Representer.__init__(self, default_style=default_style,
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
-

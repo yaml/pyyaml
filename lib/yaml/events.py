@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 # Abstract classes.
 
@@ -83,4 +84,3 @@ class MappingStartEvent(CollectionStartEvent):
 
 class MappingEndEvent(CollectionEndEvent):
     pass
-

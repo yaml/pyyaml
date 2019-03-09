@@ -1,4 +1,3 @@
-
 NAME = 'PyYAML'
 VERSION = '5.1b7'
 DESCRIPTION = "YAML parser and emitter for Python"
@@ -255,10 +254,7 @@ class test(Command):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        if sys.version_info[0] < 3:
-            sys.path.insert(0, 'tests/lib')
-        else:
-            sys.path.insert(0, 'tests/lib3')
+        sys.path.insert(0, 'tests/lib')
         import test_all
         if not test_all.main([]):
             raise DistutilsError("Tests failed")
@@ -288,8 +284,9 @@ if __name__ == '__main__':
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
 
-        package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
+        package_dir={'': 'lib'},
         packages=['yaml'],
+        install_requires=['six'],
         ext_modules=[
             Extension('_yaml', ['ext/_yaml.pyx'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,

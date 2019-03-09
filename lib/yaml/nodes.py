@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 class Node(object):
     def __init__(self, tag, value, start_mark, end_mark):
@@ -46,4 +47,3 @@ class SequenceNode(CollectionNode):
 
 class MappingNode(CollectionNode):
     id = 'mapping'
-

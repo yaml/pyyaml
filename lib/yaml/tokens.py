@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 class Token(object):
     def __init__(self, start_mark, end_mark):
@@ -101,4 +102,3 @@ class ScalarToken(Token):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.style = style
-

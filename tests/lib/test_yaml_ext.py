@@ -1,4 +1,4 @@
-
+from __future__ import unicode_literals
 import _yaml, yaml
 import types, pprint
 
@@ -117,8 +117,8 @@ def _tear_down():
 
 def test_c_version(verbose=False):
     if verbose:
-        print _yaml.get_version()
-        print _yaml.get_version_string()
+        print(_yaml.get_version())
+        print(_yaml.get_version_string())
     assert ("%s.%s.%s" % _yaml.get_version()) == _yaml.get_version_string(),    \
             (_yaml.get_version(), _yaml.get_version_string())
 
@@ -143,9 +143,9 @@ def _compare_scanners(py_data, c_data, verbose):
             assert py_end == c_end, (py_end, c_end)
     finally:
         if verbose:
-            print "PY_TOKENS:"
+            print("PY_TOKENS:")
             pprint.pprint(py_tokens)
-            print "C_TOKENS:"
+            print("C_TOKENS:")
             pprint.pprint(c_tokens)
 
 def test_c_scanner(data_filename, canonical_filename, verbose=False):
@@ -176,9 +176,9 @@ def _compare_parsers(py_data, c_data, verbose):
                 assert py_value == c_value, (py_event, c_event, attribute)
     finally:
         if verbose:
-            print "PY_EVENTS:"
+            print("PY_EVENTS:")
             pprint.pprint(py_events)
-            print "C_EVENTS:"
+            print("C_EVENTS:")
             pprint.pprint(c_events)
 
 def test_c_parser(data_filename, canonical_filename, verbose=False):
@@ -198,7 +198,7 @@ def _compare_emitters(data, verbose):
     events = list(yaml.parse(data, Loader=yaml.PyLoader))
     c_data = yaml.emit(events, Dumper=yaml.CDumper)
     if verbose:
-        print c_data
+        print(c_data)
     py_events = list(yaml.parse(c_data, Loader=yaml.PyLoader))
     c_events = list(yaml.parse(c_data, Loader=yaml.CLoader))
     try:
@@ -210,8 +210,8 @@ def _compare_emitters(data, verbose):
                 value = getattr(event, attribute, None)
                 py_value = getattr(py_event, attribute, None)
                 c_value = getattr(c_event, attribute, None)
-                if attribute == 'tag' and value in [None, u'!'] \
-                        and py_value in [None, u'!'] and c_value in [None, u'!']:
+                if attribute == 'tag' and value in [None, '!'] \
+                        and py_value in [None, '!'] and c_value in [None, '!']:
                     continue
                 if attribute == 'explicit' and (py_value or c_value):
                     continue
@@ -219,11 +219,11 @@ def _compare_emitters(data, verbose):
                 assert value == c_value, (event, c_event, attribute)
     finally:
         if verbose:
-            print "EVENTS:"
+            print("EVENTS:")
             pprint.pprint(events)
-            print "PY_EVENTS:"
+            print("PY_EVENTS:")
             pprint.pprint(py_events)
-            print "C_EVENTS:"
+            print("C_EVENTS:")
             pprint.pprint(c_events)
 
 def test_c_emitter(data_filename, canonical_filename, verbose=False):
@@ -240,11 +240,9 @@ def wrap_ext_function(function):
             function(*args, **kwds)
         finally:
             _tear_down()
-    try:
-        wrapper.func_name = '%s_ext' % function.func_name
-    except TypeError:
-        pass
-    wrapper.unittest_name = '%s_ext' % function.func_name
+    # Call str() for Python 2 compatibility.
+    # TypeError: __name__ must be set to a string object
+    wrapper.__name__ = str('%s_ext' % function.__name__)
     wrapper.unittest = function.unittest
     wrapper.skip = getattr(function, 'skip', [])+['.skip-ext']
     return wrapper
@@ -256,15 +254,13 @@ def wrap_ext(collections):
     for collection in collections:
         if not isinstance(collection, dict):
             collection = vars(collection)
-        keys = collection.keys()
-        keys.sort()
-        for key in keys:
+        for key in sorted(collection):
             value = collection[key]
             if isinstance(value, types.FunctionType) and hasattr(value, 'unittest'):
                 functions.append(wrap_ext_function(value))
     for function in functions:
-        assert function.unittest_name not in globals()
-        globals()[function.unittest_name] = function
+        assert function.__name__ not in globals()
+        globals()[function.__name__] = function
 
 import test_tokens, test_structure, test_errors, test_resolver, test_constructor,   \
         test_emitter, test_representer, test_recursive, test_input_output
@@ -274,4 +270,3 @@ wrap_ext([test_tokens, test_structure, test_errors, test_resolver, test_construc
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

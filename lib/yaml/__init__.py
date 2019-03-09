@@ -1,21 +1,24 @@
+from __future__ import unicode_literals
 
-from error import *
+import six
 
-from tokens import *
-from events import *
-from nodes import *
+from .error import *
 
-from loader import *
-from dumper import *
+from .tokens import *
+from .events import *
+from .nodes import *
+
+from .loader import *
+from .dumper import *
 
 __version__ = '5.1b7'
-
 try:
-    from cyaml import *
+    from .cyaml import *
     __with_libyaml__ = True
 except ImportError:
     __with_libyaml__ = False
 
+import io
 
 #------------------------------------------------------------------------------
 # Warnings control
@@ -200,8 +203,7 @@ def emit(events, stream=None, Dumper=Dumper,
     """
     getvalue = None
     if stream is None:
-        from StringIO import StringIO
-        stream = StringIO()
+        stream = io.StringIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break)
@@ -216,7 +218,7 @@ def emit(events, stream=None, Dumper=Dumper,
 def serialize_all(nodes, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
-        encoding='utf-8', explicit_start=None, explicit_end=None,
+        encoding=None, explicit_start=None, explicit_end=None,
         version=None, tags=None):
     """
     Serialize a sequence of representation trees into a YAML stream.
@@ -225,10 +227,9 @@ def serialize_all(nodes, stream=None, Dumper=Dumper,
     getvalue = None
     if stream is None:
         if encoding is None:
-            from StringIO import StringIO
+            stream = io.StringIO()
         else:
-            from cStringIO import StringIO
-        stream = StringIO()
+            stream = io.BytesIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break,
@@ -255,7 +256,7 @@ def dump_all(documents, stream=None, Dumper=Dumper,
         default_style=None, default_flow_style=False,
         canonical=None, indent=None, width=None,
         allow_unicode=None, line_break=None,
-        encoding='utf-8', explicit_start=None, explicit_end=None,
+        encoding=None, explicit_start=None, explicit_end=None,
         version=None, tags=None, sort_keys=True):
     """
     Serialize a sequence of Python objects into a YAML stream.
@@ -264,10 +265,9 @@ def dump_all(documents, stream=None, Dumper=Dumper,
     getvalue = None
     if stream is None:
         if encoding is None:
-            from StringIO import StringIO
+            stream = io.StringIO()
         else:
-            from cStringIO import StringIO
-        stream = StringIO()
+            stream = io.BytesIO()
         getvalue = stream.getvalue
     dumper = Dumper(stream, default_style=default_style,
             default_flow_style=default_flow_style,
@@ -374,13 +374,12 @@ class YAMLObjectMetaclass(type):
             cls.yaml_loader.add_constructor(cls.yaml_tag, cls.from_yaml)
             cls.yaml_dumper.add_representer(cls, cls.to_yaml)
 
-class YAMLObject(object):
+class YAMLObject(six.with_metaclass(YAMLObjectMetaclass)):
     """
     An object that can dump itself to a YAML stream
     and load itself from a YAML stream.
     """
 
-    __metaclass__ = YAMLObjectMetaclass
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 
     yaml_loader = Loader
@@ -389,18 +388,17 @@ class YAMLObject(object):
     yaml_tag = None
     yaml_flow_style = None
 
+    @classmethod
     def from_yaml(cls, loader, node):
         """
         Convert a representation node to a Python object.
         """
         return loader.construct_yaml_object(node, cls)
-    from_yaml = classmethod(from_yaml)
 
+    @classmethod
     def to_yaml(cls, dumper, data):
         """
         Convert a Python object to a representation node.
         """
         return dumper.represent_yaml_object(cls.yaml_tag, data, cls,
                 flow_style=cls.yaml_flow_style)
-    to_yaml = classmethod(to_yaml)
-
