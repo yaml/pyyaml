@@ -1,3 +1,5 @@
+# dist: xenial
+
 language: python
 
 sudo: false
@@ -16,15 +18,18 @@ matrix:
       env: TOXENV=py36
     - python: 3.7-dev
       env: TOXENV=py37
-    - python: pypy
-      env: TOXENV=pypy
+    # This is broken on travis as of 2019/03/12
+    # - python: pypy
+    # env: TOXENV=pypy
 
 # build libyaml
 before_script:
 - >-
   cd /tmp
-  && git clone https://github.com/yaml/libyaml.git -b 0.2.2-pre2 libyaml
+  && git clone https://github.com/yaml/libyaml.git libyaml
   && cd libyaml
+  && true "# Switch sha1 to '0.2.2' when tag is pushed"
+  && git reset --hard 24a020a1a2a1fbbb1caf3a032ccc81eb74018c31
   && ./bootstrap
   && ./configure
   && make
