@@ -58,7 +58,7 @@ int main(void) {
 """
 
 
-import sys, os.path, platform
+import sys, os.path, platform, warnings
 
 from distutils import log
 from distutils.core import setup, Command
@@ -92,6 +92,19 @@ try:
 except ImportError:
     bdist_wheel = None
 
+
+# on Windows, disable wheel generation warning noise
+windows_ignore_warnings = [
+"Unknown distribution option: 'python_requires'",
+"Config variable 'Py_DEBUG' is unset",
+"Config variable 'WITH_PYMALLOC' is unset",
+"Config variable 'Py_UNICODE_SIZE' is unset",
+"Cython directive 'language_level' not set"
+]
+
+if platform.system() == 'Windows':
+    for w in windows_ignore_warnings:
+        warnings.filterwarnings('ignore', w)
 
 class Distribution(_Distribution):
 
