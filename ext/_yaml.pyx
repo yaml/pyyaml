@@ -14,6 +14,15 @@ def get_version():
     yaml_get_version(&major, &minor, &patch)
     return (major, minor, patch)
 
+
+cdef bytes _tobytes(s, error):
+    if isinstance(s, unicode):
+        return PyUnicode_AsUTF8String(s)
+    if not isinstance(s, bytes):
+        raise TypeError(error)
+    return <bytes>s
+
+
 #Mark = yaml.error.Mark
 YAMLError = yaml.error.YAMLError
 ReaderError = yaml.reader.ReaderError
@@ -1016,17 +1025,11 @@ cdef class CEmitter:
                 cache = []
                 for handle in event_object.tags:
                     prefix = event_object.tags[handle]
-                    if isinstance(handle, unicode):
-                        handle = PyUnicode_AsUTF8String(handle)
-                        cache.append(handle)
-                    if not isinstance(handle, bytes):
-                        raise TypeError("tag handle must be a string")
+                    handle = _tobytes(handle, "tag handle must be a string")
+                    cache.append(handle)
                     tag_directives_end.handle = PyString_AS_STRING(handle)
-                    if isinstance(prefix, unicode):
-                        prefix = PyUnicode_AsUTF8String(prefix)
-                        cache.append(prefix)
-                    if not isinstance(prefix, bytes):
-                        raise TypeError("tag prefix must be a string")
+                    prefix = _tobytes(prefix, "tag prefix must be a string")
+                    cache.append(prefix)
                     tag_directives_end.prefix = PyString_AS_STRING(prefix)
                     tag_directives_end = tag_directives_end+1
             implicit = 1
@@ -1041,12 +1044,7 @@ cdef class CEmitter:
                 implicit = 0
             yaml_document_end_event_initialize(event, implicit)
         elif event_class is AliasEvent:
-            anchor = NULL
-            anchor_object = event_object.anchor
-            if isinstance(anchor_object, unicode):
-                anchor_object = PyUnicode_AsUTF8String(anchor_object)
-            if not isinstance(anchor_object, bytes):
-                raise TypeError("anchor must be a string")
+            anchor_object = _tobytes(event_object.anchor, "anchor must be a string")
             anchor = PyString_AS_STRING(anchor_object)
             if yaml_alias_event_initialize(event, anchor) == 0:
                 raise MemoryError
@@ -1054,24 +1052,14 @@ cdef class CEmitter:
             anchor = NULL
             anchor_object = event_object.anchor
             if anchor_object is not None:
-                if isinstance(anchor_object, unicode):
-                    anchor_object = PyUnicode_AsUTF8String(anchor_object)
-                if not isinstance(anchor_object, bytes):
-                    raise TypeError("anchor must be a string")
+                anchor_object = _tobytes(anchor_object, "anchor must be a string")
                 anchor = PyString_AS_STRING(anchor_object)
             tag = NULL
             tag_object = event_object.tag
             if tag_object is not None:
-                if isinstance(tag_object, unicode):
-                    tag_object = PyUnicode_AsUTF8String(tag_object)
-                if not isinstance(tag_object, bytes):
-                    raise TypeError("tag must be a string")
+                tag_object = _tobytes(tag_object, "tag must be a string")
                 tag = PyString_AS_STRING(tag_object)
-            value_object = event_object.value
-            if isinstance(value_object, unicode):
-                value_object = PyUnicode_AsUTF8String(value_object)
-            if not isinstance(value_object, bytes):
-                raise TypeError("value must be a string")
+            value_object = _tobytes(event_object.value, "value must be a string")
             value = PyString_AS_STRING(value_object)
             length = PyString_GET_SIZE(value_object)
             plain_implicit = 0
@@ -1096,18 +1084,12 @@ cdef class CEmitter:
             anchor = NULL
             anchor_object = event_object.anchor
             if anchor_object is not None:
-                if isinstance(anchor_object, unicode):
-                    anchor_object = PyUnicode_AsUTF8String(anchor_object)
-                if not isinstance(anchor_object, bytes):
-                    raise TypeError("anchor must be a string")
+                anchor_object = _tobytes(anchor_object, "anchor must be a string")
                 anchor = PyString_AS_STRING(anchor_object)
             tag = NULL
             tag_object = event_object.tag
             if tag_object is not None:
-                if isinstance(tag_object, unicode):
-                    tag_object = PyUnicode_AsUTF8String(tag_object)
-                if not isinstance(tag_object, bytes):
-                    raise TypeError("tag must be a string")
+                tag_object = _tobytes(tag_object, "tag must be a string")
                 tag = PyString_AS_STRING(tag_object)
             implicit = 0
             if event_object.implicit:
@@ -1122,18 +1104,12 @@ cdef class CEmitter:
             anchor = NULL
             anchor_object = event_object.anchor
             if anchor_object is not None:
-                if isinstance(anchor_object, unicode):
-                    anchor_object = PyUnicode_AsUTF8String(anchor_object)
-                if not isinstance(anchor_object, bytes):
-                    raise TypeError("anchor must be a string")
+                anchor_object = _tobytes(anchor_object, "anchor must be a string")
                 anchor = PyString_AS_STRING(anchor_object)
             tag = NULL
             tag_object = event_object.tag
             if tag_object is not None:
-                if isinstance(tag_object, unicode):
-                    tag_object = PyUnicode_AsUTF8String(tag_object)
-                if not isinstance(tag_object, bytes):
-                    raise TypeError("tag must be a string")
+                tag_object = _tobytes(tag_object, "tag must be a string")
                 tag = PyString_AS_STRING(tag_object)
             implicit = 0
             if event_object.implicit:
@@ -1220,17 +1196,11 @@ cdef class CEmitter:
             tag_directives_end = tag_directives_value
             for handle in self.use_tags:
                 prefix = self.use_tags[handle]
-                if isinstance(handle, unicode):
-                    handle = PyUnicode_AsUTF8String(handle)
-                    cache.append(handle)
-                if not isinstance(handle, bytes):
-                    raise TypeError("tag handle must be a string")
+                handle = _tobytes(handle, "tag handle must be a string")
+                cache.append(handle)
                 tag_directives_end.handle = PyString_AS_STRING(handle)
-                if isinstance(prefix, unicode):
-                    prefix = PyUnicode_AsUTF8String(prefix)
-                    cache.append(prefix)
-                if not isinstance(prefix, bytes):
-                    raise TypeError("tag prefix must be a string")
+                prefix = _tobytes(prefix, "tag prefix must be a string")
+                cache.append(prefix)
                 tag_directives_end.prefix = PyString_AS_STRING(prefix)
                 tag_directives_end = tag_directives_end+1
         if yaml_document_start_event_initialize(&event, version_directive,
@@ -1283,10 +1253,7 @@ cdef class CEmitter:
         anchor_object = self.anchors[node]
         anchor = NULL
         if anchor_object is not None:
-            if isinstance(anchor_object, unicode):
-                anchor_object = PyUnicode_AsUTF8String(anchor_object)
-            if not isinstance(anchor_object, bytes):
-                raise TypeError("anchor must be a string")
+            anchor_object = _tobytes(anchor_object, "anchor must be a string")
             anchor = PyString_AS_STRING(anchor_object)
         if node in self.serialized_nodes:
             if yaml_alias_event_initialize(&event, anchor) == 0:
@@ -1308,16 +1275,9 @@ cdef class CEmitter:
                     quoted_implicit = 1
                 tag = NULL
                 if tag_object is not None:
-                    if isinstance(tag_object, unicode):
-                        tag_object = PyUnicode_AsUTF8String(tag_object)
-                    if not isinstance(tag_object, bytes):
-                        raise TypeError("tag must be a string")
+                    tag_object = _tobytes(tag_object, "tag must be a string")
                     tag = PyString_AS_STRING(tag_object)
-                value_object = node.value
-                if isinstance(value_object, unicode):
-                    value_object = PyUnicode_AsUTF8String(value_object)
-                if not isinstance(value_object, bytes):
-                    raise TypeError("value must be a string")
+                value_object = _tobytes(node.value, "value must be a string")
                 value = PyString_AS_STRING(value_object)
                 length = PyString_GET_SIZE(value_object)
                 style_object = node.style
@@ -1343,10 +1303,7 @@ cdef class CEmitter:
                     implicit = 1
                 tag = NULL
                 if tag_object is not None:
-                    if isinstance(tag_object, unicode):
-                        tag_object = PyUnicode_AsUTF8String(tag_object)
-                    if not isinstance(tag_object, bytes):
-                        raise TypeError("tag must be a string")
+                    tag_object = _tobytes(tag_object, "tag must be a string")
                     tag = PyString_AS_STRING(tag_object)
                 sequence_style = YAML_BLOCK_SEQUENCE_STYLE
                 if node.flow_style:
@@ -1372,10 +1329,7 @@ cdef class CEmitter:
                     implicit = 1
                 tag = NULL
                 if tag_object is not None:
-                    if isinstance(tag_object, unicode):
-                        tag_object = PyUnicode_AsUTF8String(tag_object)
-                    if not isinstance(tag_object, bytes):
-                        raise TypeError("tag must be a string")
+                    tag_object = _tobytes(tag_object, "tag must be a string")
                     tag = PyString_AS_STRING(tag_object)
                 mapping_style = YAML_BLOCK_MAPPING_STYLE
                 if node.flow_style:
