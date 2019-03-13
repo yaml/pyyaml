@@ -1,15 +1,10 @@
 
 cdef extern from "_yaml.h":
 
-    void malloc(int l)
     void memcpy(char *d, char *s, int l)
-    int strlen(char *s)
-    int PyString_CheckExact(object o)
-    int PyUnicode_CheckExact(object o)
     char *PyString_AS_STRING(object o)
     int PyString_GET_SIZE(object o)
     unicode PyUnicode_FromString(char *u)
-    unicode PyUnicode_DecodeUTF8(char *u, int s, char *e)
     bytes PyUnicode_AsUTF8String(object o)
     int PY_MAJOR_VERSION
 
