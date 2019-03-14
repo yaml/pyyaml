@@ -53,35 +53,6 @@ script:
 - python -m tox.__main__
 
 .mixtures:
-- &osx_python
-  name: macOS 10.13 with xcode 10.1
-  if: type IN (api, cron) OR tag IS present
-  os: osx
-  osx_image: xcode10.1
-  language: generic
-  before_install:
-  - brew install zlib readline
-  - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/pyenv.rb || brew upgrade pyenv
-  - &ensure_pyenv_preloaded eval "$(pyenv init -)"
-  - &select_specific_python |
-      if [[ ! "$TRAVIS_PYTHON_VERSION" =~ "dev" ]]
-      then
-        export TRAVIS_PYTHON_VERSION=$(\
-          pyenv install --list | \
-          grep -E '\s\s'"$TRAVIS_PYTHON_VERSION" | grep -vE 'dev|rc' | \
-          tail -n 1 | tr -d '[:space:]'\
-        )
-      fi
-  - &install_python |
-      pyenv install --skip-existing --keep --verbose "$TRAVIS_PYTHON_VERSION" | \
-      tee pyenv-install.log | tail -n 50
-  - &switch_python pyenv shell "$TRAVIS_PYTHON_VERSION"
-  - &python_version python --version
-  after_failure:
-  - cat pyenv-install.log
-  before_script: []
-  before_cache:
-  - brew --cache
 - &macos-job
   os: osx
   osx_image: xcode10.1
