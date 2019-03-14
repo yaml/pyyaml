@@ -140,13 +140,6 @@ env:
     TOXENV: python
 jobs:
   fast_finish: true
-  allow_failures:
-  - os: osx
-    env:
-      TRAVIS_PYTHON_VERSION: '2.7'
-  - os: osx
-    env:
-      TRAVIS_PYTHON_VERSION: &pypy3-osx-version pypy3.6-7.0.0
   include:
   - <<: *macos-job
     name: Python 3.7 under macOS 10.13 with xcode 10.1
@@ -161,8 +154,8 @@ jobs:
   - <<: *macos-job
     name: PyPy3.6 v7.0.0 under macOS 10.13 with xcode 10.1
     env:
-      TRAVIS_PYTHON_VERSION: *pypy3-osx-version
-    python: *pypy3-osx-version
+      TRAVIS_PYTHON_VERSION: pypy3.6-7.0.0
+    python: pypy3.6-7.0.0
   - <<: *macos-job
     name: Python 3.6 under macOS 10.13 with xcode 10.1
     env:
