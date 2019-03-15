@@ -1,5 +1,3 @@
-# dist: xenial
-
 language: python
 
 sudo: false
@@ -22,6 +20,9 @@ matrix:
       env: TOXENV=py38
     - python: pypy
       env: TOXENV=pypy
+  allow_failures:
+    - python: pypy
+    - python: 3.8-dev
 
 # build libyaml
 before_script:
