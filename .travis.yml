@@ -20,8 +20,11 @@ matrix:
       env: TOXENV=py38
     - python: pypy
       env: TOXENV=pypy
+    - python: pypy-3.5
+      env: TOXENV=pypy3.5
   allow_failures:
     - python: pypy
+    - python: pypy-3.5
     - python: 3.8-dev
 
 # build libyaml
