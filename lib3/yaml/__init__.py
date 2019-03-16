@@ -379,7 +379,7 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
 
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 
-    yaml_loader = Loader
+    yaml_loader = FullLoader
     yaml_dumper = Dumper
 
     yaml_tag = None
