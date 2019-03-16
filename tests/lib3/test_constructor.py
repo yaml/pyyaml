@@ -16,7 +16,7 @@ def _make_objects():
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute
 
-    class MyLoader(yaml.Loader):
+    class MyLoader(yaml.FullLoader):
         pass
     class MyDumper(yaml.Dumper):
         pass

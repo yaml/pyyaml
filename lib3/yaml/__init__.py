@@ -326,7 +326,7 @@ def add_path_resolver(tag, path, kind=None, Loader=Loader, Dumper=Dumper):
     Loader.add_path_resolver(tag, path, kind)
     Dumper.add_path_resolver(tag, path, kind)
 
-def add_constructor(tag, constructor, Loader=Loader):
+def add_constructor(tag, constructor, Loader=FullLoader):
     """
     Add a constructor for the given tag.
     Constructor is a function that accepts a Loader instance
