@@ -4,6 +4,8 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 
 from error import *
 
+from nodes import *
+
 import datetime
 
 import copy_reg, types
