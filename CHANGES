@@ -17,7 +17,6 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/61 -- Use Travis CI built in pip cache support
 * https://github.com/yaml/pyyaml/pull/62 -- Remove tox workaround for Travis CI
 * https://github.com/yaml/pyyaml/pull/63 -- Adding support to Unicode characters over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/65 -- Support unicode literals over codepoint 0xffff
 * https://github.com/yaml/pyyaml/pull/75 -- add 3.12 changelog
 * https://github.com/yaml/pyyaml/pull/76 -- Fallback to Pure Python if Compilation fails
 * https://github.com/yaml/pyyaml/pull/84 -- Drop unsupported Python 3.3
