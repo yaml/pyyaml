@@ -378,7 +378,12 @@ class YAMLObjectMetaclass(type):
     def __init__(cls, name, bases, kwds):
         super(YAMLObjectMetaclass, cls).__init__(name, bases, kwds)
         if 'yaml_tag' in kwds and kwds['yaml_tag'] is not None:
-            cls.yaml_loader.add_constructor(cls.yaml_tag, cls.from_yaml)
+            if isinstance(cls.yaml_loader, list):
+                for loader in cls.yaml_loader:
+                    loader.add_constructor(cls.yaml_tag, cls.from_yaml)
+            else:
+                cls.yaml_loader.add_constructor(cls.yaml_tag, cls.from_yaml)
+
             cls.yaml_dumper.add_representer(cls, cls.to_yaml)
 
 class YAMLObject(metaclass=YAMLObjectMetaclass):
@@ -389,7 +394,7 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
 
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 
-    yaml_loader = Loader
+    yaml_loader = [Loader, FullLoader, UnsafeLoader]
     yaml_dumper = Dumper
 
     yaml_tag = None
