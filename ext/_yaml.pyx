@@ -86,7 +86,7 @@ cdef class Mark:
                 % (self.name, self.line+1, self.column+1)
         return where
 
-#class YAMLError(Exception):
+#class YAMLError(ValueError):
 #    pass
 #
 #class MarkedYAMLError(YAMLError):
