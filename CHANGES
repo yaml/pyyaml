@@ -27,7 +27,6 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/61 -- Use Travis CI built in pip cache support
 * https://github.com/yaml/pyyaml/pull/62 -- Remove tox workaround for Travis CI
 * https://github.com/yaml/pyyaml/pull/63 -- Adding support to Unicode characters over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/65 -- Support unicode literals over codepoint 0xffff
 * https://github.com/yaml/pyyaml/pull/75 -- add 3.12 changelog
 * https://github.com/yaml/pyyaml/pull/76 -- Fallback to Pure Python if Compilation fails
 * https://github.com/yaml/pyyaml/pull/84 -- Drop unsupported Python 3.3
@@ -35,12 +34,17 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/105 -- Removed Python 2.6 & 3.3 support
 * https://github.com/yaml/pyyaml/pull/111 -- Remove commented out Psyco code
 * https://github.com/yaml/pyyaml/pull/129 -- Remove call to `ord` in lib3 emitter code
-* https://github.com/yaml/pyyaml/pull/143 -- Allow to turn off sorting keys in Dumper
 * https://github.com/yaml/pyyaml/pull/149 -- Test on Python 3.7-dev
 * https://github.com/yaml/pyyaml/pull/158 -- Support escaped slash in double quotes "\/"
+* https://github.com/yaml/pyyaml/pull/175 -- Updated link to pypi in release announcement
 * https://github.com/yaml/pyyaml/pull/181 -- Import Hashable from collections.abc
+* https://github.com/yaml/pyyaml/pull/194 -- Reverting https://github.com/yaml/pyyaml/pull/74
+* https://github.com/yaml/pyyaml/pull/195 -- Build libyaml on travis
+* https://github.com/yaml/pyyaml/pull/196 -- Force cython when building sdist
+* https://github.com/yaml/pyyaml/pull/254 -- Allow to turn off sorting keys in Dumper (2)
 * https://github.com/yaml/pyyaml/pull/256 -- Make default_flow_style=False
 * https://github.com/yaml/pyyaml/pull/257 -- Deprecate yaml.load and add FullLoader and UnsafeLoader classes
+* https://github.com/yaml/pyyaml/pull/261 -- Skip certain unicode tests when maxunicode not > 0xffff
 * https://github.com/yaml/pyyaml/pull/263 -- Windows Appveyor build
 
 3.13 (2018-07-05)
