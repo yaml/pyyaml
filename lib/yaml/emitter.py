@@ -706,7 +706,7 @@ class Emitter(object):
             if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
                 if (ch == u'\x85' or u'\xA0' <= ch <= u'\uD7FF'
                         or u'\uE000' <= ch <= u'\uFFFD'
-                        or ((not has_ucs4) or (u'\U00010000' <= ch < u'\U0010ffff'))) and ch != u'\uFEFF':
+                        or (u'\U00010000' <= ch < u'\U0010ffff')) and ch != u'\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
