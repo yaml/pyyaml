@@ -332,7 +332,7 @@ def add_constructor(tag, constructor, Loader=None):
     Constructor is a function that accepts a Loader instance
     and a node object and produces the corresponding Python object.
     """
-    if Loader == None:
+    if Loader is None:
         loader.Loader.add_constructor(tag, constructor)
         loader.FullLoader.add_constructor(tag, constructor)
         loader.UnsafeLoader.add_constructor(tag, constructor)
@@ -346,7 +346,7 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     Multi-constructor accepts a Loader instance, a tag suffix,
     and a node object and produces the corresponding Python object.
     """
-    if Loader == None:
+    if Loader is None:
         loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
         loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
         loader.UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
