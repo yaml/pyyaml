@@ -356,6 +356,9 @@ class SafeConstructor(BaseConstructor):
                 delta = -delta
             return datetime.datetime(year, month, day, hour, minute, second, fraction,
                                      tzinfo=timezone(delta))
+        elif values['tz']:
+            return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                     tzinfo=timezone(datetime.timedelta(0)))
         else:
             return datetime.datetime(year, month, day, hour, minute, second, fraction)
 
