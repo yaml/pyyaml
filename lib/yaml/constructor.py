@@ -18,6 +18,29 @@ import binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+
+class timezone(datetime.tzinfo):
+    def __init__(self, offset):
+        self._offset = offset
+        seconds = abs(offset).total_seconds()
+        self._name = '%s%02d:%02d' % (
+            '-' if offset.days < 0 else '+',
+            seconds // 3600,
+            seconds % 3600 // 60
+        )
+
+    def tzname(self, dt=None):
+        return self._name
+
+    def utcoffset(self, dt=None):
+        return self._offset
+
+    def dst(self, dt=None):
+        return datetime.timedelta(0)
+
+    __repr__ = __str__ = tzname
+
+
 class BaseConstructor(object):
 
     yaml_constructors = {}
@@ -307,13 +330,6 @@ class SafeConstructor(BaseConstructor):
                 (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
                 (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
 
-    def timezone(self, offset):
-        class tz(datetime.tzinfo):
-            def utcoffset(self, dt=None):
-                return offset
-
-        return tz()
-
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
         match = self.timestamp_regexp.match(node.value)
@@ -339,7 +355,7 @@ class SafeConstructor(BaseConstructor):
             if values['tz_sign'] == '-':
                 delta = -delta
             return datetime.datetime(year, month, day, hour, minute, second, fraction,
-                                     tzinfo=self.timezone(delta))
+                                     tzinfo=timezone(delta))
         else:
             return datetime.datetime(year, month, day, hour, minute, second, fraction)
 
