@@ -936,6 +936,7 @@ class Emitter:
         # This is currently based on the 'write single quoted' string logic
         breaks = True
         start = end = 0
+        self.stream.write('\n')
         self.write_indent()
         while end <= len(text):
             ch = None
