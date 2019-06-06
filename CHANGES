@@ -4,6 +4,11 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+5.1.1 (2019-06-05)
+------------------
+
+* Re-release of 5.1 with regenerated Cython sources to build properly for Python 3.8
+
 5.1 (2019-03-13)
 ----------------
 

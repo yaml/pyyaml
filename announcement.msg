@@ -1,58 +1,22 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.1: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-5.1.1: YAML parser and emitter for Python
 
 =======================
- Announcing PyYAML-5.1
+Announcing PyYAML-5.1.1
 =======================
 
-A new MAJOR RELEASE of PyYAML is now available:
+A new minor release of PyYAML is now available:
 https://pypi.org/project/PyYAML/
 
-This is the first major release of PyYAML under the new maintenance team.
-
-Among the many changes listed below, this release specifically addresses the
-arbitrary code execution issue raised by:
-
-    https://nvd.nist.gov/vuln/detail/CVE-2017-18342
-
-(See https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
-for complete details).
-
-The PyYAML project is now maintained by the YAML and Python communities.
-Planning happens on the #yaml-dev, #pyyaml and #libyaml IRC channels on
-irc.freenode.net.
-
+This is a maintenance re-release of PyYAML 5.1 with re-generated Cython
+bindings to allow the extension to build properly for Python 3.8. No code
+changes were made in the PyYAML sources.
 
 Changes
 =======
 
-* https://github.com/yaml/pyyaml/pull/35  -- Some modernization of the test running
-* https://github.com/yaml/pyyaml/pull/42  -- Install tox in a virtualenv
-* https://github.com/yaml/pyyaml/pull/45  -- Allow colon in a plain scalar in a flow context
-* https://github.com/yaml/pyyaml/pull/48  -- Fix typos
-* https://github.com/yaml/pyyaml/pull/55  -- Improve RepresenterError creation
-* https://github.com/yaml/pyyaml/pull/59  -- Resolves #57, update readme issues link
-* https://github.com/yaml/pyyaml/pull/60  -- Document and test Python 3.6 support
-* https://github.com/yaml/pyyaml/pull/61  -- Use Travis CI built in pip cache support
-* https://github.com/yaml/pyyaml/pull/62  -- Remove tox workaround for Travis CI
-* https://github.com/yaml/pyyaml/pull/63  -- Adding support to Unicode characters over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/65  -- Support unicode literals over codepoint 0xffff
-* https://github.com/yaml/pyyaml/pull/75  -- add 3.12 changelog
-* https://github.com/yaml/pyyaml/pull/76  -- Fallback to Pure Python if Compilation fails
-* https://github.com/yaml/pyyaml/pull/84  -- Drop unsupported Python 3.3
-* https://github.com/yaml/pyyaml/pull/102 -- Include license file in the generated wheel package
-* https://github.com/yaml/pyyaml/pull/105 -- Removed Python 2.6 & 3.3 support
-* https://github.com/yaml/pyyaml/pull/111 -- Remove commented out Psyco code
-* https://github.com/yaml/pyyaml/pull/129 -- Remove call to `ord` in lib3 emitter code
-* https://github.com/yaml/pyyaml/pull/143 -- Allow to turn off sorting keys in Dumper
-* https://github.com/yaml/pyyaml/pull/149 -- Test on Python 3.7-dev
-* https://github.com/yaml/pyyaml/pull/158 -- Support escaped slash in double quotes "\/"
-* https://github.com/yaml/pyyaml/pull/181 -- Import Hashable from collections.abc
-* https://github.com/yaml/pyyaml/pull/256 -- Make default_flow_style=False
-* https://github.com/yaml/pyyaml/pull/257 -- Deprecate yaml.load and add FullLoader and UnsafeLoader classes
-* https://github.com/yaml/pyyaml/pull/263 -- Windows Appveyor build
-
+* None
 
 Resources
 =========
