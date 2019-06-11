@@ -309,24 +309,34 @@ def safe_dump(data, stream=None, **kwds):
     return dump_all([data], stream, Dumper=SafeDumper, **kwds)
 
 def add_implicit_resolver(tag, regexp, first=None,
-        Loader=Loader, Dumper=Dumper):
+        Loader=None, Dumper=Dumper):
     """
     Add an implicit scalar detector.
     If an implicit scalar value matches the given regexp,
     the corresponding tag is assigned to the scalar.
     first is a sequence of possible initial characters or None.
     """
-    Loader.add_implicit_resolver(tag, regexp, first)
+    if Loader is None:
+        loader.Loader.add_implicit_resolver(tag, regexp, first)
+        loader.FullLoader.add_implicit_resolver(tag, regexp, first)
+        loader.UnsafeLoader.add_implicit_resolver(tag, regexp, first)
+    else:
+        Loader.add_implicit_resolver(tag, regexp, first)
     Dumper.add_implicit_resolver(tag, regexp, first)
 
-def add_path_resolver(tag, path, kind=None, Loader=Loader, Dumper=Dumper):
+def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
     """
     Add a path based resolver for the given tag.
     A path is a list of keys that forms a path
     to a node in the representation tree.
     Keys can be string values, integers, or None.
     """
-    Loader.add_path_resolver(tag, path, kind)
+    if Loader is None:
+        loader.Loader.add_path_resolver(tag, path, kind)
+        loader.FullLoader.add_path_resolver(tag, path, kind)
+        loader.UnsafeLoader.add_path_resolver(tag, path, kind)
+    else:
+        Loader.add_path_resolver(tag, path, kind)
     Dumper.add_path_resolver(tag, path, kind)
 
 def add_constructor(tag, constructor, Loader=Loader):
