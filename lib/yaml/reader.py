@@ -138,7 +138,7 @@ class Reader(object):
     def check_printable(self, data):
         for pos, ch in enumerate(data):
             cat = unicodedata.category(ch)
-            if ord(ch) not in [0x09, 0x0A, 0x0D, 0x85] and cat == "Cc":
+            if cat == "Cc" and ord(ch) not in [0x09, 0x0A, 0x0D, 0x85]:
                 position = self.index+(len(self.buffer)-self.pointer)+pos
                 raise ReaderError(self.name, position, ord(ch),
                     'unicode', "special characters are not allowed")
