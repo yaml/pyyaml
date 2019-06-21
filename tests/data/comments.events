@@ -1,0 +1,101 @@
+- !StreamStart
+
+- !DocumentStart
+- !SequenceStart
+- !Comment { value: 'ok in empty sequence' }
+- !SequenceEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !SequenceStart { tag: '!mytag', implicit: false }
+- !Comment { value: 'ok in empty sequence' }
+- !SequenceEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !SequenceStart
+- !Comment { value: 'ok before first item in seq' }
+- !SequenceStart
+- !SequenceEnd
+- !SequenceStart { tag: '!mytag', implicit: false }
+- !SequenceEnd
+- !SequenceStart
+- !Comment { value: 'Comment before empty scalar' }
+- !Scalar
+- !Comment { value: 'Comment before Scalar' }
+- !Scalar { value: 'data' }
+- !Comment { value: 'Comment Before tagged scalar' }
+- !Scalar { tag: '!mytag', implicit: [false,false], value: 'data' }
+- !SequenceEnd
+- !Comment { value: 'Comment before deep list' }
+- !SequenceStart
+- !SequenceStart
+- !SequenceStart
+- !Scalar
+- !SequenceEnd
+- !SequenceEnd
+- !SequenceEnd
+- !SequenceStart
+- !SequenceStart { tag: '!mytag', implicit: false }
+- !SequenceStart
+- !Comment { value: 'Comment in deep list' }
+- !Scalar { value: 'data' }
+- !SequenceEnd
+- !SequenceEnd
+- !SequenceEnd
+- !SequenceEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !SequenceStart
+- !MappingStart
+- !Comment { value: 'ok' }
+- !Scalar { value: 'key1' }
+- !SequenceStart
+- !Comment { value: 'ok in sub-seq' }
+- !Scalar { value: 'data1' }
+- !Scalar { value: 'data2' }
+- !SequenceEnd
+- !Comment { value: 'ok in front of second key' }
+- !Scalar { value: 'key2' }
+- !SequenceStart { tag: '!mytag1', implicit: false }
+- !Comment { value: 'ok in sub-seq 2' }
+- !Scalar { value: 'data3' }
+- !SequenceStart
+- !Comment { value: 'ok in sub-sub-seq 1' }
+- !Scalar { value: 'data4' }
+- !Comment { value: 'ok in sub-sub-seq 2' }
+- !Scalar { value: 'data5' }
+- !SequenceEnd
+- !SequenceStart { tag: '!mytag2', implicit: false }
+- !Comment { value: 'ok in sub-seq 3' }
+- !Scalar { value: 'data6' }
+- !Comment { value: 'ok in sub-seq 4' }
+- !Scalar { value: 'data7' }
+- !SequenceEnd
+- !SequenceEnd
+- !MappingEnd
+- !SequenceEnd
+- !DocumentEnd
+
+- !DocumentStart
+- !SequenceStart
+- !SequenceStart { flow_style: true }
+- !Comment { value: 'ok before sequence in sequence in flow style' }
+- !SequenceStart
+- !SequenceEnd
+- !Comment { value: 'ok in flow style' }
+- !Scalar
+- !Comment { value: 'ok in flow style2' }
+- !Scalar { value: 'data1' }
+- !Comment { value: 'ok in flow style3' }
+- !Scalar { tag: '!mytag', implicit: [false,false], value: 'data2' }
+- !SequenceStart { tag: '!mytag', implicit: false }
+- !Scalar { value: 'data3' }
+- !Scalar { value: 'data4' }
+- !SequenceEnd
+- !SequenceEnd
+- !SequenceEnd
+- !DocumentEnd
+
+- !StreamEnd

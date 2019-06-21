@@ -76,6 +76,9 @@ class Emitter:
         self.whitespace = True
         self.indention = True
 
+        # Some comments shouldn't be written immediately, so we defer their value momentarily.
+        self.deferred_comment = None
+
         # Whether the document requires an explicit document indicator
         self.open_ended = False
 
@@ -116,23 +119,38 @@ class Emitter:
             self.event = None
 
     # In some cases, we wait for a few next events before emitting.
-
     def need_more_events(self):
         if not self.events:
             return True
-        event = self.events[0]
-        if isinstance(event, DocumentStartEvent):
-            return self.need_events(1)
+
+        event = None
+        offset = 0 
+        while offset < len(self.events):
+            if isinstance(self.events[offset], CommentEvent):
+                offset += 1
+            else:
+                event = self.events[offset]
+                break
+        else:
+            # It's all comments
+            return True
+
+        if isinstance(event, (DocumentStartEvent)):
+            return self.need_events(1, offset)
         elif isinstance(event, SequenceStartEvent):
-            return self.need_events(2)
+            return self.need_events(2, offset)
         elif isinstance(event, MappingStartEvent):
-            return self.need_events(3)
+            return self.need_events(3, offset)
         else:
             return False
 
-    def need_events(self, count):
+    def need_events(self, count, offset):
         level = 0
-        for event in self.events[1:]:
+        for event in self.events[offset+1:]:
+            if isinstance(event, (CommentEvent)):
+                # Each comment we see increases the total amount of events needed.
+                count += 1
+
             if isinstance(event, (DocumentStartEvent, CollectionStartEvent)):
                 level += 1
             elif isinstance(event, (DocumentEndEvent, CollectionEndEvent)):
@@ -141,7 +159,7 @@ class Emitter:
                 level = -1
             if level < 0:
                 return False
-        return (len(self.events) < count+1)
+        return (len(self.events) - offset < count+1)
 
     def increase_indent(self, flow=False, indentless=False):
         self.indents.append(self.indent)
@@ -257,6 +275,27 @@ class Emitter:
         else:
             raise EmitterError("expected NodeEvent, but got %s" % self.event)
 
+    def expect_comment(self, defer=False):
+        # Expect an entirely optional comment event. If the next event isn't
+        # one, then just continue. 
+        # If the comment is deferred, save the comment even for later processing.
+        # Returns True if there was a comment.
+        if isinstance(self.event, CommentEvent):
+            if not defer:
+                self.process_comment()
+            else:
+                if self.deferred_comment is not None:
+                    raise EmitterError("Tried to defer comment when one "
+                                       "already exists.\n"
+                                       "old: %s, new: %s" % 
+                                       (self.deferred_comment, self.event))
+                self.deferred_comment = self.event
+
+            self.event = self.events.pop(0)
+            return True
+        else:
+            return False
+
     def expect_alias(self):
         if self.event.anchor is None:
             raise EmitterError("anchor is not specified for alias")
@@ -278,18 +317,22 @@ class Emitter:
         self.state = self.expect_first_flow_sequence_item
 
     def expect_first_flow_sequence_item(self):
+        had_comment = self.expect_comment()
         if isinstance(self.event, SequenceEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
             self.write_indicator(']', False)
             self.state = self.states.pop()
         else:
-            if self.canonical or self.column > self.best_width:
+            if (self.canonical or 
+                    self.column > self.best_width or 
+                    had_comment):
                 self.write_indent()
             self.states.append(self.expect_flow_sequence_item)
             self.expect_node(sequence=True)
 
     def expect_flow_sequence_item(self):
+        had_comment = self.expect_comment(defer=True)
         if isinstance(self.event, SequenceEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
@@ -300,7 +343,10 @@ class Emitter:
             self.state = self.states.pop()
         else:
             self.write_indicator(',', False)
-            if self.canonical or self.column > self.best_width:
+            self.resolve_comment()
+            if (self.canonical or 
+                    self.column > self.best_width or
+                    had_comment):
                 self.write_indent()
             self.states.append(self.expect_flow_sequence_item)
             self.expect_node(sequence=True)
@@ -311,9 +357,11 @@ class Emitter:
         self.write_indicator('{', True, whitespace=True)
         self.flow_level += 1
         self.increase_indent(flow=True)
+        self.expect_comment()
         self.state = self.expect_first_flow_mapping_key
 
     def expect_first_flow_mapping_key(self):
+        self.expect_comment()
         if isinstance(self.event, MappingEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
@@ -331,18 +379,21 @@ class Emitter:
                 self.expect_node(mapping=True)
 
     def expect_flow_mapping_key(self):
+        self.expect_comment(defer=True)
         if isinstance(self.event, MappingEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
             if self.canonical:
                 self.write_indicator(',', False)
                 self.write_indent()
+            self.resolve_comment()
             self.write_indicator('}', False)
             self.state = self.states.pop()
         else:
             self.write_indicator(',', False)
             if self.canonical or self.column > self.best_width:
                 self.write_indent()
+            self.resolve_comment()
             if not self.canonical and self.check_simple_key():
                 self.states.append(self.expect_flow_mapping_simple_value)
                 self.expect_node(mapping=True, simple_key=True)
@@ -374,10 +425,13 @@ class Emitter:
         return self.expect_block_sequence_item(first=True)
 
     def expect_block_sequence_item(self, first=False):
+        self.expect_comment(defer=True)
         if not first and isinstance(self.event, SequenceEndEvent):
+            self.resolve_comment()
             self.indent = self.indents.pop()
             self.state = self.states.pop()
         else:
+            self.resolve_comment()
             self.write_indent()
             self.write_indicator('-', True, indention=True)
             self.states.append(self.expect_block_sequence_item)
@@ -393,10 +447,13 @@ class Emitter:
         return self.expect_block_mapping_key(first=True)
 
     def expect_block_mapping_key(self, first=False):
+        self.expect_comment(defer=True)
         if not first and isinstance(self.event, MappingEndEvent):
+            self.resolve_comment()
             self.indent = self.indents.pop()
             self.state = self.states.pop()
         else:
+            self.resolve_comment()
             self.write_indent()
             if self.check_simple_key():
                 self.states.append(self.expect_block_mapping_simple_value)
@@ -420,12 +477,24 @@ class Emitter:
     # Checkers.
 
     def check_empty_sequence(self):
-        return (isinstance(self.event, SequenceStartEvent) and self.events
-                and isinstance(self.events[0], SequenceEndEvent))
+        if isinstance(self.event, SequenceStartEvent):
+            i = 0
+            while (i < len(self.events) and 
+                isinstance(self.events[i], CommentEvent)):
+                i += 1
+            if i < len(self.events) and isinstance(self.events[i], SequenceEndEvent):
+                return True
+        return False
 
     def check_empty_mapping(self):
-        return (isinstance(self.event, MappingStartEvent) and self.events
-                and isinstance(self.events[0], MappingEndEvent))
+        if isinstance(self.event, MappingStartEvent):
+            i = 0
+            while (i < len(self.events) and 
+                    isinstance(self.events[i], CommentEvent)):
+                i += 1
+            if i < len(self.events) and isinstance(self.events[i], MappingEndEvent):
+                return True
+        return False
 
     def check_empty_document(self):
         if not isinstance(self.event, DocumentStartEvent) or not self.events:
@@ -454,7 +523,19 @@ class Emitter:
                     and not self.analysis.empty and not self.analysis.multiline)
             or self.check_empty_sequence() or self.check_empty_mapping()))
 
-    # Anchor, Tag, and Scalar processors.
+    # Anchor, Tag, Scalar and Comment processors.
+
+    def process_comment(self):
+        # Write the comment event's value. No other parameters needed.
+        self.write_comment(self.event.value)
+
+
+    def resolve_comment(self):
+        # Write the deferred comment, if any
+        if self.deferred_comment is not None:
+            self.write_comment(self.deferred_comment.value)
+            self.deferred_comment = None
+
 
     def process_anchor(self, indicator):
         if self.event.anchor is None:
@@ -848,6 +929,42 @@ class Emitter:
             data = data.encode(self.encoding)
         self.stream.write(data)
         self.write_line_break()
+
+    # Comment writing.
+
+    def write_comment(self, text):
+        # This is currently based on the 'write single quoted' string logic
+        breaks = True
+        start = end = 0
+        self.stream.write('\n')
+        self.write_indent()
+        while end <= len(text):
+            ch = None
+            if end < len(text):
+                ch = text[end]
+            if breaks:
+                if ch is None or ch not in '\n\x85\u2028\u2029':
+                    for br in text[start:end]:
+                        if br == '\n':
+                            self.write_line_break()
+                        else:
+                            self.write_line_break(br)
+                    if ch is not None:
+                        self.write_indent()
+                        self.stream.write('# ')
+                    start = end
+            else:
+                if ch is None or ch in '\n\x85\u2028\u2029':
+                    data = text[start:end]
+                    if self.encoding:
+                        data = data.encode(self.encoding)
+                    self.stream.write(data)
+                    if ch is None:
+                        self.write_line_break()
+                    start = end
+            if ch is not None:
+                breaks = (ch in '\n\x85\u2028\u2029')
+            end += 1
 
     # Scalar streams.
 
