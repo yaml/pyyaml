@@ -332,7 +332,7 @@ class Scanner(object):
         ## }
         #if self.flow_level and self.indent > column:
         #    raise ScannerError(None, None,
-        #            "invalid intendation or unclosed '[' or '{'",
+        #            "invalid indentation or unclosed '[' or '{'",
         #            self.get_mark())
 
         # In the flow context, indentation is ignored. We make the scanner less
@@ -370,7 +370,7 @@ class Scanner(object):
 
     def fetch_stream_end(self):
 
-        # Set the current intendation to -1.
+        # Set the current indentation to -1.
         self.unwind_indent(-1)
 
         # Reset simple keys.
@@ -389,7 +389,7 @@ class Scanner(object):
 
     def fetch_directive(self):
         
-        # Set the current intendation to -1.
+        # Set the current indentation to -1.
         self.unwind_indent(-1)
 
         # Reset simple keys.
@@ -407,7 +407,7 @@ class Scanner(object):
 
     def fetch_document_indicator(self, TokenClass):
 
-        # Set the current intendation to -1.
+        # Set the current indentation to -1.
         self.unwind_indent(-1)
 
         # Reset simple keys. Note that there could not be a block collection
