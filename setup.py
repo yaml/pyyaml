@@ -40,24 +40,6 @@ CLASSIFIERS = [
 ]
 
 
-LIBYAML_CHECK = """
-#include <yaml.h>
-
-int main(void) {
-    yaml_parser_t parser;
-    yaml_emitter_t emitter;
-
-    yaml_parser_initialize(&parser);
-    yaml_parser_delete(&parser);
-
-    yaml_emitter_initialize(&emitter);
-    yaml_emitter_delete(&emitter);
-
-    return 0;
-}
-"""
-
-
 import sys, os.path, platform
 
 from distutils import log
@@ -65,29 +47,7 @@ from distutils.core import setup, Command
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
 from distutils.dir_util import mkpath
-from distutils.command.build_ext import build_ext as _build_ext
-from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
 from distutils.errors import DistutilsError, CompileError, LinkError, DistutilsPlatformError
-
-if 'setuptools.extension' in sys.modules:
-    _Extension = sys.modules['setuptools.extension']._Extension
-    sys.modules['distutils.core'].Extension = _Extension
-    sys.modules['distutils.extension'].Extension = _Extension
-    sys.modules['distutils.command.build_ext'].Extension = _Extension
-
-with_cython = False
-try:
-    from Cython.Distutils.extension import Extension as _Extension
-    from Cython.Distutils import build_ext as _build_ext
-    with_cython = True
-except ImportError:
-    pass
-
-try:
-    from wheel.bdist_wheel import bdist_wheel
-except ImportError:
-    bdist_wheel = None
-
 
 class Distribution(_Distribution):
 
@@ -149,94 +109,6 @@ class Extension(_Extension):
         self.neg_option_name = 'without-' + feature_name
 
 
-class build_ext(_build_ext):
-
-    def run(self):
-        optional = True
-        disabled = True
-        for ext in self.extensions:
-            with_ext = self.distribution.ext_status(ext)
-            if with_ext is None:
-                disabled = False
-            elif with_ext:
-                optional = False
-                disabled = False
-                break
-        if disabled:
-            return
-        try:
-            _build_ext.run(self)
-        except DistutilsPlatformError:
-            exc = sys.exc_info()[1]
-            if optional:
-                log.warn(str(exc))
-                log.warn("skipping build_ext")
-            else:
-                raise
-
-    def get_source_files(self):
-        self.check_extensions_list(self.extensions)
-        filenames = []
-        for ext in self.extensions:
-            if with_cython:
-                self.cython_sources(ext.sources, ext)
-            for filename in ext.sources:
-                filenames.append(filename)
-                base = os.path.splitext(filename)[0]
-                for ext in ['c', 'h', 'pyx', 'pxd']:
-                    filename = '%s.%s' % (base, ext)
-                    if filename not in filenames and os.path.isfile(filename):
-                        filenames.append(filename)
-        return filenames
-
-    def get_outputs(self):
-        self.check_extensions_list(self.extensions)
-        outputs = []
-        for ext in self.extensions:
-            fullname = self.get_ext_fullname(ext.name)
-            filename = os.path.join(self.build_lib,
-                                    self.get_ext_filename(fullname))
-            if os.path.isfile(filename):
-                outputs.append(filename)
-        return outputs
-
-    def build_extensions(self):
-        self.check_extensions_list(self.extensions)
-        for ext in self.extensions:
-            with_ext = self.distribution.ext_status(ext)
-            if with_ext is not None and not with_ext:
-                continue
-            if with_cython:
-                ext.sources = self.cython_sources(ext.sources, ext)
-            try:
-                self.build_extension(ext)
-            except (CompileError, LinkError):
-                if with_ext is not None:
-                    raise
-                log.warn("Error compiling module, falling back to pure Python")
-
-
-class bdist_rpm(_bdist_rpm):
-
-    def _make_spec_file(self):
-        argv0 = sys.argv[0]
-        features = []
-        for ext in self.distribution.ext_modules:
-            if not isinstance(ext, Extension):
-                continue
-            with_ext = getattr(self.distribution, ext.attr_name)
-            if with_ext is None:
-                continue
-            if with_ext:
-                features.append('--'+ext.option_name)
-            else:
-                features.append('--'+ext.neg_option_name)
-        sys.argv[0] = ' '.join([argv0]+features)
-        spec_file = _bdist_rpm._make_spec_file(self)
-        sys.argv[0] = argv0
-        return spec_file
-
-
 class test(Command):
 
     user_options = []
@@ -251,23 +123,15 @@ class test(Command):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        if sys.version_info[0] < 3:
-            sys.path.insert(0, 'tests/lib')
-        else:
-            sys.path.insert(0, 'tests/lib3')
+        sys.path.insert(0, 'tests/lib')
         import test_all
         if not test_all.main([]):
             raise DistutilsError("Tests failed")
 
 
 cmdclass = {
-    'build_ext': build_ext,
-    'bdist_rpm': bdist_rpm,
     'test': test,
 }
-if bdist_wheel:
-    cmdclass['bdist_wheel'] = bdist_wheel
-
 
 if __name__ == '__main__':
 
@@ -284,14 +148,8 @@ if __name__ == '__main__':
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
 
-        package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
+        package_dir={'': 'lib'},
         packages=['yaml'],
-        ext_modules=[
-            Extension('_yaml', ['ext/_yaml.pyx'],
-                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-                libraries=['yaml']),
-        ],
 
-        distclass=Distribution,
         cmdclass=cmdclass,
     )

@@ -1,7 +1,7 @@
 
 .PHONY: default build buildext force forceext install installext test testext dist clean
 
-PYTHON=/usr/bin/python
+PYTHON=/usr/bin/python3
 TEST=
 PARAMETERS=
 
@@ -23,13 +23,7 @@ install:
 installext:
 	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
 
-test: build
-	${PYTHON} tests/lib/test_build.py ${TEST}
-
-testext: buildext
-	${PYTHON} tests/lib/test_build_ext.py ${TEST}
-
-testall:
+test:
 	${PYTHON} setup.py test
 
 dist:

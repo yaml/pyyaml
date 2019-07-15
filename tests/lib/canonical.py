@@ -7,10 +7,12 @@ class CanonicalError(yaml.YAMLError):
 class CanonicalScanner:
 
     def __init__(self, data):
-        try:
-            self.data = unicode(data, 'utf-8')+u'\0'
-        except UnicodeDecodeError:
-            raise CanonicalError("utf-8 stream is expected")
+        if isinstance(data, bytes):
+            try:
+                data = data.decode('utf-8')
+            except UnicodeDecodeError:
+                raise CanonicalError("utf-8 stream is expected")
+        self.data = data+'\0'
         self.index = 0
         self.tokens = []
         self.scanned = False
@@ -49,63 +51,63 @@ class CanonicalScanner:
         while True:
             self.find_token()
             ch = self.data[self.index]
-            if ch == u'\0':
+            if ch == '\0':
                 self.tokens.append(yaml.StreamEndToken(None, None))
                 break
-            elif ch == u'%':
+            elif ch == '%':
                 self.tokens.append(self.scan_directive())
-            elif ch == u'-' and self.data[self.index:self.index+3] == u'---':
+            elif ch == '-' and self.data[self.index:self.index+3] == '---':
                 self.index += 3
                 self.tokens.append(yaml.DocumentStartToken(None, None))
-            elif ch == u'[':
+            elif ch == '[':
                 self.index += 1
                 self.tokens.append(yaml.FlowSequenceStartToken(None, None))
-            elif ch == u'{':
+            elif ch == '{':
                 self.index += 1
                 self.tokens.append(yaml.FlowMappingStartToken(None, None))
-            elif ch == u']':
+            elif ch == ']':
                 self.index += 1
                 self.tokens.append(yaml.FlowSequenceEndToken(None, None))
-            elif ch == u'}':
+            elif ch == '}':
                 self.index += 1
                 self.tokens.append(yaml.FlowMappingEndToken(None, None))
-            elif ch == u'?':
+            elif ch == '?':
                 self.index += 1
                 self.tokens.append(yaml.KeyToken(None, None))
-            elif ch == u':':
+            elif ch == ':':
                 self.index += 1
                 self.tokens.append(yaml.ValueToken(None, None))
-            elif ch == u',':
+            elif ch == ',':
                 self.index += 1
                 self.tokens.append(yaml.FlowEntryToken(None, None))
-            elif ch == u'*' or ch == u'&':
+            elif ch == '*' or ch == '&':
                 self.tokens.append(self.scan_alias())
-            elif ch == u'!':
+            elif ch == '!':
                 self.tokens.append(self.scan_tag())
-            elif ch == u'"':
+            elif ch == '"':
                 self.tokens.append(self.scan_scalar())
             else:
                 raise CanonicalError("invalid token")
         self.scanned = True
 
-    DIRECTIVE = u'%YAML 1.1'
+    DIRECTIVE = '%YAML 1.1'
 
     def scan_directive(self):
         if self.data[self.index:self.index+len(self.DIRECTIVE)] == self.DIRECTIVE and \
-                self.data[self.index+len(self.DIRECTIVE)] in u' \n\0':
+                self.data[self.index+len(self.DIRECTIVE)] in ' \n\0':
             self.index += len(self.DIRECTIVE)
             return yaml.DirectiveToken('YAML', (1, 1), None, None)
         else:
             raise CanonicalError("invalid directive")
 
     def scan_alias(self):
-        if self.data[self.index] == u'*':
+        if self.data[self.index] == '*':
             TokenClass = yaml.AliasToken
         else:
             TokenClass = yaml.AnchorToken
         self.index += 1
         start = self.index
-        while self.data[self.index] not in u', \n\0':
+        while self.data[self.index] not in ', \n\0':
             self.index += 1
         value = self.data[start:self.index]
         return TokenClass(value, None, None)
@@ -113,17 +115,17 @@ class CanonicalScanner:
     def scan_tag(self):
         self.index += 1
         start = self.index
-        while self.data[self.index] not in u' \n\0':
+        while self.data[self.index] not in ' \n\0':
             self.index += 1
         value = self.data[start:self.index]
         if not value:
-            value = u'!'
-        elif value[0] == u'!':
+            value = '!'
+        elif value[0] == '!':
             value = 'tag:yaml.org,2002:'+value[1:]
-        elif value[0] == u'<' and value[-1] == u'>':
+        elif value[0] == '<' and value[-1] == '>':
             value = value[1:-1]
         else:
-            value = u'!'+value
+            value = '!'+value
         return yaml.TagToken(value, None, None)
 
     QUOTE_CODES = {
@@ -133,23 +135,22 @@ class CanonicalScanner:
     }
 
     QUOTE_REPLACES = {
-        u'\\': u'\\',
-        u'\"': u'\"',
-        u' ': u' ',
-        u'a': u'\x07',
-        u'b': u'\x08',
-        u'e': u'\x1B',
-        u'f': u'\x0C',
-        u'n': u'\x0A',
-        u'r': u'\x0D',
-        u't': u'\x09',
-        u'v': u'\x0B',
-        u'N': u'\u0085',
-        u'L': u'\u2028',
-        u'P': u'\u2029',
-        u'_': u'_',
-        u'0': u'\x00',
-
+        '\\': '\\',
+        '\"': '\"',
+        ' ': ' ',
+        'a': '\x07',
+        'b': '\x08',
+        'e': '\x1B',
+        'f': '\x0C',
+        'n': '\x0A',
+        'r': '\x0D',
+        't': '\x09',
+        'v': '\x0B',
+        'N': '\u0085',
+        'L': '\u2028',
+        'P': '\u2029',
+        '_': '_',
+        '0': '\x00',
     }
 
     def scan_scalar(self):
@@ -157,32 +158,32 @@ class CanonicalScanner:
         chunks = []
         start = self.index
         ignore_spaces = False
-        while self.data[self.index] != u'"':
-            if self.data[self.index] == u'\\':
+        while self.data[self.index] != '"':
+            if self.data[self.index] == '\\':
                 ignore_spaces = False
                 chunks.append(self.data[start:self.index])
                 self.index += 1
                 ch = self.data[self.index]
                 self.index += 1
-                if ch == u'\n':
+                if ch == '\n':
                     ignore_spaces = True
                 elif ch in self.QUOTE_CODES:
                     length = self.QUOTE_CODES[ch]
                     code = int(self.data[self.index:self.index+length], 16)
-                    chunks.append(unichr(code))
+                    chunks.append(chr(code))
                     self.index += length
                 else:
                     if ch not in self.QUOTE_REPLACES:
                         raise CanonicalError("invalid escape code")
                     chunks.append(self.QUOTE_REPLACES[ch])
                 start = self.index
-            elif self.data[self.index] == u'\n':
+            elif self.data[self.index] == '\n':
                 chunks.append(self.data[start:self.index])
-                chunks.append(u' ')
+                chunks.append(' ')
                 self.index += 1
                 start = self.index
                 ignore_spaces = True
-            elif ignore_spaces and self.data[self.index] == u' ':
+            elif ignore_spaces and self.data[self.index] == ' ':
                 self.index += 1
                 start = self.index
             else:
@@ -190,17 +191,17 @@ class CanonicalScanner:
                 self.index += 1
         chunks.append(self.data[start:self.index])
         self.index += 1
-        return yaml.ScalarToken(u''.join(chunks), False, None, None)
+        return yaml.ScalarToken(''.join(chunks), False, None, None)
 
     def find_token(self):
         found = False
         while not found:
-            while self.data[self.index] in u' \t':
+            while self.data[self.index] in ' \t':
                 self.index += 1
-            if self.data[self.index] == u'#':
-                while self.data[self.index] != u'\n':
+            if self.data[self.index] == '#':
+                while self.data[self.index] != '\n':
                     self.index += 1
-            if self.data[self.index] == u'\n':
+            if self.data[self.index] == '\n':
                 self.index += 1
             else:
                 found = True

@@ -8,17 +8,13 @@
 
 __all__ = ['Emitter', 'EmitterError']
 
-import sys
-
-from error import YAMLError
-from events import *
-
-has_ucs4 = sys.maxunicode > 0xffff
+from .error import YAMLError
+from .events import *
 
 class EmitterError(YAMLError):
     pass
 
-class ScalarAnalysis(object):
+class ScalarAnalysis:
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
@@ -32,11 +28,11 @@ class ScalarAnalysis(object):
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
 
-class Emitter(object):
+class Emitter:
 
     DEFAULT_TAG_PREFIXES = {
-        u'!' : u'!',
-        u'tag:yaml.org,2002:' : u'!!',
+        '!' : '!',
+        'tag:yaml.org,2002:' : '!!',
     }
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
@@ -95,8 +91,8 @@ class Emitter(object):
         self.best_width = 80
         if width and width > self.best_indent*2:
             self.best_width = width
-        self.best_line_break = u'\n'
-        if line_break in [u'\r', u'\n', u'\r\n']:
+        self.best_line_break = '\n'
+        if line_break in ['\r', '\n', '\r\n']:
             self.best_line_break = line_break
 
         # Tag prefixes.
@@ -123,12 +119,10 @@ class Emitter(object):
             self.event = None
 
     # In some cases, we wait for a few next events before emitting.
-
     def need_more_events(self):
         if not self.events:
             return True
 
-        # Find the first non-comment event.
         event = None
         offset = 0 
         while offset < len(self.events):
@@ -141,7 +135,7 @@ class Emitter(object):
             # It's all comments
             return True
 
-        if isinstance(event, DocumentStartEvent):
+        if isinstance(event, (DocumentStartEvent)):
             return self.need_events(1, offset)
         elif isinstance(event, SequenceStartEvent):
             return self.need_events(2, offset)
@@ -156,7 +150,7 @@ class Emitter(object):
             if isinstance(event, (CommentEvent)):
                 # Each comment we see increases the total amount of events needed.
                 count += 1
-            
+
             if isinstance(event, (DocumentStartEvent, CollectionStartEvent)):
                 level += 1
             elif isinstance(event, (DocumentEndEvent, CollectionEndEvent)):
@@ -183,7 +177,7 @@ class Emitter(object):
 
     def expect_stream_start(self):
         if isinstance(self.event, StreamStartEvent):
-            if self.event.encoding and not getattr(self.stream, 'encoding', None):
+            if self.event.encoding and not hasattr(self.stream, 'encoding'):
                 self.encoding = self.event.encoding
             self.write_stream_start()
             self.state = self.expect_first_document_start
@@ -202,15 +196,14 @@ class Emitter(object):
     def expect_document_start(self, first=False):
         if isinstance(self.event, DocumentStartEvent):
             if (self.event.version or self.event.tags) and self.open_ended:
-                self.write_indicator(u'...', True)
+                self.write_indicator('...', True)
                 self.write_indent()
             if self.event.version:
                 version_text = self.prepare_version(self.event.version)
                 self.write_version_directive(version_text)
             self.tag_prefixes = self.DEFAULT_TAG_PREFIXES.copy()
             if self.event.tags:
-                handles = self.event.tags.keys()
-                handles.sort()
+                handles = sorted(self.event.tags.keys())
                 for handle in handles:
                     prefix = self.event.tags[handle]
                     self.tag_prefixes[prefix] = handle
@@ -222,13 +215,13 @@ class Emitter(object):
                     and not self.check_empty_document())
             if not implicit:
                 self.write_indent()
-                self.write_indicator(u'---', True)
+                self.write_indicator('---', True)
                 if self.canonical:
                     self.write_indent()
             self.state = self.expect_document_root
         elif isinstance(self.event, StreamEndEvent):
             if self.open_ended:
-                self.write_indicator(u'...', True)
+                self.write_indicator('...', True)
                 self.write_indent()
             self.write_stream_end()
             self.state = self.expect_nothing
@@ -240,7 +233,7 @@ class Emitter(object):
         if isinstance(self.event, DocumentEndEvent):
             self.write_indent()
             if self.event.explicit:
-                self.write_indicator(u'...', True)
+                self.write_indicator('...', True)
                 self.write_indent()
             self.flush_stream()
             self.state = self.expect_document_start
@@ -263,7 +256,7 @@ class Emitter(object):
         if isinstance(self.event, AliasEvent):
             self.expect_alias()
         elif isinstance(self.event, (ScalarEvent, CollectionStartEvent)):
-            self.process_anchor(u'&')
+            self.process_anchor('&')
             self.process_tag()
             if isinstance(self.event, ScalarEvent):
                 self.expect_scalar()
@@ -306,7 +299,7 @@ class Emitter(object):
     def expect_alias(self):
         if self.event.anchor is None:
             raise EmitterError("anchor is not specified for alias")
-        self.process_anchor(u'*')
+        self.process_anchor('*')
         self.state = self.states.pop()
 
     def expect_scalar(self):
@@ -318,7 +311,7 @@ class Emitter(object):
     # Flow sequence handlers.
 
     def expect_flow_sequence(self):
-        self.write_indicator(u'[', True, whitespace=True)
+        self.write_indicator('[', True, whitespace=True)
         self.flow_level += 1
         self.increase_indent(flow=True)
         self.state = self.expect_first_flow_sequence_item
@@ -328,7 +321,7 @@ class Emitter(object):
         if isinstance(self.event, SequenceEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
-            self.write_indicator(u']', False)
+            self.write_indicator(']', False)
             self.state = self.states.pop()
         else:
             if (self.canonical or 
@@ -344,12 +337,12 @@ class Emitter(object):
             self.indent = self.indents.pop()
             self.flow_level -= 1
             if self.canonical:
-                self.write_indicator(u',', False)
+                self.write_indicator(',', False)
                 self.write_indent()
-            self.write_indicator(u']', False)
+            self.write_indicator(']', False)
             self.state = self.states.pop()
         else:
-            self.write_indicator(u',', False)
+            self.write_indicator(',', False)
             self.resolve_comment()
             if (self.canonical or 
                     self.column > self.best_width or
@@ -361,7 +354,7 @@ class Emitter(object):
     # Flow mapping handlers.
 
     def expect_flow_mapping(self):
-        self.write_indicator(u'{', True, whitespace=True)
+        self.write_indicator('{', True, whitespace=True)
         self.flow_level += 1
         self.increase_indent(flow=True)
         self.expect_comment()
@@ -372,7 +365,7 @@ class Emitter(object):
         if isinstance(self.event, MappingEndEvent):
             self.indent = self.indents.pop()
             self.flow_level -= 1
-            self.write_indicator(u'}', False)
+            self.write_indicator('}', False)
             self.state = self.states.pop()
         else:
             if self.canonical or self.column > self.best_width:
@@ -381,7 +374,7 @@ class Emitter(object):
                 self.states.append(self.expect_flow_mapping_simple_value)
                 self.expect_node(mapping=True, simple_key=True)
             else:
-                self.write_indicator(u'?', True)
+                self.write_indicator('?', True)
                 self.states.append(self.expect_flow_mapping_value)
                 self.expect_node(mapping=True)
 
@@ -391,13 +384,13 @@ class Emitter(object):
             self.indent = self.indents.pop()
             self.flow_level -= 1
             if self.canonical:
-                self.write_indicator(u',', False)
+                self.write_indicator(',', False)
                 self.write_indent()
             self.resolve_comment()
-            self.write_indicator(u'}', False)
+            self.write_indicator('}', False)
             self.state = self.states.pop()
         else:
-            self.write_indicator(u',', False)
+            self.write_indicator(',', False)
             if self.canonical or self.column > self.best_width:
                 self.write_indent()
             self.resolve_comment()
@@ -405,19 +398,19 @@ class Emitter(object):
                 self.states.append(self.expect_flow_mapping_simple_value)
                 self.expect_node(mapping=True, simple_key=True)
             else:
-                self.write_indicator(u'?', True)
+                self.write_indicator('?', True)
                 self.states.append(self.expect_flow_mapping_value)
                 self.expect_node(mapping=True)
 
     def expect_flow_mapping_simple_value(self):
-        self.write_indicator(u':', False)
+        self.write_indicator(':', False)
         self.states.append(self.expect_flow_mapping_key)
         self.expect_node(mapping=True)
 
     def expect_flow_mapping_value(self):
         if self.canonical or self.column > self.best_width:
             self.write_indent()
-        self.write_indicator(u':', True)
+        self.write_indicator(':', True)
         self.states.append(self.expect_flow_mapping_key)
         self.expect_node(mapping=True)
 
@@ -440,7 +433,7 @@ class Emitter(object):
         else:
             self.resolve_comment()
             self.write_indent()
-            self.write_indicator(u'-', True, indention=True)
+            self.write_indicator('-', True, indention=True)
             self.states.append(self.expect_block_sequence_item)
             self.expect_node(sequence=True)
 
@@ -466,18 +459,18 @@ class Emitter(object):
                 self.states.append(self.expect_block_mapping_simple_value)
                 self.expect_node(mapping=True, simple_key=True)
             else:
-                self.write_indicator(u'?', True, indention=True)
+                self.write_indicator('?', True, indention=True)
                 self.states.append(self.expect_block_mapping_value)
                 self.expect_node(mapping=True)
 
     def expect_block_mapping_simple_value(self):
-        self.write_indicator(u':', False)
+        self.write_indicator(':', False)
         self.states.append(self.expect_block_mapping_key)
         self.expect_node(mapping=True)
 
     def expect_block_mapping_value(self):
         self.write_indent()
-        self.write_indicator(u':', True, indention=True)
+        self.write_indicator(':', True, indention=True)
         self.states.append(self.expect_block_mapping_key)
         self.expect_node(mapping=True)
 
@@ -508,7 +501,7 @@ class Emitter(object):
             return False
         event = self.events[0]
         return (isinstance(event, ScalarEvent) and event.anchor is None
-                and event.tag is None and event.implicit and event.value == u'')
+                and event.tag is None and event.implicit and event.value == '')
 
     def check_simple_key(self):
         length = 0
@@ -530,7 +523,7 @@ class Emitter(object):
                     and not self.analysis.empty and not self.analysis.multiline)
             or self.check_empty_sequence() or self.check_empty_mapping()))
 
-    # Anchor, Tag, Scalar, and Comment processors.
+    # Anchor, Tag, Scalar and Comment processors.
 
     def process_comment(self):
         # Write the comment event's value. No other parameters needed.
@@ -565,7 +558,7 @@ class Emitter(object):
                 self.prepared_tag = None
                 return
             if self.event.implicit[0] and tag is None:
-                tag = u'!'
+                tag = '!'
                 self.prepared_tag = None
         else:
             if (not self.canonical or tag is None) and self.event.implicit:
@@ -628,19 +621,18 @@ class Emitter(object):
         major, minor = version
         if major != 1:
             raise EmitterError("unsupported YAML version: %d.%d" % (major, minor))
-        return u'%d.%d' % (major, minor)
+        return '%d.%d' % (major, minor)
 
     def prepare_tag_handle(self, handle):
         if not handle:
             raise EmitterError("tag handle must not be empty")
-        if handle[0] != u'!' or handle[-1] != u'!':
-            raise EmitterError("tag handle must start and end with '!': %r"
-                    % (handle.encode('utf-8')))
+        if handle[0] != '!' or handle[-1] != '!':
+            raise EmitterError("tag handle must start and end with '!': %r" % handle)
         for ch in handle[1:-1]:
-            if not (u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'  \
-                    or ch in u'-_'):
+            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'    \
+                    or ch in '-_'):
                 raise EmitterError("invalid character %r in the tag handle: %r"
-                        % (ch.encode('utf-8'), handle.encode('utf-8')))
+                        % (ch, handle))
         return handle
 
     def prepare_tag_prefix(self, prefix):
@@ -648,12 +640,12 @@ class Emitter(object):
             raise EmitterError("tag prefix must not be empty")
         chunks = []
         start = end = 0
-        if prefix[0] == u'!':
+        if prefix[0] == '!':
             end = 1
         while end < len(prefix):
             ch = prefix[end]
-            if u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'   \
-                    or ch in u'-;/?!:@&=+$,_.~*\'()[]':
+            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z' \
+                    or ch in '-;/?!:@&=+$,_.~*\'()[]':
                 end += 1
             else:
                 if start < end:
@@ -661,32 +653,31 @@ class Emitter(object):
                 start = end = end+1
                 data = ch.encode('utf-8')
                 for ch in data:
-                    chunks.append(u'%%%02X' % ord(ch))
+                    chunks.append('%%%02X' % ord(ch))
         if start < end:
             chunks.append(prefix[start:end])
-        return u''.join(chunks)
+        return ''.join(chunks)
 
     def prepare_tag(self, tag):
         if not tag:
             raise EmitterError("tag must not be empty")
-        if tag == u'!':
+        if tag == '!':
             return tag
         handle = None
         suffix = tag
-        prefixes = self.tag_prefixes.keys()
-        prefixes.sort()
+        prefixes = sorted(self.tag_prefixes.keys())
         for prefix in prefixes:
             if tag.startswith(prefix)   \
-                    and (prefix == u'!' or len(prefix) < len(tag)):
+                    and (prefix == '!' or len(prefix) < len(tag)):
                 handle = self.tag_prefixes[prefix]
                 suffix = tag[len(prefix):]
         chunks = []
         start = end = 0
         while end < len(suffix):
             ch = suffix[end]
-            if u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'   \
-                    or ch in u'-;/?:@&=+$,_.~*\'()[]'   \
-                    or (ch == u'!' and handle != u'!'):
+            if '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z' \
+                    or ch in '-;/?:@&=+$,_.~*\'()[]'   \
+                    or (ch == '!' and handle != '!'):
                 end += 1
             else:
                 if start < end:
@@ -694,23 +685,23 @@ class Emitter(object):
                 start = end = end+1
                 data = ch.encode('utf-8')
                 for ch in data:
-                    chunks.append(u'%%%02X' % ord(ch))
+                    chunks.append('%%%02X' % ord(ch))
         if start < end:
             chunks.append(suffix[start:end])
-        suffix_text = u''.join(chunks)
+        suffix_text = ''.join(chunks)
         if handle:
-            return u'%s%s' % (handle, suffix_text)
+            return '%s%s' % (handle, suffix_text)
         else:
-            return u'!<%s>' % suffix_text
+            return '!<%s>' % suffix_text
 
     def prepare_anchor(self, anchor):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
-            if not (u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'  \
-                    or ch in u'-_'):
+            if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'    \
+                    or ch in '-_'):
                 raise EmitterError("invalid character %r in the anchor: %r"
-                        % (ch.encode('utf-8'), anchor.encode('utf-8')))
+                        % (ch, anchor))
         return anchor
 
     def analyze_scalar(self, scalar):
@@ -737,7 +728,7 @@ class Emitter(object):
         space_break = False
 
         # Check document indicators.
-        if scalar.startswith(u'---') or scalar.startswith(u'...'):
+        if scalar.startswith('---') or scalar.startswith('...'):
             block_indicators = True
             flow_indicators = True
 
@@ -746,7 +737,7 @@ class Emitter(object):
 
         # Last character or followed by a whitespace.
         followed_by_whitespace = (len(scalar) == 1 or
-                scalar[1] in u'\0 \t\r\n\x85\u2028\u2029')
+                scalar[1] in '\0 \t\r\n\x85\u2028\u2029')
 
         # The previous character is a space.
         previous_space = False
@@ -761,35 +752,35 @@ class Emitter(object):
             # Check for indicators.
             if index == 0:
                 # Leading indicators are special characters.
-                if ch in u'#,[]{}&*!|>\'\"%@`':
+                if ch in '#,[]{}&*!|>\'\"%@`':
                     flow_indicators = True
                     block_indicators = True
-                if ch in u'?:':
+                if ch in '?:':
                     flow_indicators = True
                     if followed_by_whitespace:
                         block_indicators = True
-                if ch == u'-' and followed_by_whitespace:
+                if ch == '-' and followed_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
             else:
                 # Some indicators cannot appear within a scalar as well.
-                if ch in u',?[]{}':
+                if ch in ',?[]{}':
                     flow_indicators = True
-                if ch == u':':
+                if ch == ':':
                     flow_indicators = True
                     if followed_by_whitespace:
                         block_indicators = True
-                if ch == u'#' and preceded_by_whitespace:
+                if ch == '#' and preceded_by_whitespace:
                     flow_indicators = True
                     block_indicators = True
 
             # Check for line breaks, special, and unicode characters.
-            if ch in u'\n\x85\u2028\u2029':
+            if ch in '\n\x85\u2028\u2029':
                 line_breaks = True
-            if not (ch == u'\n' or u'\x20' <= ch <= u'\x7E'):
-                if (ch == u'\x85' or u'\xA0' <= ch <= u'\uD7FF'
-                        or u'\uE000' <= ch <= u'\uFFFD'
-                        or ((not has_ucs4) or (u'\U00010000' <= ch < u'\U0010ffff'))) and ch != u'\uFEFF':
+            if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
+                if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
+                        or '\uE000' <= ch <= '\uFFFD'
+                        or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
@@ -797,7 +788,7 @@ class Emitter(object):
                     special_characters = True
 
             # Detect important whitespace combinations.
-            if ch == u' ':
+            if ch == ' ':
                 if index == 0:
                     leading_space = True
                 if index == len(scalar)-1:
@@ -806,7 +797,7 @@ class Emitter(object):
                     break_space = True
                 previous_space = True
                 previous_break = False
-            elif ch in u'\n\x85\u2028\u2029':
+            elif ch in '\n\x85\u2028\u2029':
                 if index == 0:
                     leading_break = True
                 if index == len(scalar)-1:
@@ -821,9 +812,9 @@ class Emitter(object):
 
             # Prepare for the next character.
             index += 1
-            preceded_by_whitespace = (ch in u'\0 \t\r\n\x85\u2028\u2029')
+            preceded_by_whitespace = (ch in '\0 \t\r\n\x85\u2028\u2029')
             followed_by_whitespace = (index+1 >= len(scalar) or
-                    scalar[index+1] in u'\0 \t\r\n\x85\u2028\u2029')
+                    scalar[index+1] in '\0 \t\r\n\x85\u2028\u2029')
 
         # Let's decide what styles are allowed.
         allow_flow_plain = True
@@ -882,7 +873,7 @@ class Emitter(object):
     def write_stream_start(self):
         # Write BOM if needed.
         if self.encoding and self.encoding.startswith('utf-16'):
-            self.stream.write(u'\uFEFF'.encode(self.encoding))
+            self.stream.write('\uFEFF'.encode(self.encoding))
 
     def write_stream_end(self):
         self.flush_stream()
@@ -892,7 +883,7 @@ class Emitter(object):
         if self.whitespace or not need_whitespace:
             data = indicator
         else:
-            data = u' '+indicator
+            data = ' '+indicator
         self.whitespace = whitespace
         self.indention = self.indention and indention
         self.column += len(data)
@@ -908,7 +899,7 @@ class Emitter(object):
             self.write_line_break()
         if self.column < indent:
             self.whitespace = True
-            data = u' '*(indent-self.column)
+            data = ' '*(indent-self.column)
             self.column = indent
             if self.encoding:
                 data = data.encode(self.encoding)
@@ -926,43 +917,44 @@ class Emitter(object):
         self.stream.write(data)
 
     def write_version_directive(self, version_text):
-        data = u'%%YAML %s' % version_text
+        data = '%%YAML %s' % version_text
         if self.encoding:
             data = data.encode(self.encoding)
         self.stream.write(data)
         self.write_line_break()
 
     def write_tag_directive(self, handle_text, prefix_text):
-        data = u'%%TAG %s %s' % (handle_text, prefix_text)
+        data = '%%TAG %s %s' % (handle_text, prefix_text)
         if self.encoding:
             data = data.encode(self.encoding)
         self.stream.write(data)
         self.write_line_break()
 
-    # Comment writing
+    # Comment writing.
 
     def write_comment(self, text):
         # This is currently based on the 'write single quoted' string logic
         breaks = True
         start = end = 0
+        self.stream.write('\n')
         self.write_indent()
         while end <= len(text):
             ch = None
             if end < len(text):
                 ch = text[end]
             if breaks:
-                if ch is None or ch not in u'\n\x85\u2028\u2029':
+                if ch is None or ch not in '\n\x85\u2028\u2029':
                     for br in text[start:end]:
-                        if br == u'\n':
+                        if br == '\n':
                             self.write_line_break()
                         else:
                             self.write_line_break(br)
                     if ch is not None:
                         self.write_indent()
-                        self.stream.write(u'# ')
+                        self.stream.write('# ')
                     start = end
             else:
-                if ch is None or ch in u'\n\x85\u2028\u2029':
+                if ch is None or ch in '\n\x85\u2028\u2029':
                     data = text[start:end]
                     if self.encoding:
                         data = data.encode(self.encoding)
@@ -971,13 +963,13 @@ class Emitter(object):
                         self.write_line_break()
                     start = end
             if ch is not None:
-                breaks = (ch in u'\n\x85\u2028\u2029')
+                breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
 
     # Scalar streams.
 
     def write_single_quoted(self, text, split=True):
-        self.write_indicator(u'\'', True)
+        self.write_indicator('\'', True)
         spaces = False
         breaks = False
         start = end = 0
@@ -986,7 +978,7 @@ class Emitter(object):
             if end < len(text):
                 ch = text[end]
             if spaces:
-                if ch is None or ch != u' ':
+                if ch is None or ch != ' ':
                     if start+1 == end and self.column > self.best_width and split   \
                             and start != 0 and end != len(text):
                         self.write_indent()
@@ -998,18 +990,18 @@ class Emitter(object):
                         self.stream.write(data)
                     start = end
             elif breaks:
-                if ch is None or ch not in u'\n\x85\u2028\u2029':
-                    if text[start] == u'\n':
+                if ch is None or ch not in '\n\x85\u2028\u2029':
+                    if text[start] == '\n':
                         self.write_line_break()
                     for br in text[start:end]:
-                        if br == u'\n':
+                        if br == '\n':
                             self.write_line_break()
                         else:
                             self.write_line_break(br)
                     self.write_indent()
                     start = end
             else:
-                if ch is None or ch in u' \n\x85\u2028\u2029' or ch == u'\'':
+                if ch is None or ch in ' \n\x85\u2028\u2029' or ch == '\'':
                     if start < end:
                         data = text[start:end]
                         self.column += len(data)
@@ -1017,49 +1009,49 @@ class Emitter(object):
                             data = data.encode(self.encoding)
                         self.stream.write(data)
                         start = end
-            if ch == u'\'':
-                data = u'\'\''
+            if ch == '\'':
+                data = '\'\''
                 self.column += 2
                 if self.encoding:
                     data = data.encode(self.encoding)
                 self.stream.write(data)
                 start = end + 1
             if ch is not None:
-                spaces = (ch == u' ')
-                breaks = (ch in u'\n\x85\u2028\u2029')
+                spaces = (ch == ' ')
+                breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
-        self.write_indicator(u'\'', False)
+        self.write_indicator('\'', False)
 
     ESCAPE_REPLACEMENTS = {
-        u'\0':      u'0',
-        u'\x07':    u'a',
-        u'\x08':    u'b',
-        u'\x09':    u't',
-        u'\x0A':    u'n',
-        u'\x0B':    u'v',
-        u'\x0C':    u'f',
-        u'\x0D':    u'r',
-        u'\x1B':    u'e',
-        u'\"':      u'\"',
-        u'\\':      u'\\',
-        u'\x85':    u'N',
-        u'\xA0':    u'_',
-        u'\u2028':  u'L',
-        u'\u2029':  u'P',
+        '\0':       '0',
+        '\x07':     'a',
+        '\x08':     'b',
+        '\x09':     't',
+        '\x0A':     'n',
+        '\x0B':     'v',
+        '\x0C':     'f',
+        '\x0D':     'r',
+        '\x1B':     'e',
+        '\"':       '\"',
+        '\\':       '\\',
+        '\x85':     'N',
+        '\xA0':     '_',
+        '\u2028':   'L',
+        '\u2029':   'P',
     }
 
     def write_double_quoted(self, text, split=True):
-        self.write_indicator(u'"', True)
+        self.write_indicator('"', True)
         start = end = 0
         while end <= len(text):
             ch = None
             if end < len(text):
                 ch = text[end]
-            if ch is None or ch in u'"\\\x85\u2028\u2029\uFEFF' \
-                    or not (u'\x20' <= ch <= u'\x7E'
+            if ch is None or ch in '"\\\x85\u2028\u2029\uFEFF' \
+                    or not ('\x20' <= ch <= '\x7E'
                         or (self.allow_unicode
-                            and (u'\xA0' <= ch <= u'\uD7FF'
-                                or u'\uE000' <= ch <= u'\uFFFD'))):
+                            and ('\xA0' <= ch <= '\uD7FF'
+                                or '\uE000' <= ch <= '\uFFFD'))):
                 if start < end:
                     data = text[start:end]
                     self.column += len(data)
@@ -1069,21 +1061,21 @@ class Emitter(object):
                     start = end
                 if ch is not None:
                     if ch in self.ESCAPE_REPLACEMENTS:
-                        data = u'\\'+self.ESCAPE_REPLACEMENTS[ch]
-                    elif ch <= u'\xFF':
-                        data = u'\\x%02X' % ord(ch)
-                    elif ch <= u'\uFFFF':
-                        data = u'\\u%04X' % ord(ch)
+                        data = '\\'+self.ESCAPE_REPLACEMENTS[ch]
+                    elif ch <= '\xFF':
+                        data = '\\x%02X' % ord(ch)
+                    elif ch <= '\uFFFF':
+                        data = '\\u%04X' % ord(ch)
                     else:
-                        data = u'\\U%08X' % ord(ch)
+                        data = '\\U%08X' % ord(ch)
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
                     self.stream.write(data)
                     start = end+1
-            if 0 < end < len(text)-1 and (ch == u' ' or start >= end)   \
+            if 0 < end < len(text)-1 and (ch == ' ' or start >= end)    \
                     and self.column+(end-start) > self.best_width and split:
-                data = text[start:end]+u'\\'
+                data = text[start:end]+'\\'
                 if start < end:
                     start = end
                 self.column += len(data)
@@ -1093,30 +1085,30 @@ class Emitter(object):
                 self.write_indent()
                 self.whitespace = False
                 self.indention = False
-                if text[start] == u' ':
-                    data = u'\\'
+                if text[start] == ' ':
+                    data = '\\'
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
                     self.stream.write(data)
             end += 1
-        self.write_indicator(u'"', False)
+        self.write_indicator('"', False)
 
     def determine_block_hints(self, text):
-        hints = u''
+        hints = ''
         if text:
-            if text[0] in u' \n\x85\u2028\u2029':
-                hints += unicode(self.best_indent)
-            if text[-1] not in u'\n\x85\u2028\u2029':
-                hints += u'-'
-            elif len(text) == 1 or text[-2] in u'\n\x85\u2028\u2029':
-                hints += u'+'
+            if text[0] in ' \n\x85\u2028\u2029':
+                hints += str(self.best_indent)
+            if text[-1] not in '\n\x85\u2028\u2029':
+                hints += '-'
+            elif len(text) == 1 or text[-2] in '\n\x85\u2028\u2029':
+                hints += '+'
         return hints
 
     def write_folded(self, text):
         hints = self.determine_block_hints(text)
-        self.write_indicator(u'>'+hints, True)
-        if hints[-1:] == u'+':
+        self.write_indicator('>'+hints, True)
+        if hints[-1:] == '+':
             self.open_ended = True
         self.write_line_break()
         leading_space = True
@@ -1128,13 +1120,13 @@ class Emitter(object):
             if end < len(text):
                 ch = text[end]
             if breaks:
-                if ch is None or ch not in u'\n\x85\u2028\u2029':
-                    if not leading_space and ch is not None and ch != u' '  \
-                            and text[start] == u'\n':
+                if ch is None or ch not in '\n\x85\u2028\u2029':
+                    if not leading_space and ch is not None and ch != ' '   \
+                            and text[start] == '\n':
                         self.write_line_break()
-                    leading_space = (ch == u' ')
+                    leading_space = (ch == ' ')
                     for br in text[start:end]:
-                        if br == u'\n':
+                        if br == '\n':
                             self.write_line_break()
                         else:
                             self.write_line_break(br)
@@ -1142,7 +1134,7 @@ class Emitter(object):
                         self.write_indent()
                     start = end
             elif spaces:
-                if ch != u' ':
+                if ch != ' ':
                     if start+1 == end and self.column > self.best_width:
                         self.write_indent()
                     else:
@@ -1153,7 +1145,7 @@ class Emitter(object):
                         self.stream.write(data)
                     start = end
             else:
-                if ch is None or ch in u' \n\x85\u2028\u2029':
+                if ch is None or ch in ' \n\x85\u2028\u2029':
                     data = text[start:end]
                     self.column += len(data)
                     if self.encoding:
@@ -1163,14 +1155,14 @@ class Emitter(object):
                         self.write_line_break()
                     start = end
             if ch is not None:
-                breaks = (ch in u'\n\x85\u2028\u2029')
-                spaces = (ch == u' ')
+                breaks = (ch in '\n\x85\u2028\u2029')
+                spaces = (ch == ' ')
             end += 1
 
     def write_literal(self, text):
         hints = self.determine_block_hints(text)
-        self.write_indicator(u'|'+hints, True)
-        if hints[-1:] == u'+':
+        self.write_indicator('|'+hints, True)
+        if hints[-1:] == '+':
             self.open_ended = True
         self.write_line_break()
         breaks = True
@@ -1180,9 +1172,9 @@ class Emitter(object):
             if end < len(text):
                 ch = text[end]
             if breaks:
-                if ch is None or ch not in u'\n\x85\u2028\u2029':
+                if ch is None or ch not in '\n\x85\u2028\u2029':
                     for br in text[start:end]:
-                        if br == u'\n':
+                        if br == '\n':
                             self.write_line_break()
                         else:
                             self.write_line_break(br)
@@ -1190,7 +1182,7 @@ class Emitter(object):
                         self.write_indent()
                     start = end
             else:
-                if ch is None or ch in u'\n\x85\u2028\u2029':
+                if ch is None or ch in '\n\x85\u2028\u2029':
                     data = text[start:end]
                     if self.encoding:
                         data = data.encode(self.encoding)
@@ -1199,7 +1191,7 @@ class Emitter(object):
                         self.write_line_break()
                     start = end
             if ch is not None:
-                breaks = (ch in u'\n\x85\u2028\u2029')
+                breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
 
     def write_plain(self, text, split=True):
@@ -1208,7 +1200,7 @@ class Emitter(object):
         if not text:
             return
         if not self.whitespace:
-            data = u' '
+            data = ' '
             self.column += len(data)
             if self.encoding:
                 data = data.encode(self.encoding)
@@ -1223,7 +1215,7 @@ class Emitter(object):
             if end < len(text):
                 ch = text[end]
             if spaces:
-                if ch != u' ':
+                if ch != ' ':
                     if start+1 == end and self.column > self.best_width and split:
                         self.write_indent()
                         self.whitespace = False
@@ -1236,11 +1228,11 @@ class Emitter(object):
                         self.stream.write(data)
                     start = end
             elif breaks:
-                if ch not in u'\n\x85\u2028\u2029':
-                    if text[start] == u'\n':
+                if ch not in '\n\x85\u2028\u2029':
+                    if text[start] == '\n':
                         self.write_line_break()
                     for br in text[start:end]:
-                        if br == u'\n':
+                        if br == '\n':
                             self.write_line_break()
                         else:
                             self.write_line_break(br)
@@ -1249,7 +1241,7 @@ class Emitter(object):
                     self.indention = False
                     start = end
             else:
-                if ch is None or ch in u' \n\x85\u2028\u2029':
+                if ch is None or ch in ' \n\x85\u2028\u2029':
                     data = text[start:end]
                     self.column += len(data)
                     if self.encoding:
@@ -1257,6 +1249,6 @@ class Emitter(object):
                     self.stream.write(data)
                     start = end
             if ch is not None:
-                spaces = (ch == u' ')
-                breaks = (ch in u'\n\x85\u2028\u2029')
+                spaces = (ch == ' ')
+                breaks = (ch in '\n\x85\u2028\u2029')
             end += 1
