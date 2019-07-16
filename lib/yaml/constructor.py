@@ -120,7 +120,11 @@ class BaseConstructor:
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
                     node.start_mark)
-        mapping = {}
+
+        if sys.version_info < (3, 6):
+            mapping = collections.OrderedDict()
+        else:
+            mapping = {}
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             if not isinstance(key, collections.Hashable):
