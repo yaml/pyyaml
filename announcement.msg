@@ -1,16 +1,16 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.1.1: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-5.1.2: YAML parser and emitter for Python
 
 =======================
-Announcing PyYAML-5.1.1
+Announcing PyYAML-5.1.2
 =======================
 
 A new minor release of PyYAML is now available:
 https://pypi.org/project/PyYAML/
 
 This is a maintenance re-release of PyYAML 5.1 with re-generated Cython
-bindings to allow the extension to build properly for Python 3.8. No code
+bindings to allow the extension to build properly for Python 3.8b2+. No code
 changes were made in the PyYAML sources.
 
 Changes

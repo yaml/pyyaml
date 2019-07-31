@@ -6,15 +6,14 @@
 # Update-AppveyorBuild -Version $dynamic_version
 
 Function Bootstrap() {
-    # uncomment when we want to start testing on Python 3.8
     # ensure py38 is present (current Appveyor VS2015 image doesn't include it)
-    #If(-not $(Test-Path C:\Python38)) {
-    #    choco.exe install python3 --version=3.8.0-a2 --forcex86 --force #--install-arguments="TargetDir=C:\Python38 PrependPath=0" --no-progress
-    #}
+    If(-not $(Test-Path C:\Python38)) {
+        choco.exe install python3 --version=3.8.0-b3 --forcex86 --force --params="/InstallDir:C:\Python38" --no-progress
+    }
 
-    #If(-not $(Test-Path C:\Python38-x64)) {
-    #    choco.exe install python3 --version=3.8.0-a2 --force #--install-arguments="TargetDir=C:\Python38-x64 PrependPath=0" --no-progress
-    #}
+    If(-not $(Test-Path C:\Python38-x64)) {
+        choco.exe install python3 --version=3.8.0-b3 --force --params="/InstallDir:C:\Python38-x64" --no-progress
+    }
 
     Write-Output "patching Windows SDK bits for distutils"
 
@@ -123,6 +122,8 @@ $pythons = @(
 "C:\Python36-x64"
 "C:\Python37"
 "C:\Python37-x64"
+"C:\Python38"
+"C:\Python38-x64"
 )
 
 #$pythons = @("C:\$($env:PYTHON_VER)")
