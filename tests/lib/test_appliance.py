@@ -3,6 +3,8 @@ import sys, os, os.path, types, traceback, pprint
 
 DATA = 'tests/data'
 
+has_ucs4 = sys.maxunicode > 0xffff
+
 def find_test_functions(collections):
     if not isinstance(collections, list):
         collections = [collections]
@@ -24,6 +26,8 @@ def find_test_filenames(directory):
         if os.path.isfile(os.path.join(directory, filename)):
             base, ext = os.path.splitext(filename)
             if base.endswith('-py3'):
+                continue
+            if not has_ucs4 and base.find('-ucs4-') > -1:
                 continue
             filenames.setdefault(base, []).append(ext)
     filenames = filenames.items()
