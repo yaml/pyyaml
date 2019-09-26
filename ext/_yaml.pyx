@@ -63,13 +63,13 @@ MappingNode = yaml.nodes.MappingNode
 
 cdef class Mark:
     cdef readonly object name
-    cdef readonly int index
-    cdef readonly int line
-    cdef readonly int column
+    cdef readonly size_t index
+    cdef readonly size_t line
+    cdef readonly size_t column
     cdef readonly buffer
     cdef readonly pointer
 
-    def __init__(self, object name, int index, int line, int column,
+    def __init__(self, object name, size_t index, size_t line, size_t column,
             object buffer, object pointer):
         self.name = name
         self.index = index
