@@ -604,7 +604,7 @@ class Emitter:
                 start = end = end+1
                 data = ch.encode('utf-8')
                 for ch in data:
-                    chunks.append('%%%02X' % ord(ch))
+                    chunks.append('%%%02X' % ch)
         if start < end:
             chunks.append(suffix[start:end])
         suffix_text = ''.join(chunks)

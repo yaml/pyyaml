@@ -17,7 +17,7 @@ def _unicode_open(file, encoding, errors='strict'):
 def test_unicode_input(unicode_filename, verbose=False):
     data = open(unicode_filename, 'rb').read().decode('utf-8')
     value = ' '.join(data.split())
-    output = yaml.load(_unicode_open(StringIO.StringIO(data.encode('utf-8')), 'utf-8'))
+    output = yaml.full_load(_unicode_open(StringIO.StringIO(data.encode('utf-8')), 'utf-8'))
     assert output == value, (output, value)
     for input in [data, data.encode('utf-8'),
                     codecs.BOM_UTF8+data.encode('utf-8'),
@@ -25,9 +25,9 @@ def test_unicode_input(unicode_filename, verbose=False):
                     codecs.BOM_UTF16_LE+data.encode('utf-16-le')]:
         if verbose:
             print "INPUT:", repr(input[:10]), "..."
-        output = yaml.load(input)
+        output = yaml.full_load(input)
         assert output == value, (output, value)
-        output = yaml.load(StringIO.StringIO(input))
+        output = yaml.full_load(StringIO.StringIO(input))
         assert output == value, (output, value)
 
 test_unicode_input.unittest = ['.unicode']
@@ -40,14 +40,14 @@ def test_unicode_input_errors(unicode_filename, verbose=False):
             codecs.BOM_UTF8+data.encode('utf-16-le')]:
 
         try:
-            yaml.load(input)
+            yaml.full_load(input)
         except yaml.YAMLError, exc:
             if verbose:
                 print exc
         else:
             raise AssertionError("expected an exception")
         try:
-            yaml.load(StringIO.StringIO(input))
+            yaml.full_load(StringIO.StringIO(input))
         except yaml.YAMLError, exc:
             if verbose:
                 print exc

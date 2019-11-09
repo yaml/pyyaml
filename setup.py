@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '4.1'
+VERSION = '5.1.2'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
@@ -27,13 +27,13 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.6",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.4",
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -59,7 +59,7 @@ int main(void) {
 """
 
 
-import sys, os.path, platform
+import sys, os.path, platform, warnings
 
 from distutils import log
 from distutils.core import setup, Command
@@ -93,6 +93,19 @@ try:
 except ImportError:
     bdist_wheel = None
 
+
+# on Windows, disable wheel generation warning noise
+windows_ignore_warnings = [
+"Unknown distribution option: 'python_requires'",
+"Config variable 'Py_DEBUG' is unset",
+"Config variable 'WITH_PYMALLOC' is unset",
+"Config variable 'Py_UNICODE_SIZE' is unset",
+"Cython directive 'language_level' not set"
+]
+
+if platform.system() == 'Windows':
+    for w in windows_ignore_warnings:
+        warnings.filterwarnings('ignore', w)
 
 class Distribution(_Distribution):
 
@@ -299,5 +312,5 @@ if __name__ == '__main__':
 
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+        python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     )

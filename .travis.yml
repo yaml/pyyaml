@@ -1,3 +1,5 @@
+# dist: xenial
+
 language: python
 
 sudo: false
@@ -6,8 +8,6 @@ cache: pip
 
 matrix:
   include:
-    - python: 2.6
-      env: TOXENV=py26
     - python: 2.7
       env: TOXENV=py27
     - python: 3.4
@@ -16,8 +16,10 @@ matrix:
       env: TOXENV=py35
     - python: 3.6
       env: TOXENV=py36
-    - python: 3.7-dev
+    - python: 3.7
       env: TOXENV=py37
+    - python: 3.8-dev
+      env: TOXENV=py38
     - python: pypy
       env: TOXENV=pypy
 
@@ -25,8 +27,9 @@ matrix:
 before_script:
 - >-
   cd /tmp
-  && git clone https://github.com/yaml/libyaml.git -b 0.2.2-pre1 libyaml
+  && git clone https://github.com/yaml/libyaml.git libyaml
   && cd libyaml
+  && git reset --hard 0.2.2
   && ./bootstrap
   && ./configure
   && make
