@@ -2,6 +2,12 @@
 
 import yaml, codecs, sys, os.path, optparse
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
+
 class Style:
 
     def __init__(self, header=None, footer=None,
@@ -48,6 +54,12 @@ class YAMLHighlight:
             self.output = open(options.output, 'wb')
         else:
             self.output = sys.stdout
+
+    def __del__(self):
+        if self.input not in (sys.stdin, None):
+            self.input.close()
+        if self.output not in (sys.stdout, None):
+            self.output.close()
 
     def highlight(self):
         input = self.input.read()
