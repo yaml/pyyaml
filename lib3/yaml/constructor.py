@@ -695,10 +695,6 @@ FullConstructor.add_multi_constructor(
     FullConstructor.construct_python_object)
 
 FullConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object/apply:',
-    FullConstructor.construct_python_object_apply)
-
-FullConstructor.add_multi_constructor(
     'tag:yaml.org,2002:python/object/new:',
     FullConstructor.construct_python_object_new)
 
@@ -713,6 +709,10 @@ class UnsafeConstructor(FullConstructor):
     def make_python_instance(self, suffix, node, args=None, kwds=None, newobj=False):
         return super(UnsafeConstructor, self).make_python_instance(
             suffix, node, args, kwds, newobj, unsafe=True)
+
+UnsafeConstructor.add_multi_constructor(
+    'tag:yaml.org,2002:python/object/apply:',
+    UnsafeConstructor.construct_python_object_apply)
 
 # Constructor is same as UnsafeConstructor. Need to leave this in place in case
 # people have extended it directly.
