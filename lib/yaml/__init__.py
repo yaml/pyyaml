@@ -8,7 +8,7 @@ from nodes import *
 from loader import *
 from dumper import *
 
-__version__ = '5.1.2'
+__version__ = '5.2b1'
 
 try:
     from cyaml import *
