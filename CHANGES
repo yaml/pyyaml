@@ -4,6 +4,21 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+5.2b1 (2019-11-26)
+------------------
+
+* Repair incompatibilities introduced with 5.1. The default Loader was changed,
+  but several methods like add_constructor still used the old default
+  https://github.com/yaml/pyyaml/pull/279 -- A more flexible fix for custom tag constructors
+  https://github.com/yaml/pyyaml/pull/287 -- Change default loader for yaml.add_constructor
+  https://github.com/yaml/pyyaml/pull/305 -- Change default loader for add_implicit_resolver, add_path_resolver
+* Make FullLoader safer by removing python/object/apply from the default FullLoader
+  https://github.com/yaml/pyyaml/pull/347 -- Move constructor for object/apply to UnsafeConstructor
+* Fix bug introduced in 5.1 where quoting went wrong on systems with sys.maxunicode <= 0xffff
+  https://github.com/yaml/pyyaml/pull/276 -- Fix logic for quoting special characters
+* Other PRs:
+  https://github.com/yaml/pyyaml/pull/280 -- Update CHANGES for 5.1
+
 5.1.2 (2019-07-30)
 ------------------
 
