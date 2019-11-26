@@ -4,9 +4,9 @@ version: '{build}'
 image:
 - Visual Studio 2015
 
-cache:
-- 'C:\Python38\'
-- 'C:\Python38-x64'
+#cache:
+#- 'C:\Python38\'
+#- 'C:\Python38-x64'
 
 environment:
   libyaml_repo_url: https://github.com/yaml/libyaml.git
@@ -14,8 +14,6 @@ environment:
 #  matrix:
 #    - PYTHON_VER: Python27
 #    - PYTHON_VER: Python27-x64
-#    - PYTHON_VER: Python34
-#    - PYTHON_VER: Python34-x64
 #    - PYTHON_VER: Python35
 #    - PYTHON_VER: Python35-x64
 #    - PYTHON_VER: Python36
