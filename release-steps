@@ -1,0 +1,57 @@
+update version number, text in:
+- announcement.msg
+- CHANGES
+- lib/__init__.py
+- lib3/__init__.py
+- setup.py
+
+ensure libyaml version is up to date in .travis.yml and .appveyor.yml
+
+commit with "changes for release X.Y"
+
+push to release branch
+
+mkdir /tmp/pyyaml-release
+cd /tmp/pyyaml-release
+mkdir work
+
+docker run -it  -v$PWD/work:/work python:3.7-buster bash
+--->
+pip install cython twine
+
+git clone https://github.com/yaml/pyyaml -b (release branch)
+git clone https://github.com/yaml/libyaml -b (current branch)
+
+cd libyaml
+./bootstrap
+./configure
+make
+make test-all
+make install
+ldconfig
+
+cd ../pyyaml
+make dist PYTHON=python
+# get wheels from AppVeyor artifacts, copy to dist/
+https://ci.appveyor.com/project/nitzmahone/pyyaml-fk6n7 -> Artifacts
+twine upload dist/*
+
+cp dist/* /work/
+
+exit docker
+
+
+tag release, push tag
+
+merge to master
+
+update yaml/pyyaml.org
+
+copy all release binaries from /tmp/pyyaml-release/work to download/pyyaml
+
+* wiki/index.md News section
+* wiki/PyYAML.md History
+
+% make update
+
+push
