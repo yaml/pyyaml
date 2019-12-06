@@ -72,7 +72,7 @@ class BaseConstructor:
             constructor = self.yaml_constructors[node.tag]
         else:
             for tag_prefix in self.yaml_multi_constructors:
-                if node.tag.startswith(tag_prefix):
+                if tag_prefix is not None and node.tag.startswith(tag_prefix):
                     tag_suffix = node.tag[len(tag_prefix):]
                     constructor = self.yaml_multi_constructors[tag_prefix]
                     break
