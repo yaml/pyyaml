@@ -2,6 +2,12 @@
 
 import yaml, codecs, sys, os.path, optparse
 
+try:
+    unicode
+except NameError:
+    unicode = str
+
+
 class Style:
 
     def __init__(self, header=None, footer=None,
@@ -37,16 +43,23 @@ yaml.add_path_resolver(u'tag:yaml.org,2002:pairs',
 class YAMLHighlight:
 
     def __init__(self, options):
-        config = yaml.load(file(options.config, 'rb').read())
+        with open(options.config, 'rb') as yaml_file:
+            config = yaml.load(yaml_file.read())
         self.style = config[options.style]
         if options.input:
-            self.input = file(options.input, 'rb')
+            self.input = open(options.input, 'rb')
         else:
             self.input = sys.stdin
         if options.output:
-            self.output = file(options.output, 'wb')
+            self.output = open(options.output, 'wb')
         else:
             self.output = sys.stdout
+
+    def __del__(self):
+        if self.input not in (sys.stdin, None):
+            self.input.close()
+        if self.output not in (sys.stdout, None):
+            self.output.close()
 
     def highlight(self):
         input = self.input.read()
