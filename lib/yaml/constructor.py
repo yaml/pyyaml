@@ -578,7 +578,7 @@ class FullConstructor(SafeConstructor):
             elif state:
                 slotstate.update(state)
             for key, value in slotstate.items():
-                setattr(object, key, value)
+                setattr(instance, key, value)
 
     def construct_python_object(self, suffix, node):
         # Format:
