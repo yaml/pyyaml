@@ -1,4 +1,3 @@
-
 # The following YAML grammar is LL(1) and is parsed by a recursive descent
 # parser.
 #
@@ -482,7 +481,7 @@ class Parser(object):
                     token = self.peek_token()
                     raise ParserError("while parsing a flow sequence", self.marks[-1],
                             "expected ',' or ']', but got %r" % token.id, token.start_mark)
-            
+
             if self.check_token(KeyToken):
                 token = self.peek_token()
                 event = MappingStartEvent(None, None, True,
@@ -586,4 +585,3 @@ class Parser(object):
 
     def process_empty_scalar(self, mark):
         return ScalarEvent(None, None, (True, False), u'', mark, mark)
-

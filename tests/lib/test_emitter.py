@@ -1,4 +1,3 @@
-
 import yaml
 
 def _compare_events(events1, events2):
@@ -97,4 +96,3 @@ def test_emitter_events(events_filename, verbose=False):
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
-

@@ -1,4 +1,3 @@
-
 import yaml
 
 def get_version_string():
@@ -964,7 +963,7 @@ cdef class CEmitter:
             if hasattr(stream, u'encoding'):
                 self.dump_unicode = 1
         self.use_encoding = encoding
-        yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)    
+        yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)
         if canonical:
             yaml_emitter_set_canonical(&self.emitter, 1)
         if indent is not None:
@@ -1524,4 +1523,3 @@ cdef int output_handler(void *data, char *buffer, size_t size) except 0:
         value = PyUnicode_DecodeUTF8(buffer, size, 'strict')
     emitter.stream.write(value)
     return 1
-

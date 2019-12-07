@@ -1,4 +1,3 @@
-
 .PHONY: default build buildext force forceext install installext test testext dist clean
 
 PYTHON=/usr/bin/python

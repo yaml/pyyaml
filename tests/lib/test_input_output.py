@@ -1,4 +1,3 @@
-
 import yaml
 import codecs, StringIO, tempfile, os, os.path
 

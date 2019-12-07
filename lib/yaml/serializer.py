@@ -1,4 +1,3 @@
-
 __all__ = ['Serializer', 'SerializerError']
 
 from error import YAMLError
@@ -108,4 +107,3 @@ class Serializer(object):
                     self.serialize_node(value, node, key)
                 self.emit(MappingEndEvent())
             self.ascend_resolver()
-

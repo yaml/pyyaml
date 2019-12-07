@@ -1,4 +1,3 @@
-
 For a complete changelog, see:
 
 * https://github.com/yaml/pyyaml/commits/
@@ -217,4 +216,3 @@ For a complete changelog, see:
 * Initial release.  The version number reflects the codename
   of the project (PyYAML 3000) and differentiates it from
   the abandoned PyYaml module.
-

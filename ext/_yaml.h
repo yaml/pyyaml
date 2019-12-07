@@ -1,4 +1,3 @@
-
 #include <yaml.h>
 
 #if PY_MAJOR_VERSION < 3

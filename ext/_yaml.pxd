@@ -1,4 +1,3 @@
-
 cdef extern from "_yaml.h":
 
     void malloc(int l)
@@ -248,4 +247,3 @@ cdef extern from "_yaml.h":
             yaml_break_t line_break)
     int yaml_emitter_emit(yaml_emitter_t *emitter, yaml_event_t *event) except *
     int yaml_emitter_flush(yaml_emitter_t *emitter)
-

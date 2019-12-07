@@ -1,4 +1,3 @@
-
 """
 yaml.py
 
@@ -427,5 +426,3 @@ class YAMLLexer(ExtendedRegexLexer):
         if context is None:
             context = YAMLLexerContext(text, 0)
         return super(YAMLLexer, self).get_tokens_unprocessed(text, context)
-
-

@@ -1,4 +1,3 @@
-
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
     'RepresenterError']
 
@@ -485,4 +484,3 @@ Representer.add_multi_representer(types.InstanceType,
 
 Representer.add_multi_representer(object,
         Representer.represent_object)
-

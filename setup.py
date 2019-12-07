@@ -1,4 +1,3 @@
-
 NAME = 'PyYAML'
 VERSION = '5.2'
 DESCRIPTION = "YAML parser and emitter for Python"

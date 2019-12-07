@@ -37,11 +37,11 @@ Function Bootstrap() {
     Copy-Item -Path "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\Itanium.VCPlatform.config" -Destination "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\Itanium.VCPlatform.Express.config" -Force
 
     # git spews all over stderr unless we tell it not to
-    $env:GIT_REDIRECT_STDERR="2>&1"; 
+    $env:GIT_REDIRECT_STDERR="2>&1";
 
     $libyaml_repo_url = If($env:libyaml_repo_url) { $env:libyaml_repo_url } Else { "https://github.com/yaml/libyaml.git" }
     $libyaml_refspec = If($env:libyaml_refspec) { $env:libyaml_refspec } Else { "master" }
-    
+
     Write-Output "cloning libyaml from $libyaml_repo_url / $libyaml_refspec"
 
     If(-not $(Test-Path .\libyaml)) {

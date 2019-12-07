@@ -1,4 +1,3 @@
-
 __all__ = ['Mark', 'YAMLError', 'MarkedYAMLError']
 
 class Mark:
@@ -72,4 +71,3 @@ class MarkedYAMLError(YAMLError):
         if self.note is not None:
             lines.append(self.note)
         return '\n'.join(lines)
-
