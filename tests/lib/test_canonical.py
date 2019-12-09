@@ -2,7 +2,8 @@
 import yaml, canonical
 
 def test_canonical_scanner(canonical_filename, verbose=False):
-    data = open(canonical_filename, 'rb').read()
+    with open(canonical_filename, 'rb') as fp:
+        data = fp.read()
     tokens = list(yaml.canonical_scan(data))
     assert tokens, tokens
     if verbose:
@@ -12,7 +13,8 @@ def test_canonical_scanner(canonical_filename, verbose=False):
 test_canonical_scanner.unittest = ['.canonical']
 
 def test_canonical_parser(canonical_filename, verbose=False):
-    data = open(canonical_filename, 'rb').read()
+    with open(canonical_filename, 'rb') as fp:
+        data = fp.read()
     events = list(yaml.canonical_parse(data))
     assert events, events
     if verbose:
@@ -22,7 +24,8 @@ def test_canonical_parser(canonical_filename, verbose=False):
 test_canonical_parser.unittest = ['.canonical']
 
 def test_canonical_error(data_filename, canonical_filename, verbose=False):
-    data = open(data_filename, 'rb').read()
+    with open(data_filename, 'rb') as fp:
+        data = fp.read()
     try:
         output = list(yaml.canonical_load_all(data))
     except yaml.YAMLError, exc:

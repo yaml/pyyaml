@@ -3,7 +3,8 @@ import yaml
 import codecs, io, tempfile, os, os.path
 
 def test_unicode_input(unicode_filename, verbose=False):
-    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    with open(unicode_filename, 'rb') as fp:
+        data = fp.read().decode('utf-8')
     value = ' '.join(data.split())
     output = yaml.full_load(data)
     assert output == value, (output, value)
@@ -23,7 +24,8 @@ def test_unicode_input(unicode_filename, verbose=False):
 test_unicode_input.unittest = ['.unicode']
 
 def test_unicode_input_errors(unicode_filename, verbose=False):
-    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    with open(unicode_filename, 'rb') as fp:
+        data = fp.read().decode('utf-8')
     for input in [data.encode('utf-16-be'),
             data.encode('utf-16-le'),
             codecs.BOM_UTF8+data.encode('utf-16-be'),
@@ -47,7 +49,8 @@ def test_unicode_input_errors(unicode_filename, verbose=False):
 test_unicode_input_errors.unittest = ['.unicode']
 
 def test_unicode_output(unicode_filename, verbose=False):
-    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    with open(unicode_filename, 'rb') as fp:
+        data = fp.read().decode('utf-8')
     value = ' '.join(data.split())
     for allow_unicode in [False, True]:
         data1 = yaml.dump(value, allow_unicode=allow_unicode)
@@ -82,7 +85,8 @@ def test_unicode_output(unicode_filename, verbose=False):
 test_unicode_output.unittest = ['.unicode']
 
 def test_file_output(unicode_filename, verbose=False):
-    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    with open(unicode_filename, 'rb') as fp:
+        data = fp.read().decode('utf-8')
     handle, filename = tempfile.mkstemp()
     os.close(handle)
     try:
@@ -92,14 +96,14 @@ def test_file_output(unicode_filename, verbose=False):
         stream = io.BytesIO()
         yaml.dump(data, stream, encoding='utf-16-le', allow_unicode=True)
         data2 = stream.getvalue().decode('utf-16-le')[1:]
-        stream = open(filename, 'w', encoding='utf-16-le')
-        yaml.dump(data, stream, allow_unicode=True)
-        stream.close()
-        data3 = open(filename, 'r', encoding='utf-16-le').read()
-        stream = open(filename, 'wb')
-        yaml.dump(data, stream, encoding='utf-8', allow_unicode=True)
-        stream.close()
-        data4 = open(filename, 'r', encoding='utf-8').read()
+        with open(filename, 'w', encoding='utf-16-le') as stream:
+            yaml.dump(data, stream, allow_unicode=True)
+        with open(filename, 'r', encoding='utf-16-le') as fp:
+            data3 = fp.read()
+        with open(filename, 'wb') as stream:
+            yaml.dump(data, stream, encoding='utf-8', allow_unicode=True)
+        with open(filename, 'r', encoding='utf-8') as fp:
+            data4 = fp.read()
         assert data1 == data2, (data1, data2)
         assert data1 == data3, (data1, data3)
         assert data1 == data4, (data1, data4)
@@ -110,7 +114,8 @@ def test_file_output(unicode_filename, verbose=False):
 test_file_output.unittest = ['.unicode']
 
 def test_unicode_transfer(unicode_filename, verbose=False):
-    data = open(unicode_filename, 'rb').read().decode('utf-8')
+    with open(unicode_filename, 'rb') as fp:
+        data = fp.read().decode('utf-8')
     for encoding in [None, 'utf-8', 'utf-16-be', 'utf-16-le']:
         input = data
         if encoding is not None:

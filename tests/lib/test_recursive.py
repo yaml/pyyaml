@@ -23,7 +23,8 @@ class AnInstanceWithState(AnInstance):
         self.foo, self.bar = state['attributes']
 
 def test_recursive(recursive_filename, verbose=False):
-    exec open(recursive_filename, 'rb').read()
+    with open(recursive_filename, 'rb') as fp:
+        exec fp.read()
     value1 = value
     output1 = None
     value2 = None

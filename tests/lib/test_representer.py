@@ -7,7 +7,8 @@ def test_representer_types(code_filename, verbose=False):
     test_constructor._make_objects()
     for allow_unicode in [False, True]:
         for encoding in ['utf-8', 'utf-16-be', 'utf-16-le']:
-            native1 = test_constructor._load_code(open(code_filename, 'rb').read())
+            with open(code_filename, 'rb') as fp:
+                native1 = test_constructor._load_code(fp.read())
             native2 = None
             try:
                 output = yaml.dump(native1, Dumper=test_constructor.MyDumper,
