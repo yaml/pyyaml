@@ -1,0 +1,12 @@
+[paths]
+source =
+    build
+
+[run]
+branch = true
+source =
+    build
+
+[report]
+precision = 2
+
