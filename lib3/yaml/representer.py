@@ -5,7 +5,7 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, sys, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections
 
 class RepresenterError(YAMLError):
     pass
