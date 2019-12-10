@@ -1,6 +1,6 @@
 
 import _yaml, yaml
-import types, pprint, tempfile, sys
+import types, pprint, tempfile, sys, os
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
@@ -238,6 +238,8 @@ def test_large_file(verbose=False):
     SIZE_ITERATION = 0
     SIZE_FILE = 31
     if sys.maxsize <= 2**32:
+        return
+    if not os.environ.get('PYYAML_TEST_LARGE_FILE'):
         return
     with tempfile.TemporaryFile() as temp_file:
         for i in range(2**(SIZE_FILE-SIZE_ITERATION-SIZE_LINE) + 1):
