@@ -5,17 +5,25 @@
 # TODO: get version number from setup.py and/or lib(3)/__version__
 # Update-AppveyorBuild -Version $dynamic_version
 
+Function Invoke-Exe([scriptblock]$sb) {
+    & $sb
+    $exitcode = $LASTEXITCODE
+    If($exitcode -ne 0) {
+       throw "exe failed with nonzero exit code $exitcode"
+    }
+}
+
 Function Bootstrap() {
-    # uncomment when we want to start testing on Python 3.8
-    # ensure py38 is present (current Appveyor VS2015 image doesn't include it)
-    #If(-not $(Test-Path C:\Python38)) {
-    #    choco.exe install python3 --version=3.8.0-a2 --forcex86 --force #--install-arguments="TargetDir=C:\Python38 PrependPath=0" --no-progress
-    #}
+<#
+    # ensure python 3.9 prerelease is present (current Appveyor VS2015 image doesn't include it)
+    If(-not $(Test-Path C:\Python39)) {
+        Invoke-Exe { choco.exe install python3 --version=3.9.0-a1 --forcex86 --force --params="/InstallDir:C:\Python39" --no-progress }
+    }
 
-    #If(-not $(Test-Path C:\Python38-x64)) {
-    #    choco.exe install python3 --version=3.8.0-a2 --force #--install-arguments="TargetDir=C:\Python38-x64 PrependPath=0" --no-progress
-    #}
-
+    If(-not $(Test-Path C:\Python39-x64)) {
+        Invoke-Exe { choco.exe install python3 --version=3.9.0-a1 --force --params="/InstallDir:C:\Python39-x64" --no-progress }
+    }
+#>
     Write-Output "patching Windows SDK bits for distutils"
 
     # patch 7.0/7.1 vcvars SDK bits up to work with distutils query
@@ -23,11 +31,7 @@ Function Bootstrap() {
     Set-Content -Path 'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\amd64\vcvars64.bat' '@CALL "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /Release /x64'
 
     # patch VS9 x64 CMake config for VS Express, hide `reg.exe` stderr noise
-    $noise = reg.exe import packaging\build\FixVS9CMake.reg 2>&1
-
-    If($LASTEXITCODE -ne 0) {
-        throw "reg failed with error code $LASTEXITCODE"
-    }
+    Invoke-Exe { $noise = reg.exe import packaging\build\FixVS9CMake.reg 2>&1 }
 
     Copy-Item -Path "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\AMD64.VCPlatform.config" -Destination "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\AMD64.VCPlatform.Express.config" -Force
     Copy-Item -Path "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\Itanium.VCPlatform.config" -Destination "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcpackages\Itanium.VCPlatform.Express.config" -Force
@@ -41,7 +45,7 @@ Function Bootstrap() {
     Write-Output "cloning libyaml from $libyaml_repo_url / $libyaml_refspec"
 
     If(-not $(Test-Path .\libyaml)) {
-        git clone -b $libyaml_refspec $libyaml_repo_url 2>&1
+        Invoke-Exe { git clone -b $libyaml_refspec $libyaml_repo_url 2>&1 }
     }
 }
 
@@ -53,7 +57,7 @@ Function Build-Wheel($python_path) {
     Write-Output "building pyyaml wheel for $python_path"
 
     # query distutils for the VC version used to build this Python; translate to a VS version to choose the right generator
-    $python_vs_buildver = & $python -c "from distutils.version import LooseVersion; from distutils.msvc9compiler import get_build_version; print(LooseVersion(str(get_build_version())).version[0])"
+    $python_vs_buildver = Invoke-Exe { & $python -c "from distutils.version import LooseVersion; from distutils.msvc9compiler import get_build_version; print(LooseVersion(str(get_build_version())).version[0])" }
 
     $python_cmake_generator = switch($python_vs_buildver) {
         "9" { "Visual Studio 9 2008" }
@@ -63,7 +67,7 @@ Function Build-Wheel($python_path) {
     }
 
     # query arch this python was built for
-    $python_arch = & $python -c "from distutils.util import get_platform; print(str(get_platform()))"
+    $python_arch = Invoke-Exe { & $python -c "from distutils.util import get_platform; print(str(get_platform()))" }
 
     if($python_arch -eq 'win-amd64') {
         $python_cmake_generator += " Win64"
@@ -71,7 +75,7 @@ Function Build-Wheel($python_path) {
     }
 
     # snarf VS vars (paths, etc) for the matching VS version and arch that built this Python
-    $raw_vars_out = & cmd.exe /c "`"C:\Program Files (x86)\Microsoft Visual Studio $($python_vs_buildver).0\VC\vcvarsall.bat`" $vcvars_arch & set"
+    $raw_vars_out = Invoke-Exe { cmd.exe /c "`"C:\Program Files (x86)\Microsoft Visual Studio $($python_vs_buildver).0\VC\vcvarsall.bat`" $vcvars_arch & set" }
     foreach($kv in $raw_vars_out) {
         If($kv -match "=") {
             $kv = $kv.Split("=", 2)
@@ -83,23 +87,23 @@ Function Build-Wheel($python_path) {
     }
 
     # ensure pip is current (some appveyor pips are not)
-    & $python -W "ignore:DEPRECATION" -m pip install --upgrade pip
+    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --upgrade pip }
 
     # ensure required-for-build packages are present and up-to-date
-    & $python -W "ignore:DEPRECATION" -m pip install --upgrade cython wheel setuptools --no-warn-script-location
+    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --upgrade cython wheel setuptools --no-warn-script-location }
 
     pushd libyaml
-    git clean -fdx
+    Invoke-Exe { git clean -fdx }
     popd
 
     mkdir libyaml\build
 
     pushd libyaml\build
-    cmake.exe -G $python_cmake_generator -DYAML_STATIC_LIB_NAME=yaml ..
-    cmake.exe --build . --config Release
+    Invoke-Exe { cmake.exe -G $python_cmake_generator -DYAML_STATIC_LIB_NAME=yaml .. }
+    Invoke-Exe { cmake.exe --build . --config Release }
     popd
 
-    & $python setup.py --with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build test bdist_wheel
+    Invoke-Exe { & $python setup.py --with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build test bdist_wheel }
 }
 
 Function Upload-Artifacts() {
@@ -115,14 +119,14 @@ Bootstrap
 $pythons = @(
 "C:\Python27"
 "C:\Python27-x64"
-"C:\Python34"
-"C:\Python34-x64"
 "C:\Python35"
 "C:\Python35-x64"
 "C:\Python36"
 "C:\Python36-x64"
 "C:\Python37"
 "C:\Python37-x64"
+"C:\Python38"
+"C:\Python38-x64"
 )
 
 #$pythons = @("C:\$($env:PYTHON_VER)")

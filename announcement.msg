@@ -1,22 +1,31 @@
-From: Ingy döt Net <ingy@ingy.net>
+From: Tina Müller <post@tinita.de>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.1.1: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-5.2: YAML parser and emitter for Python
 
 =======================
-Announcing PyYAML-5.1.1
+Announcing PyYAML-5.2
 =======================
 
-A new minor release of PyYAML is now available:
+A new release of PyYAML is now available:
 https://pypi.org/project/PyYAML/
 
-This is a maintenance re-release of PyYAML 5.1 with re-generated Cython
-bindings to allow the extension to build properly for Python 3.8. No code
-changes were made in the PyYAML sources.
+This fixes some incompatibilities introduced in version 5.1 and also removes
+another possibility of loading arbitrary code.
 
 Changes
 =======
 
-* None
+* Repair incompatibilities introduced with 5.1. The default Loader was changed,
+  but several methods like add_constructor still used the old default
+  https://github.com/yaml/pyyaml/pull/279 -- A more flexible fix for custom tag constructors
+  https://github.com/yaml/pyyaml/pull/287 -- Change default loader for yaml.add_constructor
+  https://github.com/yaml/pyyaml/pull/305 -- Change default loader for add_implicit_resolver, add_path_resolver
+* Make FullLoader safer by removing python/object/apply from the default FullLoader
+  https://github.com/yaml/pyyaml/pull/347 -- Move constructor for object/apply to UnsafeConstructor
+* Fix bug introduced in 5.1 where quoting went wrong on systems with sys.maxunicode <= 0xffff
+  https://github.com/yaml/pyyaml/pull/276 -- Fix logic for quoting special characters
+* Other PRs:
+  https://github.com/yaml/pyyaml/pull/280 -- Update CHANGES for 5.1
 
 Resources
 =========

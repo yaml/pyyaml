@@ -74,7 +74,7 @@ class BaseConstructor(object):
             constructor = self.yaml_constructors[node.tag]
         else:
             for tag_prefix in self.yaml_multi_constructors:
-                if node.tag.startswith(tag_prefix):
+                if tag_prefix is not None and node.tag.startswith(tag_prefix):
                     tag_suffix = node.tag[len(tag_prefix):]
                     constructor = self.yaml_multi_constructors[tag_prefix]
                     break
@@ -497,7 +497,7 @@ class FullConstructor(SafeConstructor):
             except ImportError, exc:
                 raise ConstructorError("while constructing a Python module", mark,
                         "cannot find module %r (%s)" % (name.encode('utf-8'), exc), mark)
-        if not name in sys.modules:
+        if name not in sys.modules:
             raise ConstructorError("while constructing a Python module", mark,
                     "module %r is not imported" % name.encode('utf-8'), mark)
         return sys.modules[name]
@@ -517,7 +517,7 @@ class FullConstructor(SafeConstructor):
             except ImportError, exc:
                 raise ConstructorError("while constructing a Python object", mark,
                         "cannot find module %r (%s)" % (module_name.encode('utf-8'), exc), mark)
-        if not module_name in sys.modules:
+        if module_name not in sys.modules:
             raise ConstructorError("while constructing a Python object", mark,
                     "module %r is not imported" % module_name.encode('utf-8'), mark)
         module = sys.modules[module_name]
@@ -578,7 +578,7 @@ class FullConstructor(SafeConstructor):
             elif state:
                 slotstate.update(state)
             for key, value in slotstate.items():
-                setattr(object, key, value)
+                setattr(instance, key, value)
 
     def construct_python_object(self, suffix, node):
         # Format:
@@ -684,10 +684,6 @@ FullConstructor.add_multi_constructor(
     FullConstructor.construct_python_object)
 
 FullConstructor.add_multi_constructor(
-    u'tag:yaml.org,2002:python/object/apply:',
-    FullConstructor.construct_python_object_apply)
-
-FullConstructor.add_multi_constructor(
     u'tag:yaml.org,2002:python/object/new:',
     FullConstructor.construct_python_object_new)
 
@@ -702,6 +698,10 @@ class UnsafeConstructor(FullConstructor):
     def make_python_instance(self, suffix, node, args=None, kwds=None, newobj=False):
         return super(UnsafeConstructor, self).make_python_instance(
             suffix, node, args, kwds, newobj, unsafe=True)
+
+UnsafeConstructor.add_multi_constructor(
+    u'tag:yaml.org,2002:python/object/apply:',
+    UnsafeConstructor.construct_python_object_apply)
 
 # Constructor is same as UnsafeConstructor. Need to leave this in place in case
 # people have extended it directly.
