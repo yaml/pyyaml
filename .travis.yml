@@ -6,6 +6,10 @@ sudo: false
 
 cache: pip
 
+env:
+  global:
+    - PYYAML_TEST_GROUP=all
+
 matrix:
   include:
     - python: 2.7
