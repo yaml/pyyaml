@@ -1,6 +1,6 @@
 
 import _yaml, yaml
-import types, pprint, tempfile, sys
+import types, pprint, tempfile, sys, os
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
