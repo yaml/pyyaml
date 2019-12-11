@@ -239,6 +239,8 @@ def test_large_file(verbose=False):
     SIZE_FILE = 31
     if sys.maxsize <= 2**32:
         return
+    if os.environ.get('PYYAML_TEST_GROUP', '') != 'all':
+        return
     with tempfile.TemporaryFile() as temp_file:
         for i in range(2**(SIZE_FILE-SIZE_ITERATION-SIZE_LINE) + 1):
             temp_file.write(bytes(('-' + (' ' * (2**SIZE_LINE-4))+ '{}\n')*(2**SIZE_ITERATION), 'utf-8'))

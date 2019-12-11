@@ -239,7 +239,7 @@ def test_large_file(verbose=False):
     SIZE_FILE = 31
     if sys.maxsize <= 2**32:
         return
-    if not os.environ.get('PYYAML_TEST_LARGE_FILE'):
+    if os.environ.get('PYYAML_TEST_GROUP', '') != 'all':
         return
     with tempfile.TemporaryFile() as temp_file:
         for i in range(2**(SIZE_FILE-SIZE_ITERATION-SIZE_LINE) + 1):
