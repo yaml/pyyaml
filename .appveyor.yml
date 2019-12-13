@@ -11,6 +11,8 @@ image:
 environment:
   libyaml_repo_url: https://github.com/yaml/libyaml.git
   libyaml_refspec: 0.2.2
+  PYYAML_TEST_GROUP: all
+
 #  matrix:
 #    - PYTHON_VER: Python27
 #    - PYTHON_VER: Python27-x64

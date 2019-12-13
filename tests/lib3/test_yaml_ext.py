@@ -1,6 +1,6 @@
 
 import _yaml, yaml
-import types, pprint
+import types, pprint, tempfile, sys, os
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
@@ -232,6 +232,22 @@ def test_c_emitter(data_filename, canonical_filename, verbose=False):
 
 test_c_emitter.unittest = ['.data', '.canonical']
 test_c_emitter.skip = ['.skip-ext']
+
+def test_large_file(verbose=False):
+    SIZE_LINE = 24
+    SIZE_ITERATION = 0
+    SIZE_FILE = 31
+    if sys.maxsize <= 2**32:
+        return
+    if os.environ.get('PYYAML_TEST_GROUP', '') != 'all':
+        return
+    with tempfile.TemporaryFile() as temp_file:
+        for i in range(2**(SIZE_FILE-SIZE_ITERATION-SIZE_LINE) + 1):
+            temp_file.write(bytes(('-' + (' ' * (2**SIZE_LINE-4))+ '{}\n')*(2**SIZE_ITERATION), 'utf-8'))
+        temp_file.seek(0)
+        yaml.load(temp_file, Loader=yaml.CLoader)
+
+test_large_file.unittest = None
 
 def wrap_ext_function(function):
     def wrapper(*args, **kwds):
