@@ -18,6 +18,29 @@ import binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+
+class timezone(datetime.tzinfo):
+    def __init__(self, offset):
+        self._offset = offset
+        seconds = abs(offset).total_seconds()
+        self._name = '%s%02d:%02d' % (
+            '-' if offset.days < 0 else '+',
+            seconds // 3600,
+            seconds % 3600 // 60
+        )
+
+    def tzname(self, dt=None):
+        return self._name
+
+    def utcoffset(self, dt=None):
+        return self._offset
+
+    def dst(self, dt=None):
+        return datetime.timedelta(0)
+
+    __repr__ = __str__ = tzname
+
+
 class BaseConstructor(object):
 
     yaml_constructors = {}
@@ -293,7 +316,7 @@ class SafeConstructor(BaseConstructor):
             return str(value).decode('base64')
         except (binascii.Error, UnicodeEncodeError), exc:
             raise ConstructorError(None, None,
-                    "failed to decode base64 data: %s" % exc, node.start_mark) 
+                    "failed to decode base64 data: %s" % exc, node.start_mark)
 
     timestamp_regexp = re.compile(
             ur'''^(?P<year>[0-9][0-9][0-9][0-9])
@@ -320,22 +343,23 @@ class SafeConstructor(BaseConstructor):
         minute = int(values['minute'])
         second = int(values['second'])
         fraction = 0
+        tzinfo = None
         if values['fraction']:
             fraction = values['fraction'][:6]
             while len(fraction) < 6:
                 fraction += '0'
             fraction = int(fraction)
-        delta = None
         if values['tz_sign']:
             tz_hour = int(values['tz_hour'])
             tz_minute = int(values['tz_minute'] or 0)
             delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
             if values['tz_sign'] == '-':
                 delta = -delta
-        data = datetime.datetime(year, month, day, hour, minute, second, fraction)
-        if delta:
-            data -= delta
-        return data
+            tzinfo = timezone(delta)
+        elif values['tz']:
+            tzinfo = timezone(datetime.timedelta(0))
+        return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                 tzinfo=tzinfo)
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
