@@ -23,7 +23,7 @@ class timezone(datetime.tzinfo):
     def __init__(self, offset):
         self._offset = offset
         seconds = abs(offset).total_seconds()
-        self._name = '%s%02d:%02d' % (
+        self._name = 'UTC%s%02d:%02d' % (
             '-' if offset.days < 0 else '+',
             seconds // 3600,
             seconds % 3600 // 60
