@@ -38,7 +38,18 @@ def _make_objects():
     def represent1(representer, native):
         return representer.represent_mapping("!tag1", native.__dict__)
 
+    def my_time_constructor(constructor, node):
+        seq = constructor.construct_sequence(node)
+        dt = seq[0]
+        tz = None
+        try:
+            tz = dt.tzinfo.tzname(dt)
+        except:
+            pass
+        return [dt, tz]
+
     yaml.add_constructor("!tag1", construct1, Loader=MyLoader)
+    yaml.add_constructor("!MyTime", my_time_constructor, Loader=MyLoader)
     yaml.add_representer(MyTestClass1, represent1, Dumper=MyDumper)
 
     class MyTestClass2(MyTestClass1, yaml.YAMLObject):
