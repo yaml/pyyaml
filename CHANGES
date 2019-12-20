@@ -4,6 +4,24 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+5.3b1 (2019-12-21)
+
+* https://github.com/yaml/pyyaml/pull/290 -- Use `is` instead of equality for comparing with `None`
+* https://github.com/yaml/pyyaml/pull/270 -- fix typos and stylistic nit
+* https://github.com/yaml/pyyaml/pull/309 -- Fix up small typo
+* https://github.com/yaml/pyyaml/pull/161 -- Fix handling of __slots__
+* https://github.com/yaml/pyyaml/pull/358 -- Allow calling add_multi_constructor with None
+* https://github.com/yaml/pyyaml/pull/285 -- Add use of safe_load() function in README
+* https://github.com/yaml/pyyaml/pull/351 -- Fix reader for Unicode code points over 0xFFFF
+* https://github.com/yaml/pyyaml/pull/360 -- Enable certain unicode tests when maxunicode not > 0xffff
+* https://github.com/yaml/pyyaml/pull/359 -- Use full_load in yaml-highlight example
+* https://github.com/yaml/pyyaml/pull/244 -- Document that PyYAML is implemented with Cython
+* https://github.com/yaml/pyyaml/pull/329 -- Fix for Python 3.10
+* https://github.com/yaml/pyyaml/pull/310 -- increase size of index, line, and column fields
+* https://github.com/yaml/pyyaml/pull/260 -- remove some unused imports
+* https://github.com/yaml/pyyaml/pull/163 -- Create timezone-aware datetimes when parsed as such
+* https://github.com/yaml/pyyaml/pull/363 -- Add tests for timezone
+
 5.2 (2019-12-02)
 ------------------
 
