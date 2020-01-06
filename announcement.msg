@@ -1,31 +1,37 @@
 From: Tina Müller <post@tinita.de>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.2: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-5.3: YAML parser and emitter for Python
 
 =======================
-Announcing PyYAML-5.2
+Announcing PyYAML-5.3
 =======================
 
 A new release of PyYAML is now available:
 https://pypi.org/project/PyYAML/
 
-This fixes some incompatibilities introduced in version 5.1 and also removes
-another possibility of loading arbitrary code.
+This release contains some bugfixes (handling of slots, enable unicode for
+maxunicode < 0xffff, enable large files), enhancements (create timezone
+aware datetimes) and some other small enhancements.
 
 Changes
 =======
 
-* Repair incompatibilities introduced with 5.1. The default Loader was changed,
-  but several methods like add_constructor still used the old default
-  https://github.com/yaml/pyyaml/pull/279 -- A more flexible fix for custom tag constructors
-  https://github.com/yaml/pyyaml/pull/287 -- Change default loader for yaml.add_constructor
-  https://github.com/yaml/pyyaml/pull/305 -- Change default loader for add_implicit_resolver, add_path_resolver
-* Make FullLoader safer by removing python/object/apply from the default FullLoader
-  https://github.com/yaml/pyyaml/pull/347 -- Move constructor for object/apply to UnsafeConstructor
-* Fix bug introduced in 5.1 where quoting went wrong on systems with sys.maxunicode <= 0xffff
-  https://github.com/yaml/pyyaml/pull/276 -- Fix logic for quoting special characters
-* Other PRs:
-  https://github.com/yaml/pyyaml/pull/280 -- Update CHANGES for 5.1
+* https://github.com/yaml/pyyaml/pull/290 -- Use `is` instead of equality for comparing with `None`
+* https://github.com/yaml/pyyaml/pull/270 -- fix typos and stylistic nit
+* https://github.com/yaml/pyyaml/pull/309 -- Fix up small typo
+* https://github.com/yaml/pyyaml/pull/161 -- Fix handling of __slots__
+* https://github.com/yaml/pyyaml/pull/358 -- Allow calling add_multi_constructor with None
+* https://github.com/yaml/pyyaml/pull/285 -- Add use of safe_load() function in README
+* https://github.com/yaml/pyyaml/pull/351 -- Fix reader for Unicode code points over 0xFFFF
+* https://github.com/yaml/pyyaml/pull/360 -- Enable certain unicode tests when maxunicode not > 0xffff
+* https://github.com/yaml/pyyaml/pull/359 -- Use full_load in yaml-highlight example
+* https://github.com/yaml/pyyaml/pull/244 -- Document that PyYAML is implemented with Cython
+* https://github.com/yaml/pyyaml/pull/329 -- Fix for Python 3.10
+* https://github.com/yaml/pyyaml/pull/310 -- increase size of index, line, and column fields
+* https://github.com/yaml/pyyaml/pull/260 -- remove some unused imports
+* https://github.com/yaml/pyyaml/pull/163 -- Create timezone-aware datetimes when parsed as such
+* https://github.com/yaml/pyyaml/pull/363 -- Add tests for timezone
+
 
 Resources
 =========
