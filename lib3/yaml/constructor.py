@@ -31,6 +31,14 @@ class BaseConstructor:
         # If there are more documents available?
         return self.check_node()
 
+    def check_state_key(self, key):
+        """Block special attributes/methods from being set in a newly created
+        object, to prevent user-controlled methods from being called during
+        deserialization"""
+        if self.get_state_keys_blacklist_regexp().match(key):
+            raise ConstructorError(None, None,
+                "blacklisted key '%s' in instance state found" % (key,), None)
+
     def get_data(self):
         # Construct and return the next document.
         if self.check_node():
@@ -472,6 +480,16 @@ SafeConstructor.add_constructor(None,
         SafeConstructor.construct_undefined)
 
 class FullConstructor(SafeConstructor):
+    # 'extend' is blacklisted because it is used by
+    # construct_python_object_apply to add `listitems` to a newly generate
+    # python instance
+    def get_state_keys_blacklist(self):
+        return ['^extend$', '^__.*__$']
+
+    def get_state_keys_blacklist_regexp(self):
+        if not hasattr(self, 'state_keys_blacklist_regexp'):
+            self.state_keys_blacklist_regexp = re.compile('(' + '|'.join(self.get_state_keys_blacklist()) + ')')
+        return self.state_keys_blacklist_regexp
 
     def construct_python_str(self, node):
         return self.construct_scalar(node)
@@ -574,7 +592,7 @@ class FullConstructor(SafeConstructor):
         else:
             return cls(*args, **kwds)
 
-    def set_python_instance_state(self, instance, state):
+    def set_python_instance_state(self, instance, state, unsafe=False):
         if hasattr(instance, '__setstate__'):
             instance.__setstate__(state)
         else:
@@ -582,10 +600,15 @@ class FullConstructor(SafeConstructor):
             if isinstance(state, tuple) and len(state) == 2:
                 state, slotstate = state
             if hasattr(instance, '__dict__'):
+                if not unsafe and state:
+                    for key in state.keys():
+                        self.check_state_key(key)
                 instance.__dict__.update(state)
             elif state:
                 slotstate.update(state)
             for key, value in slotstate.items():
+                if not unsafe:
+                    self.check_state_key(key)
                 setattr(instance, key, value)
 
     def construct_python_object(self, suffix, node):
@@ -710,6 +733,10 @@ class UnsafeConstructor(FullConstructor):
     def make_python_instance(self, suffix, node, args=None, kwds=None, newobj=False):
         return super(UnsafeConstructor, self).make_python_instance(
             suffix, node, args, kwds, newobj, unsafe=True)
+
+    def set_python_instance_state(self, instance, state):
+        return super(UnsafeConstructor, self).set_python_instance_state(
+            instance, state, unsafe=True)
 
 UnsafeConstructor.add_multi_constructor(
     'tag:yaml.org,2002:python/object/apply:',
