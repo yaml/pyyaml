@@ -1,0 +1,5 @@
+- !!python/object/new:yaml.MappingNode
+  args:
+  state:
+    mymethod: test
+    wrong_method: test2
