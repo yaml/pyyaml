@@ -17,7 +17,7 @@ def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
             AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, MyInt, MyList, MyDict,  \
-            FixedOffset, today, execute
+            FixedOffset, today, execute, MyFullLoader
 
     class MyLoader(yaml.Loader):
         pass
@@ -213,6 +213,10 @@ def _make_objects():
         def dst(self, dt):
             return datetime.timedelta(0)
 
+    class MyFullLoader(yaml.FullLoader):
+        def get_state_keys_blacklist(self):
+            return super(MyFullLoader, self).get_state_keys_blacklist() + ['^mymethod$', '^wrong_.*$']
+
     today = datetime.date.today()
 
 def _load_code(expression):
@@ -266,6 +270,18 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
             pprint.pprint(native2)
 
 test_constructor_types.unittest = ['.data', '.code']
+
+def test_subclass_blacklist_types(data_filename, verbose=False):
+    _make_objects()
+    try:
+        yaml.load(open(data_filename, 'rb').read(), MyFullLoader)
+    except yaml.YAMLError as exc:
+        if verbose:
+            print("%s:" % exc.__class__.__name__, exc)
+    else:
+        raise AssertionError("expected an exception")
+
+test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
 if __name__ == '__main__':
     import sys, test_constructor
