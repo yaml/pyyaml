@@ -1,36 +1,25 @@
 From: Tina Müller <post@tinita.de>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.3: YAML parser and emitter for Python
+Subject: [ANN] PyYAML-5.3.1: YAML parser and emitter for Python
 
 =======================
-Announcing PyYAML-5.3
+Announcing PyYAML-5.3.1
 =======================
 
 A new release of PyYAML is now available:
 https://pypi.org/project/PyYAML/
 
-This release contains some bugfixes (handling of slots, enable unicode for
-maxunicode < 0xffff, enable large files), enhancements (create timezone
-aware datetimes) and some other small enhancements.
+This release contains a security fix for CVE-2020-1747. FullLoader was still
+exploitable for arbitrary command execution.
+https://bugzilla.redhat.com/show_bug.cgi?id=1807367
+
+Thanks to Riccardo Schirone (https://github.com/ret2libc) for both reporting
+this and providing the fixes to resolve it.
 
 Changes
 =======
 
-* https://github.com/yaml/pyyaml/pull/290 -- Use `is` instead of equality for comparing with `None`
-* https://github.com/yaml/pyyaml/pull/270 -- fix typos and stylistic nit
-* https://github.com/yaml/pyyaml/pull/309 -- Fix up small typo
-* https://github.com/yaml/pyyaml/pull/161 -- Fix handling of __slots__
-* https://github.com/yaml/pyyaml/pull/358 -- Allow calling add_multi_constructor with None
-* https://github.com/yaml/pyyaml/pull/285 -- Add use of safe_load() function in README
-* https://github.com/yaml/pyyaml/pull/351 -- Fix reader for Unicode code points over 0xFFFF
-* https://github.com/yaml/pyyaml/pull/360 -- Enable certain unicode tests when maxunicode not > 0xffff
-* https://github.com/yaml/pyyaml/pull/359 -- Use full_load in yaml-highlight example
-* https://github.com/yaml/pyyaml/pull/244 -- Document that PyYAML is implemented with Cython
-* https://github.com/yaml/pyyaml/pull/329 -- Fix for Python 3.10
-* https://github.com/yaml/pyyaml/pull/310 -- increase size of index, line, and column fields
-* https://github.com/yaml/pyyaml/pull/260 -- remove some unused imports
-* https://github.com/yaml/pyyaml/pull/163 -- Create timezone-aware datetimes when parsed as such
-* https://github.com/yaml/pyyaml/pull/363 -- Add tests for timezone
+* https://github.com/yaml/pyyaml/pull/386 -- Prevents arbitrary code execution during python/object/new constructor
 
 
 Resources
@@ -90,8 +79,8 @@ Maintainers
 
 The following people are currently responsible for maintaining PyYAML:
 
-* Ingy döt Net
 * Tina Mueller
+* Ingy döt Net
 * Matt Davis
 
 and many thanks to all who have contribributed!
@@ -101,7 +90,7 @@ See: https://github.com/yaml/pyyaml/pulls
 Copyright
 =========
 
-Copyright (c) 2017-2019 Ingy döt Net <ingy@ingy.net>
+Copyright (c) 2017-2020 Ingy döt Net <ingy@ingy.net>
 Copyright (c) 2006-2016 Kirill Simonov <xi@resolvent.net>
 
 The PyYAML module was written by Kirill Simonov <xi@resolvent.net>.
