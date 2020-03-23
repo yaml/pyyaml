@@ -920,7 +920,7 @@ class Scanner(object):
         length = 0
         ch = self.peek(length)
         while u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'    \
-                or ch in u'-_':
+                or ch in u'-_./':
             length += 1
             ch = self.peek(length)
         if not length:

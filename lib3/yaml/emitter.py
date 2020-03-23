@@ -618,7 +618,7 @@ class Emitter:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
             if not ('0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'    \
-                    or ch in '-_'):
+                    or ch in '-_./'):
                 raise EmitterError("invalid character %r in the anchor: %r"
                         % (ch, anchor))
         return anchor
