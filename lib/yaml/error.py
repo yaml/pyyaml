@@ -42,7 +42,7 @@ class Mark(object):
             where += ":\n"+snippet
         return where
 
-class YAMLError(Exception):
+class YAMLError(ValueError):
     pass
 
 class MarkedYAMLError(YAMLError):
