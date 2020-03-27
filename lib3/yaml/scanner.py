@@ -914,8 +914,7 @@ class Scanner:
         self.forward()
         length = 0
         ch = self.peek(length)
-        while '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'  \
-                or ch in '-_':
+        while ch not in u'\0 \t\r\n\x85\u2028\u2029?:,[]{}%@':
             length += 1
             ch = self.peek(length)
         if not length:

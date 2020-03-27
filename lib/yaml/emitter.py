@@ -624,8 +624,7 @@ class Emitter(object):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
-            if not (u'0' <= ch <= u'9' or u'A' <= ch <= u'Z' or u'a' <= ch <= u'z'  \
-                    or ch in u'-_'):
+            if ch in u'\0 \t\r\n\x85\u2028\u2029?:,[]{}%@=':
                 raise EmitterError("invalid character %r in the anchor: %r"
                         % (ch.encode('utf-8'), anchor.encode('utf-8')))
         return anchor

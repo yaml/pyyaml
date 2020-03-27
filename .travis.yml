@@ -52,3 +52,4 @@ before_script:
 install: pip install cython tox
 
 script: tox
+
