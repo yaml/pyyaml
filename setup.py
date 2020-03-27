@@ -62,7 +62,8 @@ int main(void) {
 import sys, os.path, platform, warnings
 
 from distutils import log
-from distutils.core import setup, Command
+from distutils.core import Command
+from setuptools import setup
 from distutils.core import Distribution as _Distribution
 from distutils.core import Extension as _Extension
 from distutils.command.build_ext import build_ext as _build_ext
@@ -293,6 +294,7 @@ if __name__ == '__main__':
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type='text/x-rst',
         author=AUTHOR,
         author_email=AUTHOR_EMAIL,
         license=LICENSE,
