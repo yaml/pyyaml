@@ -79,7 +79,6 @@ Maintainers
 
 The following people are currently responsible for maintaining PyYAML:
 
-* Tina Mueller
 * Ingy döt Net
 * Matt Davis
 
