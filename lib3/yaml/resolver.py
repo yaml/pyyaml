@@ -4,6 +4,7 @@ __all__ = ['BaseResolver', 'Resolver']
 from .error import *
 from .nodes import *
 
+import itertools
 import re
 
 class ResolverError(YAMLError):
@@ -146,8 +147,8 @@ class BaseResolver:
                 resolvers = self.yaml_implicit_resolvers.get('', [])
             else:
                 resolvers = self.yaml_implicit_resolvers.get(value[0], [])
-            resolvers += self.yaml_implicit_resolvers.get(None, [])
-            for tag, regexp in resolvers:
+            none_resolvers = self.yaml_implicit_resolvers.get(None, [])
+            for tag, regexp in itertools.chain(resolvers, none_resolvers):
                 if regexp.match(value):
                     return tag
             implicit = implicit[1]

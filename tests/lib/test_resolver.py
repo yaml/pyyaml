@@ -1,6 +1,7 @@
 
 import yaml
 import pprint
+import re
 
 def test_implicit_resolver(data_filename, detect_filename, verbose=False):
     correct_tag = None
@@ -20,6 +21,25 @@ def test_implicit_resolver(data_filename, detect_filename, verbose=False):
                 pprint.pprint(node.value)
 
 test_implicit_resolver.unittest = ['.data', '.detect']
+
+def test_implicit_resolver_leak(data_filename, detect_filename, verbose=False):
+    # Add any custom resolver
+    tag, regexp = '!any_resolver', re.compile('AnyResolver')
+    yaml.add_implicit_resolver(tag, regexp)
+
+    none_resolvers = yaml.Dumper.yaml_implicit_resolvers.get(None, [])
+    assert (tag, regexp) in none_resolvers
+
+    old_f_resolvers = yaml.Dumper.yaml_implicit_resolvers.get('f', [])
+    assert (tag, regexp) not in old_f_resolvers
+
+    # Dump at least one ScalarNode
+    yaml.dump(False)
+
+    new_f_resolvers = yaml.Dumper.yaml_implicit_resolvers.get('f', [])
+    assert (tag, regexp) not in new_f_resolvers
+
+test_implicit_resolver_leak.unittest = ['.data', '.path']
 
 def _make_path_loader_and_dumper():
     global MyLoader, MyDumper
