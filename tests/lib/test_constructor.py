@@ -305,6 +305,18 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
+def test_timezone_copy(verbose=False):
+    import copy
+    tzinfo = yaml.constructor.timezone(datetime.timedelta(0))
+
+    tz_copy = copy.copy(tzinfo)
+    tz_deepcopy = copy.deepcopy(tzinfo)
+
+    if tzinfo.tzname() != tz_copy.tzname() != tz_deepcopy.tzname():
+        raise AssertionError("Timezones should be equal")
+
+test_timezone_copy.unittest = []
+
 if __name__ == '__main__':
     import sys, test_constructor
     sys.modules['test_constructor'] = sys.modules['__main__']
