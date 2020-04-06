@@ -38,6 +38,12 @@ class timezone(datetime.tzinfo):
     def dst(self, dt=None):
         return datetime.timedelta(0)
 
+    def __copy__(self):
+        return self.__deepcopy__()
+
+    def __deepcopy__(self, memodict={}):
+        return self.__class__(self.utcoffset())
+
     __repr__ = __str__ = tzname
 
 
