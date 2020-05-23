@@ -1,6 +1,7 @@
 # build outputs
 /dist/*
 /build/*
+/wheelhouse/*
 /ext/_yaml.c
 MANIFEST
 
