@@ -2,10 +2,20 @@
 
 set -eux
 
-yum install -y libyaml libyaml-devel
+pushd /opt
+LIBYAML_VERSION='0.2.4'
+git config --global advice.detachedHead false
+git clone -q \
+    --branch "$LIBYAML_VERSION" \
+    https://github.com/yaml/libyaml.git libyaml
+pushd libyaml
+./bootstrap
+./configure
+make
+make install
+ldconfig
 
-cd /io
-# TODO: might want to modify make clean / setup.py clean
+pushd /io
 mkdir -p wheelhouse
 rm -vf wheelhouse/*.whl
 
