@@ -2,23 +2,14 @@
 
 set -eux
 
-pushd /opt
-LIBYAML_VERSION='0.2.4'
-git config --global advice.detachedHead false
-git clone -q \
-    --branch "$LIBYAML_VERSION" \
-    https://github.com/yaml/libyaml.git libyaml
-pushd libyaml
-./bootstrap
-./configure
-make
-make install
-ldconfig
+./packaging/build/libyaml.sh
 
 pushd /io
+rm -rf "$TD"
 mkdir -p wheelhouse
 rm -vf wheelhouse/*.whl
 
+# PyYAML supports Python 2.7, 3.5-3.8
 for PYBIN in /opt/python/*/bin; do
     "${PYBIN}/python" -m pip install -U Cython auditwheel wheel setuptools pip
     "${PYBIN}/python" -m pip wheel \
@@ -30,7 +21,7 @@ for PYBIN in /opt/python/*/bin; do
 done
 
 for whl in wheelhouse/*.whl; do
-    "${PYBIN}/python" -m auditwheel repair "$whl" --plat "$PLAT" -w wheelhouse/
+    auditwheel repair "$whl" --plat "$PLAT" -w wheelhouse/
     rm -f "$whl"
 done
 

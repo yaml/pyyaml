@@ -1,7 +1,5 @@
 # dist: xenial
 
-language: python
-
 cache: pip
 
 env:
@@ -10,45 +8,55 @@ env:
 
 matrix:
   include:
-    - python: 2.7
-      env: TOXENV=py27
-    - python: 3.5
-      env: TOXENV=py35
-    - python: 3.6
-      env: TOXENV=py36
-    - python: 3.7
-      env: TOXENV=py37
-    - python: 3.8
-      env: TOXENV=py38
-    - python: 3.8-dev
-      env: TOXENV=py38
-    - python: 3.7
+    - language: python
+      python: 2.7
+      env: TOXENV=py27 JOBTYPE=test
+    - language: python
+      python: 3.5
+      env: TOXENV=py35 JOBTYPE=test
+    - language: python
+      python: 3.6
+      env: TOXENV=py36 JOBTYPE=test
+    - language: python
+      python: 3.7
+      env: TOXENV=py37 JOBTYPE=test
+    - language: python
+      python: 3.8
+      env: TOXENV=py38 JOBTYPE=test
+    - language: python
+      python: 3.8-dev
+      env: TOXENV=py38 JOBTYPE=test
+    - language: python
+      python: 3.7
       arch: arm64
-      env: TOXENV=py37
-    - python: 3.8
+      env: TOXENV=py37 JOBTYPE=test
+    - language: python
+      python: 3.8
       arch: arm64
-      env: TOXENV=py38
-    - python: 3.8-dev
+      env: TOXENV=py38 JOBTYPE=test
+    - language: python
+      python: 3.8-dev
       arch: arm64
-      env: TOXENV=py38
-    - python: pypy
-      env: TOXENV=pypy
+      env: TOXENV=py38 JOBTYPE=test
+    - language: python
+      python: pypy
+      env: TOXENV=pypy JOBTYPE=test
+    - name: manylinux2014-x86-64
+      sudo: required
+      services:
+        - docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux2014_x86_64:latest
+           PLAT=manylinux2014_x86_64
+           JOBTYPE=manylinux
 
-# build libyaml
 before_script:
-- >-
-  cd /tmp
-  && git clone https://github.com/yaml/libyaml.git libyaml
-  && cd libyaml
-  && git reset --hard 0.2.2
-  && ./bootstrap
-  && ./configure
-  && make
-  && make test-all
-  && sudo make install
-  && sudo ldconfig
-  && cd "$TRAVIS_BUILD_DIR"
+  - if [[ "$JOBTYPE" == "test" ]]; then ./packaging/build/libyaml.sh; fi
 
-install: pip install cython tox
+install:
+  - if [[ "$JOBTYPE" == "test" ]]; then pip install cython tox; fi
 
-script: tox
+script:
+  - if [[ "$JOBTYPE" == "test" ]]; then tox; fi
+  - if [[ "$JOBTYPE" == "manylinux" ]]; then
+      docker container run --rm -e PLAT="$PLAT" -v "$(pwd)":/io $DOCKER_IMAGE /io/packaging/build/manylinux.sh;
+    fi
