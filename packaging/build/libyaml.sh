@@ -2,7 +2,7 @@
 
 set -eux
 
-if [[ "$UID" != 0 ]]
+if [[ "$UID" != 0 ]]; then
     echo "Must be root" >&2
     exit 1
 fi
