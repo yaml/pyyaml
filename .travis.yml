@@ -62,7 +62,7 @@ before_script:
 install:
   - if [[ "$JOBTYPE" == "test" ]]; then pip install cython tox; fi
   - if [[ "$JOBTYPE" == "wheels-pure-py" ]]; then
-      pip install -u setuptools wheel;
+      pip install -U setuptools wheel;
     fi
 
 script:
