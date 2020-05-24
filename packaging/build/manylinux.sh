@@ -4,8 +4,6 @@ set -eux
 
 ./packaging/build/libyaml.sh
 
-pushd /io
-rm -rf "$TD"
 mkdir -p wheelhouse
 rm -vf wheelhouse/*.whl
 

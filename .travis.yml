@@ -57,5 +57,5 @@ install:
 script:
   - if [[ "$JOBTYPE" == "test" ]]; then tox; fi
   - if [[ "$JOBTYPE" == "manylinux" ]]; then
-      docker container run --rm -e PLAT="$PLAT" -v "$(pwd)":/io $DOCKER_IMAGE /io/packaging/build/manylinux.sh;
+      docker container run --rm -e PLAT="$PLAT" -v "$(pwd)":/io --workdir '/io' $DOCKER_IMAGE /io/packaging/build/manylinux.sh;
     fi
