@@ -42,7 +42,6 @@ matrix:
       python: pypy
       env: TOXENV=pypy JOBTYPE=test
     - name: manylinux2014-x86-64
-      sudo: required
       services:
         - docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux2014_x86_64:latest
