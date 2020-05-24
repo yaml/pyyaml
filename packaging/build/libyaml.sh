@@ -4,7 +4,7 @@ set -eux
 
 . ./LIBYAML_VERSION
 TD="$(mktemp -d)"
-pushd "$TD" | exit 1
+pushd "$TD" || exit 1
 git clone https://github.com/yaml/libyaml.git
 pushd libyaml
 git config --global advice.detachedHead false
