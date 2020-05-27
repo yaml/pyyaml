@@ -1,5 +1,5 @@
 
-import _yaml, yaml
+import yaml._yaml, yaml
 import types, pprint, tempfile, sys, os
 
 yaml.PyBaseLoader = yaml.BaseLoader
@@ -119,8 +119,8 @@ def test_c_version(verbose=False):
     if verbose:
         print(_yaml.get_version())
         print(_yaml.get_version_string())
-    assert ("%s.%s.%s" % _yaml.get_version()) == _yaml.get_version_string(),    \
-            (_yaml.get_version(), _yaml.get_version_string())
+    assert ("%s.%s.%s" % yaml._yaml.get_version()) == yaml._yaml.get_version_string(),    \
+            (_yaml.get_version(), yaml._yaml.get_version_string())
 
 def _compare_scanners(py_data, c_data, verbose):
     py_tokens = list(yaml.scan(py_data, Loader=yaml.PyLoader))
