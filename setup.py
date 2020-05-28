@@ -55,7 +55,7 @@ CLASSIFIERS = [
 
 extension = Extension(
     'yaml._yaml',
-    sources=['yaml/_yaml.%s' % 'pyx' if with_cython else 'c'],
+    sources=['ext/_yaml.%s' % 'pyx' if with_cython else 'c'],
     libraries=['yaml'],
 )
 
