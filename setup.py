@@ -95,7 +95,6 @@ except ImportError:
 
 # on Windows, disable wheel generation warning noise
 windows_ignore_warnings = [
-"Unknown distribution option: 'python_requires'",
 "Config variable 'Py_DEBUG' is unset",
 "Config variable 'WITH_PYMALLOC' is unset",
 "Config variable 'Py_UNICODE_SIZE' is unset",
@@ -109,6 +108,7 @@ if platform.system() == 'Windows':
 class Distribution(_Distribution):
 
     def __init__(self, attrs=None):
+        attrs.pop('python_requires', None)
         _Distribution.__init__(self, attrs)
         if not self.ext_modules:
             return
