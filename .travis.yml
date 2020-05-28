@@ -56,7 +56,7 @@ matrix:
       python: 3.7
       env: JOBTYPE=wheels-pure-py
     - name: MacOS Python 2.7
-      env: PYENV_VERSION=2.7.18 JOBTYPE=wheels-macosx
+      env: PYENV_VERSION=2.7.17 JOBTYPE=wheels-macosx
       os: osx
       language: c++
     - name: MacOS Python 3.5
