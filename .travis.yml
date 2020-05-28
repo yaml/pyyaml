@@ -55,19 +55,38 @@ matrix:
       language: python
       python: 3.7
       env: JOBTYPE=wheels-pure-py
+    - name: MacOS Python 2.7
+      env: PYENV_VERSION=2.7.18 JOBTYPE=wheels-macosx
+      os: osx
+      language: c++
+    - name: MacOS Python 3.5
+      env: PYENV_VERSION=3.5.9 JOBTYPE=wheels-macosx
+      os: osx
+      language: c++
+    - name: MacOS Python 3.6
+      env: PYENV_VERSION=3.6.10 JOBTYPE=wheels-macosx
+      os: osx
+      language: c++
+    - name: MacOS Python 3.7
+      env: PYENV_VERSION=3.7.7 JOBTYPE=wheels-macosx
+      os: osx
+      language: c++
+    - name: MacOS Python 3.8
+      env: PYENV_VERSION=3.8.3 JOBTYPE=wheels-macosx
+      os: osx
+      language: c++
 
 before_script:
   - if [[ "$JOBTYPE" == "test" ]]; then ./packaging/build/libyaml.sh; fi
 
 install:
   - if [[ "$JOBTYPE" == "test" ]]; then pip install cython tox; fi
-  - if [[ "$JOBTYPE" == "wheels-pure-py" ]]; then
-      pip install -U setuptools wheel;
-    fi
+  - if [[ "$JOBTYPE" == "wheels-pure-py" ]]; then pip install -U setuptools wheel; fi
 
 script:
   - if [[ "$JOBTYPE" == "test" ]]; then tox; fi
   - if [[ "$JOBTYPE" == "wheels-manylinux" ]]; then
       docker container run --rm -e PLAT="$PLAT" -v "$(pwd)":/io --workdir '/io' $DOCKER_IMAGE /io/packaging/build/manylinux.sh;
     fi
+  - if [[ "$JOBTYPE" == "wheels-macosx" ]]; then ./packaging/build/macos.sh; fi
   - if [[ "$JOBTYPE" == "wheels-pure-py" ]]; then python setup.py bdist_wheel && ls -1 dist; fi
