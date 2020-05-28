@@ -20,10 +20,11 @@ if [[ "$UID" != 0 ]]; then
         exit 1
     fi
     sudo make install
-    sudo ldconfig
+    # No ldconfig on MacOS
+    command -v ldconfig > /dev/null 2>&1 && sudo ldconfig || true
 else
     make install
-    ldconfig
+    command -v ldconfig > /dev/null 2>&1 && ldconfig || true
 fi
 popd && popd
 rm -rvf "$TD"
