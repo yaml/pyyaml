@@ -54,7 +54,7 @@ CLASSIFIERS = [
     "Topic :: Text Processing :: Markup",
 ]
 
-source = 'yaml/_yaml.%s' % ('pyx' if with_cython else 'c')
+source = 'yaml/_yaml.%s' % 'pyx' if with_cython else 'c'
 if not os.path.isfile(source):
     msg = "Attempting to build %s but cythonized file does not exist" % source
     raise RuntimeError(msg)
