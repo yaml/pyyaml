@@ -2,8 +2,11 @@
 /dist/*
 /build/*
 /wheelhouse/*
-/ext/_yaml.c
+/yaml/_yaml.c
 MANIFEST
+**/*.so
+**/*.dylib
+**/*.pyd
 
 # cached Python binaries
 *.py[cdo]
