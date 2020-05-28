@@ -62,12 +62,12 @@ For more information, check the PyYAML homepage:
 'https://github.com/yaml/pyyaml'.
 
 For PyYAML tutorial and reference, see:
-'http://pyyaml.org/wiki/PyYAMLDocumentation'.
+'https://pyyaml.org/wiki/PyYAMLDocumentation'.
 
 Discuss PyYAML with the maintainers in IRC #pyyaml irc.freenode.net.
 
 You may also use the YAML-Core mailing list:
-'http://lists.sourceforge.net/lists/listinfo/yaml-core'.
+'https://sourceforge.net/projects/yaml/lists/yaml-core'.
 
 Submit bug reports and feature requests to the PyYAML bug tracker:
 'https://github.com/yaml/pyyaml/issues'.
