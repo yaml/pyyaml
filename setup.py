@@ -3,6 +3,7 @@ import sys
 
 from setuptools import setup, Extension
 
+with_libyaml = '--with-libyaml' in sys.argv
 with_cython = 'sdist' in sys.argv or os.environ.get('USE_CYTHON')
 cython_available = False
 try:
@@ -53,9 +54,14 @@ CLASSIFIERS = [
     "Topic :: Text Processing :: Markup",
 ]
 
+source = 'yaml/_yaml.%s' % 'pyx' if with_cython else 'c'
+if not os.path.isfile(source):
+    msg = "Attempting to build %s but cythonized file does not exist" % source
+    raise RuntimeError(msg)
+
 extension = Extension(
     'yaml._yaml',
-    sources=['yaml/_yaml.%s' % 'pyx' if with_cython else 'c'],
+    sources=[source],
     libraries=['yaml'],
 )
 
