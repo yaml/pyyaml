@@ -13,7 +13,7 @@ pyenv --version
 pyenv install -s "$PYENV_VERSION"
 pyenv local "$PYENV_VERSION"
 python -V
-python -m pip install -U Cython wheel setuptools delocate
+pip install -U Cython wheel setuptools delocate
 python setup.py bdist_wheel
 delocate-listdeps dist/*.whl
 delocate-wheel -v dist/*.whl
