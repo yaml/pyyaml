@@ -37,7 +37,7 @@ skip building and installing LibYAML bindings, use ``--without-libyaml``:
 .. code-block:: shell
 
     # recommended
-    pip install pyyaml --install-option=--without-libyaml
+    pip install pyyaml --global-option=--without-libyaml
     # or
     python setup.py --without-libyaml install
     # Ref: pip.pypa.io/en/stable/reference/pip_install/#per-requirement-overrides
