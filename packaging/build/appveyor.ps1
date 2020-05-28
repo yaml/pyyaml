@@ -131,8 +131,6 @@ $pythons = @(
 
 #$pythons = @("C:\$($env:PYTHON_VER)")
 
-$Env:USE_CYTHON = "1"
-
 foreach($python in $pythons) {
     Build-Wheel $python
 }
