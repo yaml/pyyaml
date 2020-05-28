@@ -27,4 +27,4 @@ else
     command -v ldconfig > /dev/null 2>&1 && ldconfig || true
 fi
 popd && popd
-rm -rvf "$TD"
+rm -rf "$TD"
