@@ -122,6 +122,11 @@ def test_c_version(verbose=False):
     assert ("%s.%s.%s" % yaml._yaml.get_version()) == yaml._yaml.get_version_string(),    \
             (_yaml.get_version(), yaml._yaml.get_version_string())
 
+def test_deprecate_yaml_module():
+    import _yaml
+    assert _yaml.__package__ == ''
+    assert isinstance(_yaml.get_version(), str)
+
 def _compare_scanners(py_data, c_data, verbose):
     py_tokens = list(yaml.scan(py_data, Loader=yaml.PyLoader))
     c_tokens = []

@@ -302,7 +302,7 @@ if __name__ == '__main__':
         classifiers=CLASSIFIERS,
 
         package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
-        packages=['yaml'],
+        packages=['yaml', '_yaml'],
         ext_modules=[
             Extension('yaml._yaml', ['yaml/_yaml.pyx'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,
