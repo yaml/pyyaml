@@ -41,6 +41,10 @@ jobs:
     # used to build Python there.  It is the latter that determines
     # the wheel's platform tag.
     # https://github.com/actions/virtual-environments/issues/696
+    #
+    # See also:
+    # https://github.com/actions/virtual-environments/blob/master/images/macos/macos-10.15-Readme.md
+    # for environment description.
     runs-on: macos-latest
     strategy:
       matrix:
@@ -51,6 +55,12 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python_version }}
+      - name: Upgrade build tools
+        run: |
+          brew update -y
+          brew upgrade -y
+          brew upgrade gettext || brew install gettext
+          brew upgrade automake || brew install automake
       - name: Build LibYAML
         run: bash ./packaging/build/libyaml.sh
       - name: Build MacOS wheels
