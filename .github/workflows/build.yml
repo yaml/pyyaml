@@ -10,6 +10,7 @@ jobs:
       matrix:
         platform:
           - manylinux1_x86_64
+          - manylinux2014_x86_64
     steps:
       - uses: actions/checkout@v2
       - name: Install Docker
