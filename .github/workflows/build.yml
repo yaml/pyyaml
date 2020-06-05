@@ -59,9 +59,9 @@ jobs:
         # Brew install may issue a warning if already installed
         # but should exit 0 regardless
         run: |
-          brew -q update
-          brew -q upgrade
-          brew -q install automake
+          brew update -q
+          brew upgrade
+          brew install automake
       - name: Build LibYAML
         run: bash ./packaging/build/libyaml.sh
       - name: Build MacOS wheels
