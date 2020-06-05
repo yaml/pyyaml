@@ -62,6 +62,7 @@ jobs:
           brew update -q
           brew upgrade
           brew install automake
+          brew install coreutils
       - name: Build LibYAML
         run: bash ./packaging/build/libyaml.sh
       - name: Build MacOS wheels
