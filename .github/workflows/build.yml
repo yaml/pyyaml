@@ -56,11 +56,12 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
       - name: Upgrade build tools
+        # Brew install may issue a warning if already installed
+        # but should exit 0 regardless
         run: |
-          brew update
-          brew upgrade
-          brew upgrade gettext || brew install gettext
-          brew upgrade automake || brew install automake
+          brew -q update
+          brew -q upgrade
+          brew -q install automake
       - name: Build LibYAML
         run: bash ./packaging/build/libyaml.sh
       - name: Build MacOS wheels
