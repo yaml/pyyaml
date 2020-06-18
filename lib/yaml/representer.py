@@ -18,10 +18,11 @@ class BaseRepresenter(object):
     yaml_representers = {}
     yaml_multi_representers = {}
 
-    def __init__(self, default_style=None, default_flow_style=False, sort_keys=True):
+    def __init__(self, default_style=None, default_flow_style=False, sort_keys=True, key=None):
         self.default_style = default_style
         self.default_flow_style = default_flow_style
         self.sort_keys = sort_keys
+        self.key = key
         self.represented_objects = {}
         self.object_keeper = []
         self.alias_key = None
@@ -120,7 +121,7 @@ class BaseRepresenter(object):
         if hasattr(mapping, 'items'):
             mapping = mapping.items()
             if self.sort_keys:
-                mapping.sort()
+                mapping.sort(key=self.key)
         for item_key, item_value in mapping:
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)

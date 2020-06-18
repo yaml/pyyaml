@@ -15,9 +15,10 @@ class BaseRepresenter:
     yaml_representers = {}
     yaml_multi_representers = {}
 
-    def __init__(self, default_style=None, default_flow_style=False, sort_keys=True):
+    def __init__(self, default_style=None, default_flow_style=False, sort_keys=True, key=None):
         self.default_style = default_style
         self.sort_keys = sort_keys
+        self.key = key
         self.default_flow_style = default_flow_style
         self.represented_objects = {}
         self.object_keeper = []
@@ -110,7 +111,7 @@ class BaseRepresenter:
             mapping = list(mapping.items())
             if self.sort_keys:
                 try:
-                    mapping = sorted(mapping)
+                    mapping = sorted(mapping, key=self.key)
                 except TypeError:
                     pass
         for item_key, item_value in mapping:
