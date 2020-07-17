@@ -11,3 +11,6 @@ _pycache_/*
 # local IDE state
 /.idea/*
 
+# tox artifacts
+.tox/
+*.egg-info/

@@ -28,7 +28,8 @@ class Composer:
 
     def get_single_node(self):
         # Drop the STREAM-START event.
-        self.get_event()
+        if self.check_event(StreamStartEvent):
+            self.get_event()
 
         # Compose a document if the stream is not empty.
         document = None
