@@ -8,7 +8,7 @@ from nodes import *
 from loader import *
 from dumper import *
 
-from .property import Environment, Property, default
+from .property import Property, default
 
 __version__ = '5.3.1'
 
