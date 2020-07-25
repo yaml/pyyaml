@@ -74,6 +74,39 @@ description: YAML parser and emitter for Python
 keywords: [YAML, serialization, configuration, persistence, pickle]
 
 
+YAML Application Files
+======================
+Examples:
+``` # properties/application.yaml
+version: 1.0
+url: "pyyaml.test.com"
+```
+``` # properties/application-dev.yaml
+integration:
+  python:
+    url: "http://teste"
+    port: 8080
+version: 2.0
+```
+>>> yaml.property('version')
+# output: 1.0
+# found: properties/application.yaml
+
+>>> yaml.property('version', 'dev')
+# output: 2.0
+# found: properties/application-dev.yaml
+
+>>> yaml.property('integration.python.port', 'dev')
+# output: 8080
+# found: properties/application-dev.yaml
+
+>>> yaml.property('url', 'dev')
+# output: pyyaml.test.com
+# not found: properties/application-dev.yaml
+# found: properties/application.yaml
+
+
+
 Maintainers
 ===========
 
@@ -82,6 +115,7 @@ The following people are currently responsible for maintaining PyYAML:
 * Tina Mueller
 * Ingy döt Net
 * Matt Davis
+* Marcos Stefani Rosa
 
 and many thanks to all who have contribributed!
 See: https://github.com/yaml/pyyaml/pulls

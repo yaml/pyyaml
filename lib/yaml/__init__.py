@@ -8,6 +8,8 @@ from nodes import *
 from loader import *
 from dumper import *
 
+from .property import Environment, Property, default
+
 __version__ = '5.3.1'
 
 try:
@@ -429,3 +431,45 @@ class YAMLObject(object):
                 flow_style=cls.yaml_flow_style)
     to_yaml = classmethod(to_yaml)
 
+#------------------------------------------------------------------------------
+# YAML Properties - application.yaml or application-{env}.properties
+#------------------------------------------------------------------------------
+
+def _find(path, items):
+    with open(path) as f:
+        docs = load_all(f, Loader=FullLoader)
+        for doc in docs:
+            for k, v in doc.items():
+                if k != items[0]:
+                    continue
+                for i in items[1:]:
+                    if isinstance(v, dict):
+                        v = v[i]
+                return v
+
+# Get Property from Yaml file inside /properties folder
+# params:
+#   - name: absolute name inside yaml file linking by dot (.)
+#           e.g.: integration.python.version
+#           ```
+#           integration:
+#             python:
+#               version: 3.7
+#           ```
+#   - environment: If the parameter value is not passed it
+#                  will consider looking in a file called `application.yaml`
+#                  otherwise otherwise it will include the environment prefix
+#                  in the file name to find (e.g.: `dev` consider a file
+#                  called `application-dev.yaml`) and if not locate, then will find
+#                  inside default `application.yaml` if exists. otherwise return None
+def property(name, environment=None):
+    file = Property(environment)
+    items = [name]
+    if '.' in name:
+        items = name.split('.')
+    value = _find(file.absoluteName(), items)
+    # find in default file if not found in specific(environment) file
+    if environment and not value:
+        file = Property()
+        value = _find(file.absoluteName(), items)
+    return value
