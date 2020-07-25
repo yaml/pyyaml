@@ -434,7 +434,7 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
 def _find(path, items):
     try:
         with open(path) as f:
-            docs = yaml.load_all(f, Loader=yaml.FullLoader)
+            docs = load_all(f, Loader=FullLoader)
             for doc in docs:
                 for k, v in doc.items():
                     if k != items[0]:

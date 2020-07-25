@@ -436,16 +436,19 @@ class YAMLObject(object):
 #------------------------------------------------------------------------------
 
 def _find(path, items):
-    with open(path) as f:
-        docs = load_all(f, Loader=FullLoader)
-        for doc in docs:
-            for k, v in doc.items():
-                if k != items[0]:
-                    continue
-                for i in items[1:]:
-                    if isinstance(v, dict):
-                        v = v[i]
-                return v
+    try:
+        with open(path) as f:
+            docs = load_all(f, Loader=FullLoader)
+            for doc in docs:
+                for k, v in doc.items():
+                    if k != items[0]:
+                        continue
+                    for i in items[1:]:
+                        if isinstance(v, dict):
+                            v = v[i]
+                    return v
+    except:
+        return None
 
 # Get Property from Yaml file inside /properties folder
 # params:
