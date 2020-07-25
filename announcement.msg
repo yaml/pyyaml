@@ -89,22 +89,21 @@ integration:
 version: 2.0
 ```
 >>> yaml.property('version')
-# output: 1.0
-# found: properties/application.yaml
+... output: 1.0
+... found: properties/application.yaml
 
 >>> yaml.property('version', 'dev')
-# output: 2.0
-# found: properties/application-dev.yaml
+... output: 2.0
+... found: properties/application-dev.yaml
 
 >>> yaml.property('integration.python.port', 'dev')
-# output: 8080
-# found: properties/application-dev.yaml
+... output: 8080
+... found: properties/application-dev.yaml
 
 >>> yaml.property('url', 'dev')
-# output: pyyaml.test.com
-# not found: properties/application-dev.yaml
-# found: properties/application.yaml
-
+... output: pyyaml.test.com
+... not found: properties/application-dev.yaml
+... found: properties/application.yaml
 
 
 Maintainers
