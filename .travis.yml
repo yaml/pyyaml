@@ -29,6 +29,9 @@ matrix:
       arch: arm64
       env: TOXENV=py38
     - python: 3.8-dev
+      arch: ppc64le
+      env: TOXENV=py38
+    - python: 3.8-dev
       arch: arm64
       env: TOXENV=py38
     - python: pypy
