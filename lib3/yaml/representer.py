@@ -228,7 +228,7 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
-        raise RepresenterError("cannot represent an object", data)
+        raise RepresenterError("cannot represent an object: %s" % data)
 
 SafeRepresenter.add_representer(type(None),
         SafeRepresenter.represent_none)
@@ -318,7 +318,7 @@ class Representer(SafeRepresenter):
         elif hasattr(data, '__reduce__'):
             reduce = data.__reduce__()
         else:
-            raise RepresenterError("cannot represent an object", data)
+            raise RepresenterError("cannot represent object: %r" % data)
         reduce = (list(reduce)+[None]*5)[:5]
         function, args, state, listitems, dictitems = reduce
         args = list(args)
