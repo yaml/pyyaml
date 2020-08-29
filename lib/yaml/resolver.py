@@ -5,9 +5,31 @@ from error import *
 from nodes import *
 
 import re
+import datetime
 
 class ResolverError(YAMLError):
     pass
+
+class timezone(datetime.tzinfo):
+    def __init__(self, offset):
+        self._offset = offset
+        seconds = abs(offset).total_seconds()
+        self._name = 'UTC%s%02d:%02d' % (
+            '-' if offset.days < 0 else '+',
+            seconds // 3600,
+            seconds % 3600 // 60
+        )
+
+    def tzname(self, dt=None):
+        return self._name
+
+    def utcoffset(self, dt=None):
+        return self._offset
+
+    def dst(self, dt=None):
+        return datetime.timedelta(0)
+
+    __repr__ = __str__ = tzname
 
 class BaseResolver(object):
 
@@ -140,6 +162,57 @@ class BaseResolver(object):
                 return
         return True
 
+    timestamp_regexp = re.compile(
+            ur'''^(?P<year>[0-9][0-9][0-9][0-9])
+                -(?P<month>[0-9][0-9]?)
+                -(?P<day>[0-9][0-9]?)
+                (?:(?:[Tt]|[ \t]+)
+                (?P<hour>[0-9][0-9]?)
+                :(?P<minute>[0-9][0-9])
+                :(?P<second>[0-9][0-9])
+                (?:\.(?P<fraction>[0-9]*))?
+                (?:[ \t]*(?P<tz>Z|(?P<tz_sign>[-+])(?P<tz_hour>[0-9][0-9]?)
+                (?::(?P<tz_minute>[0-9][0-9]))?))?)?$''', re.X)
+
+    def generate_yaml_timestamp(self, value):
+        match = self.timestamp_regexp.match(value)
+        values = match.groupdict()
+        year = int(values['year'])
+        month = int(values['month'])
+        day = int(values['day'])
+        if not values['hour']:
+            return datetime.date(year, month, day)
+        hour = int(values['hour'])
+        minute = int(values['minute'])
+        second = int(values['second'])
+        fraction = 0
+        tzinfo = None
+        if values['fraction']:
+            fraction = values['fraction'][:6]
+            while len(fraction) < 6:
+                fraction += '0'
+            fraction = int(fraction)
+        if values['tz_sign']:
+            tz_hour = int(values['tz_hour'])
+            tz_minute = int(values['tz_minute'] or 0)
+            delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
+            if values['tz_sign'] == '-':
+                delta = -delta
+            tzinfo = timezone(delta)
+        elif values['tz']:
+            tzinfo = timezone(datetime.timedelta(0))
+        return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                 tzinfo=tzinfo)
+
+    def check_yaml_tag(self, tag, value):
+        # if the timestamp is wrong. the tag:timestamp will be changed into tag:str
+        if tag == u'tag:yaml.org,2002:timestamp':
+            try:
+                self.generate_yaml_timestamp(value)
+            except:
+                return False
+        return True
+
     def resolve(self, kind, value, implicit):
         if kind is ScalarNode and implicit[0]:
             if value == u'':
@@ -148,7 +221,7 @@ class BaseResolver(object):
                 resolvers = self.yaml_implicit_resolvers.get(value[0], [])
             resolvers += self.yaml_implicit_resolvers.get(None, [])
             for tag, regexp in resolvers:
-                if regexp.match(value):
+                if regexp.match(value) and self.check_yaml_tag(tag, value):
                     return tag
             implicit = implicit[1]
         if self.yaml_path_resolvers:
