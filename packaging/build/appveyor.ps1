@@ -14,16 +14,18 @@ Function Invoke-Exe([scriptblock]$sb) {
 }
 
 Function Bootstrap() {
-<#
     # ensure python 3.9 prerelease is present (current Appveyor VS2015 image doesn't include it)
+    
+    # ignoring deps because KB deps don't install properly on AppVeyor
     If(-not $(Test-Path C:\Python39)) {
-        Invoke-Exe { choco.exe install python3 --version=3.9.0-a1 --forcex86 --force --params="/InstallDir:C:\Python39" --no-progress }
+        Invoke-Exe { choco.exe install python3 --ignore-dependencies --version=3.9.0-rc1 --forcex86 --force --params="/InstallDir:C:\Python39" --no-progress }
     }
 
+    # ignoring deps because KB deps don't install properly on AppVeyor
     If(-not $(Test-Path C:\Python39-x64)) {
-        Invoke-Exe { choco.exe install python3 --version=3.9.0-a1 --force --params="/InstallDir:C:\Python39-x64" --no-progress }
+        Invoke-Exe { choco.exe install python3 --ignore-dependencies --version=3.9.0-rc1 --force --params="/InstallDir:C:\Python39-x64" --no-progress }
     }
-#>
+
     Write-Output "patching Windows SDK bits for distutils"
 
     # patch 7.0/7.1 vcvars SDK bits up to work with distutils query
@@ -87,10 +89,10 @@ Function Build-Wheel($python_path) {
     }
 
     # ensure pip is current (some appveyor pips are not)
-    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --upgrade pip }
+    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --no-warn-script-location --upgrade pip }
 
     # ensure required-for-build packages are present and up-to-date
-    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --upgrade cython wheel setuptools --no-warn-script-location }
+    Invoke-Exe { & $python -W "ignore:DEPRECATION" -m pip install --no-warn-script-location --upgrade cython wheel setuptools --no-warn-script-location }
 
     pushd libyaml
     Invoke-Exe { git clean -fdx }
@@ -127,6 +129,8 @@ $pythons = @(
 "C:\Python37-x64"
 "C:\Python38"
 "C:\Python38-x64"
+"C:\Python39"
+"C:\Python39-x64"
 )
 
 #$pythons = @("C:\$($env:PYTHON_VER)")
