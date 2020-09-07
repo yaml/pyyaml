@@ -15,6 +15,29 @@ try:
 except ImportError:
     __with_libyaml__ = False
 
+# Replace the Python dumpers and loaders with the C versions if
+# 'import builtins; builtins._yaml__use_libyaml_by_default__ = True'
+# is called before 'import yaml'
+
+MAGIC_BUILTIN_KEY = "_yaml__use_libyaml_by_default__"
+
+if type(__builtins__) is dict and MAGIC_BUILTIN_KEY in __builtins__:
+    __use_libyaml_by_default__ = __builtins__.get(MAGIC_BUILTIN_KEY)
+elif hasattr(__builtins__, MAGIC_BUILTIN_KEY):
+    __use_libyaml_by_default__ = getattr(__builtins__, MAGIC_BUILTIN_KEY)
+else:
+    __use_libyaml_by_default__ = False
+
+if __use_libyaml_by_default__ and __with_libyaml__:
+    BaseLoader = CBaseLoader
+    SafeLoader = CSafeLoader
+    FullLoader = CFullLoader
+    UnsafeLoader = CUnsafeLoader
+    Loader = CLoader
+    BaseDumper = CBaseDumper
+    SafeDumper = CSafeDumper
+    Dumper = CDumper
+
 import io
 
 #------------------------------------------------------------------------------
@@ -314,9 +337,9 @@ def add_implicit_resolver(tag, regexp, first=None,
     first is a sequence of possible initial characters or None.
     """
     if Loader is None:
-        loader.Loader.add_implicit_resolver(tag, regexp, first)
-        loader.FullLoader.add_implicit_resolver(tag, regexp, first)
-        loader.UnsafeLoader.add_implicit_resolver(tag, regexp, first)
+        globals().Loader.add_implicit_resolver(tag, regexp, first)
+        globals().FullLoader.add_implicit_resolver(tag, regexp, first)
+        globals().UnsafeLoader.add_implicit_resolver(tag, regexp, first)
     else:
         Loader.add_implicit_resolver(tag, regexp, first)
     Dumper.add_implicit_resolver(tag, regexp, first)
@@ -329,9 +352,9 @@ def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
     Keys can be string values, integers, or None.
     """
     if Loader is None:
-        loader.Loader.add_path_resolver(tag, path, kind)
-        loader.FullLoader.add_path_resolver(tag, path, kind)
-        loader.UnsafeLoader.add_path_resolver(tag, path, kind)
+        globals().Loader.add_path_resolver(tag, path, kind)
+        globals().FullLoader.add_path_resolver(tag, path, kind)
+        globals().UnsafeLoader.add_path_resolver(tag, path, kind)
     else:
         Loader.add_path_resolver(tag, path, kind)
     Dumper.add_path_resolver(tag, path, kind)
@@ -343,9 +366,9 @@ def add_constructor(tag, constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_constructor(tag, constructor)
-        loader.FullLoader.add_constructor(tag, constructor)
-        loader.UnsafeLoader.add_constructor(tag, constructor)
+        globals().Loader.add_constructor(tag, constructor)
+        globals().FullLoader.add_constructor(tag, constructor)
+        globals().UnsafeLoader.add_constructor(tag, constructor)
     else:
         Loader.add_constructor(tag, constructor)
 
@@ -357,9 +380,9 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
+        globals().Loader.add_multi_constructor(tag_prefix, multi_constructor)
+        globals().FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
+        globals().UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
     else:
         Loader.add_multi_constructor(tag_prefix, multi_constructor)
 
