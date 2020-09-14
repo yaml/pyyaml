@@ -12,6 +12,12 @@ class ResolverError(YAMLError):
 
 class timezone(datetime.tzinfo):
     def __init__(self, offset):
+        maxoffset = datetime.timedelta(hours=24, microseconds=-1)
+        minoffset = - maxoffset
+        if not minoffset <= offset <= maxoffset:
+            raise ValueError("offset must be a timedelta"
+                             "strictly between -timedelta(hours=24) and "
+                             "timedelta(hours=24).")
         self._offset = offset
         seconds = abs(offset).total_seconds()
         self._name = 'UTC%s%02d:%02d' % (
