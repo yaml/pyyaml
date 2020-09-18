@@ -40,7 +40,7 @@ before_script:
   cd /tmp
   && git clone https://github.com/yaml/libyaml.git libyaml
   && cd libyaml
-  && git reset --hard 0.2.2
+  && git reset --hard 0.2.5
   && ./bootstrap
   && ./configure
   && make
