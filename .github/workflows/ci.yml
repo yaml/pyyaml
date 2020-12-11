@@ -1,0 +1,256 @@
+---
+
+name: PyYAML CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_wheels:
+        default: false
+env:
+  LIBYAML_REPO: https://github.com/yaml/libyaml
+  LIBYAML_REF: '0.2.5'
+jobs:
+  python_sdist:
+    name: pyyaml sdist
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout pyyaml
+        uses: actions/checkout@v2
+
+      - name: install a python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: install build deps
+        run: |
+          python -V
+
+          python -m pip install Cython setuptools wheel
+
+      - name: build sdist
+        run: |
+          export PYYAML_FORCE_CYTHON=1
+          export PYYAML_FORCE_LIBYAML=1
+
+          # FIXME: move this to `build` once our build is PEP517 OK
+          python setup.py sdist
+
+          # ensure exactly one artifact
+          shopt -s nullglob
+          DISTFILES=(dist/*.tar.gz)
+          if [[ ${DISTFILES[@]} -ne 1 ]]; then
+            echo "unexpected content in dist dir: $(ls dist/*.tar.gz)"
+            exit 1
+          fi
+
+      - name: test sdist
+        run: |
+          # install some libyaml headers
+          # TODO: should we smoke test the sdist against the libyaml we built?
+          sudo apt update
+          sudo apt install libyaml-dev -y
+
+          # remove Cython to ensure we use only what's in the sdist
+          python -m pip uninstall Cython -y
+
+          # pass no extra args- we should auto-install with libyaml since it's present
+          python -m pip install dist/*.tar.gz -v
+
+          python packaging/build/smoketest.py
+
+      - name: upload sdist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist/*.tar.gz
+
+
+  linux_libyaml:
+    name: libyaml ${{ matrix.arch }} ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          # manylinux1 is forward-compatible to 2010/2014
+          #- manylinux2014
+          #- manylinux2010
+          - manylinux1
+        arch:
+          - x86_64
+    env:
+      DOCKER_IMAGE: quay.io/pypa/${{ matrix.platform }}_${{ matrix.arch }}
+    steps:
+      - name: check cached libyaml state
+        id: cached_libyaml
+        uses: actions/cache@v2
+        with:
+          path: |
+            libyaml
+          key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+
+      - name: checkout pyyaml
+        uses: actions/checkout@v2
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+      - name: build libyaml
+        run: |
+          docker run --rm -v $(pwd):/io -e LIBYAML_REF -e LIBYAML_REPO --workdir /io "$DOCKER_IMAGE" /io/packaging/build/libyaml.sh
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+  linux_pyyaml:
+    needs: linux_libyaml
+    name: pyyaml ${{ matrix.arch }} ${{ matrix.platform }} ${{ matrix.python_tag }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform:
+          # so long as manylinux1 container builds work, they're forward-compatible to 2010/2014
+          # - manylinux2014
+          # - manylinux2010
+          - manylinux1
+        arch:
+          - x86_64
+        python_tag:
+          # NB: manylinux >=2014 containers don't have Python 2.7, so we have to use exclude to skip it
+          - cp27-cp27mu
+          - cp36-cp36m
+          - cp37-cp37m
+          - cp38-cp38
+          - cp39-cp39
+#        exclude:
+#          - platform: manylinux2014
+#            arch: x86_64
+#            python_tag: cp27-cp27mu
+    env:
+      AW_PLAT: ${{ matrix.platform }}_${{ matrix.arch }}
+      DOCKER_IMAGE: quay.io/pypa/${{ matrix.platform }}_${{ matrix.arch }}
+      PYTHON_TAG: ${{ matrix.python_tag }}
+      PYYAML_BUILD_WHEELS: 1
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: fetch cached libyaml
+        id: cached_libyaml
+        uses: actions/cache@v2
+        with:
+          path: |
+            libyaml
+          key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+
+      - name: ensure libyaml fetched
+        run: exit 1
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+      - name: start container
+        run: |
+          docker run --name worker -t -d --rm -v $(pwd):/io "$DOCKER_IMAGE" bash
+
+      - name: build/test/package
+        run: |
+          docker exec -e PYTHON_TAG -e PYYAML_RUN_TESTS -e PYYAML_BUILD_WHEELS -e AW_PLAT --workdir /io worker \
+          /io/packaging/build/manylinux.sh
+
+          # ensure exactly one artifact
+          shopt -s nullglob
+          DISTFILES=(dist/*.whl)
+          if [[ ${#DISTFILES[@]} -ne 1 ]]; then
+            echo -e "unexpected dist content:\n\n$(ls)"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v2
+        with:
+          #name: wheel_${{ matrix.platform }}_${{ matrix.arch }}_${{ matrix.python_tag }}
+          name: dist
+          path: dist/*.whl
+
+  macos_libyaml:
+    name: libyaml ${{ matrix.arch }} ${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform:
+          - macos-10.15
+        arch:
+          - x86_64
+    steps:
+      - name: check cached libyaml state
+        id: cached_libyaml
+        uses: actions/cache@v2
+        with:
+          path: |
+            libyaml
+          key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+
+      - name: checkout pyyaml
+        uses: actions/checkout@v2
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+      - name: build libyaml
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '10.9'
+        run: |
+          brew install automake coreutils
+          bash ./packaging/build/libyaml.sh
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+
+  macos_pyyaml:
+    needs: macos_libyaml
+    name: pyyaml ${{ matrix.arch }} ${{ matrix.platform }} ${{ matrix.python_tag }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform:
+          - macos-10.15
+        arch:
+          - x86_64
+        python_tag:
+          - cp27*
+          - cp36*
+          - cp37*
+          - cp38*
+          - cp39*
+    steps:
+      - name: checkout pyyaml
+        uses: actions/checkout@v2
+
+      - name: get cached libyaml state
+        id: cached_libyaml
+        uses: actions/cache@v2
+        with:
+          path: |
+            libyaml
+          key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+
+      - name: ensure libyaml fetched
+        run: exit 1
+        if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+      - name: install a python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: build/test/package
+        env:
+          CIBW_BUILD: ${{ matrix.python_tag }}
+          CIBW_BUILD_VERBOSITY: 1
+        run: |
+          bash ./packaging/build/macos.sh
+
+          # ensure exactly one artifact
+          shopt -s nullglob
+          DISTFILES=(dist/*.whl)
+          if [[ ${#DISTFILES[@]} -ne 1 ]]; then
+            echo -e "unexpected dist content:\n\n$(ls)"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist/*.whl

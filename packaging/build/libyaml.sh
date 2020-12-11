@@ -2,29 +2,25 @@
 
 set -eux
 
-. ./LIBYAML_VERSION
-TD="$(mktemp -d)"
-pushd "$TD" || exit 1
-git clone https://github.com/yaml/libyaml.git
-pushd libyaml
+# build the requested version of libyaml locally
+echo "::group::fetch libyaml ${LIBYAML_REF}"
 git config --global advice.detachedHead false
-git reset --hard "$LIBYAML_VERSION"
+git clone --branch "$LIBYAML_REF" "$LIBYAML_REPO" libyaml
+pushd libyaml
+git reset --hard "$LIBYAML_REF"
+echo "::endgroup::"
+
+echo "::group::autoconf libyaml w/ static only"
 ./bootstrap
-./configure --disable-dependency-tracking
+# build only a static library- reduces our reliance on auditwheel/delocate magic
+./configure --disable-dependency-tracking --with-pic --enable-shared=no
+echo "::endgroup::"
+
+echo "::group::build libyaml"
 make
+echo "::endgroup::"
+
+echo "::group::test built libyaml"
 make test-all
-# Avoid error where we may be root but not have sudo itself available
-if [[ "$UID" != 0 ]]; then
-    if [[ ! -x "$(command -v sudo)" ]]; then
-        echo "Error: lacking sudo as non-root user" >&2
-        exit 1
-    fi
-    sudo make install
-    # No ldconfig on MacOS
-    command -v ldconfig > /dev/null 2>&1 && sudo ldconfig || true
-else
-    make install
-    command -v ldconfig > /dev/null 2>&1 && ldconfig || true
-fi
-popd && popd
-rm -rf "$TD"
+echo "::endgroup::"
+popd

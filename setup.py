@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '5.3.1'
+VERSION = '5.4.0a0'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
@@ -30,10 +30,10 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 2",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -59,7 +59,7 @@ int main(void) {
 """
 
 
-import sys, os.path, platform, warnings
+import sys, os, os.path, platform, warnings
 
 from distutils import log
 from distutils.core import setup, Command
@@ -76,7 +76,7 @@ if 'setuptools.extension' in sys.modules:
     sys.modules['distutils.command.build_ext'].Extension = _Extension
 
 with_cython = False
-if 'sdist' in sys.argv:
+if 'sdist' in sys.argv or os.environ.get('PYYAML_FORCE_CYTHON') == '1':
     # we need cython here
     with_cython = True
 try:
@@ -138,10 +138,11 @@ class Distribution(_Distribution):
 
     def ext_status(self, ext):
         implementation = platform.python_implementation()
-        if implementation != 'CPython':
+        if implementation not in ['CPython', 'PyPy']:
             return False
         if isinstance(ext, Extension):
-            with_ext = getattr(self, ext.attr_name)
+            # the "build by default" behavior is implemented by this returning None
+            with_ext = getattr(self, ext.attr_name) or os.environ.get('PYYAML_FORCE_{0}'.format(ext.feature_name.upper())) == '1' or None
             return with_ext
         else:
             return True

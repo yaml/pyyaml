@@ -2,30 +2,55 @@
 
 set -eux
 
-# We need to build this here rather than as a CI step
-# so that it's easily available in the container itself
-./packaging/build/libyaml.sh
+PYBIN="/opt/python/${PYTHON_TAG}/bin/python"
 
-mkdir -p wheelhouse
-rm -vf wheelhouse/*.whl
+# modern tools don't allow us to pass eg, --with-libyaml, so we force it via env
+export PYYAML_FORCE_CYTHON=1
+export PYYAML_FORCE_LIBYAML=1
 
-# PyYAML supports Python 2.7, 3.5-3.8
-for tag in $PYTHON_TAGS; do
-  PYBIN="/opt/python/${tag}/bin"
-  "${PYBIN}/python" -m pip install -U wheel setuptools pip Cython auditwheel
-  "${PYBIN}/python" -m pip wheel \
-    --verbose \
-    --no-deps \
-    --global-option '--with-libyaml' \
-    --global-option "build_ext" \
-    -w wheelhouse .
-done
+# we're using a private build of libyaml, so set paths to favor that instead of whatever's laying around
+export C_INCLUDE_PATH=libyaml/include:${C_INCLUDE_PATH:-}
+export LIBRARY_PATH=libyaml/src/.libs:${LIBRARY_PATH:-}
+export LD_LIBRARY_PATH=libyaml/src/.libs:${LD_LIBRARY_PATH:-}
 
-for whl in wheelhouse/*.whl; do
-  auditwheel repair "$whl" --plat "$PLAT" -w wheelhouse/
-  rm -f "$whl"
-done
+# install deps
+echo "::group::installing build deps"
+# FIXME: installing Cython here won't be necessary once we fix tests, since the build is PEP517 and declares its own deps
+"${PYBIN}" -m pip install build==0.1.0 Cython
+echo "::endgroup::"
 
-mkdir dist
-mv wheelhouse/*.whl dist/
-ls -1 dist/
+if [[ ${PYYAML_RUN_TESTS:-1} -eq 1 ]]; then
+  echo "::group::running test suite"
+  # FIXME: split tests out for easier direct execution w/o Makefile
+  # run full test suite
+  make testall PYTHON="${PYBIN}"
+  echo "::endgroup::"
+else
+  echo "skipping test suite..."
+fi
+
+
+# FIXME: always build wheels by default, but only store them if asked
+if [[ ${PYYAML_BUILD_WHEELS:-0} -eq 1 ]]; then
+  echo "::group::building wheels"
+  "${PYBIN}" -m build -w -o tempwheel .
+  echo "::endgroup::"
+
+  echo "::group::validating wheels"
+  # FIXME: validate only one wheel and set its filename as an output
+  for whl in tempwheel/*.whl; do
+    auditwheel repair --plat "${AW_PLAT}" "$whl" -w dist/
+  done
+
+  # this should only match one
+  "${PYBIN}" -m pip install dist/*.whl
+
+  "${PYBIN}" packaging/build/smoketest.py
+
+  ls -1 dist/
+
+  echo "::endgroup::"
+
+else
+  echo "skipping wheel build..."
+fi
