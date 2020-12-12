@@ -30,19 +30,25 @@ else
 fi
 
 
-# FIXME: always build wheels by default, but only store them if asked
 if [[ ${PYYAML_BUILD_WHEELS:-0} -eq 1 ]]; then
   echo "::group::building wheels"
   "${PYBIN}" -m build -w -o tempwheel .
   echo "::endgroup::"
 
   echo "::group::validating wheels"
-  # FIXME: validate only one wheel and set its filename as an output
+
   for whl in tempwheel/*.whl; do
     auditwheel repair --plat "${AW_PLAT}" "$whl" -w dist/
   done
 
-  # this should only match one
+  # ensure exactly one finished artifact
+  shopt -s nullglob
+  DISTFILES=(dist/*.whl)
+  if [[ ${#DISTFILES[@]} -ne 1 ]]; then
+    echo -e "unexpected dist content:\n\n$(ls)"
+    exit 1
+  fi
+
   "${PYBIN}" -m pip install dist/*.whl
 
   "${PYBIN}" packaging/build/smoketest.py

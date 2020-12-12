@@ -6,8 +6,6 @@ set -eux
 # build, since cibuildwheel is internally managing looping over all the Pythons for us.
 export PYBIN=/usr/bin/python3
 
-# FIXME: run tests
-
 ${PYBIN} -V
 ${PYBIN} -m pip install -U --user cibuildwheel
 # run cibuildwheel; we can skip CIBW_ENVIRONMENT since the Mac version will directly inherit the envvars we set to
@@ -33,11 +31,13 @@ export CIBW_TEST_COMMAND='python {project}/packaging/build/smoketest.py'
 
 ${PYBIN} -m cibuildwheel --platform macos .
 
-
-# FIXME: always build artifacts, but only store them if asked
-# FIXME: store wheel filename as an output so we can upload the naked artifact
-
 mkdir -p dist
 mv wheelhouse/* dist/
 
-ls -1 dist/
+# ensure exactly one artifact
+shopt -s nullglob
+DISTFILES=(dist/*.whl)
+if [[ ${#DISTFILES[@]} -ne 1 ]]; then
+  echo -e "unexpected dist content:\n\n$(ls)"
+  exit 1
+fi

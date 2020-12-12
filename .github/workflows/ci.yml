@@ -5,9 +5,7 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-    inputs:
-      build_wheels:
-        default: false
+
 env:
   LIBYAML_REPO: https://github.com/yaml/libyaml
   LIBYAML_REF: '0.2.5'
@@ -28,17 +26,16 @@ jobs:
         run: |
           python -V
 
-          python -m pip install Cython setuptools wheel
+          python -m pip install build
 
       - name: build sdist
         run: |
-          export PYYAML_FORCE_CYTHON=1
-          export PYYAML_FORCE_LIBYAML=1
+          export PYYAML_FORCE_CYTHON=1  # we DO want to force Cythoning, at least until 6.0
+          export PYYAML_FORCE_LIBYAML=0  # we don't actually want to build the lib
 
-          # FIXME: move this to `build` once our build is PEP517 OK
-          python setup.py sdist
+          python -m build .
 
-          # ensure exactly one artifact
+          # ensure exactly one artifact was produced
           shopt -s nullglob
           DISTFILES=(dist/*.tar.gz)
           if [[ ${DISTFILES[@]} -ne 1 ]]; then
@@ -53,8 +50,8 @@ jobs:
           sudo apt update
           sudo apt install libyaml-dev -y
 
-          # remove Cython to ensure we use only what's in the sdist
-          python -m pip uninstall Cython -y
+          # ensure Cython is not present so we use only what's in the sdist
+          python -m pip uninstall Cython -y || true
 
           # pass no extra args- we should auto-install with libyaml since it's present
           python -m pip install dist/*.tar.gz -v
@@ -153,17 +150,8 @@ jobs:
           docker exec -e PYTHON_TAG -e PYYAML_RUN_TESTS -e PYYAML_BUILD_WHEELS -e AW_PLAT --workdir /io worker \
           /io/packaging/build/manylinux.sh
 
-          # ensure exactly one artifact
-          shopt -s nullglob
-          DISTFILES=(dist/*.whl)
-          if [[ ${#DISTFILES[@]} -ne 1 ]]; then
-            echo -e "unexpected dist content:\n\n$(ls)"
-            exit 1
-          fi
-
       - uses: actions/upload-artifact@v2
         with:
-          #name: wheel_${{ matrix.platform }}_${{ matrix.arch }}_${{ matrix.python_tag }}
           name: dist
           path: dist/*.whl
 
@@ -241,14 +229,6 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
         run: |
           bash ./packaging/build/macos.sh
-
-          # ensure exactly one artifact
-          shopt -s nullglob
-          DISTFILES=(dist/*.whl)
-          if [[ ${#DISTFILES[@]} -ne 1 ]]; then
-            echo -e "unexpected dist content:\n\n$(ls)"
-            exit 1
-          fi
 
       - uses: actions/upload-artifact@v2
         with:
