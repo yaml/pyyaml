@@ -7,4 +7,4 @@ recursive-include examples *.py *.cfg *.yaml
 recursive-include tests/data *
 recursive-include tests/lib *.py
 recursive-include tests/lib3 *.py
-recursive-include yaml/ *
+recursive-include yaml *

@@ -18,7 +18,7 @@ AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = 'xi@resolvent.net'
 LICENSE = "MIT"
 PLATFORMS = "Any"
-URL = "https://github.com/yaml/pyyaml"
+URL = "https://pyyaml.org/"
 DOWNLOAD_URL = "https://pypi.org/project/PyYAML/"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -39,7 +39,13 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup",
 ]
-
+PROJECT_URLS = {
+   'Bug Tracker': 'https://github.com/yaml/pyyaml/issues',
+   'CI': 'https://github.com/yaml/pyyaml/actions',
+   'Documentation': 'https://pyyaml.org/wiki/PyYAMLDocumentation',
+   'Mailing lists': 'http://lists.sourceforge.net/lists/listinfo/yaml-core',
+   'Source Code': 'https://github.com/yaml/pyyaml',
+}
 
 LIBYAML_CHECK = """
 #include <yaml.h>
@@ -274,6 +280,7 @@ if __name__ == '__main__':
         url=URL,
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
+        project_urls=PROJECT_URLS,
 
         package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
         packages=['yaml', '_yaml'],
