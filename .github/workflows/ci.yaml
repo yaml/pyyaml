@@ -1,5 +1,6 @@
 ---
 name: PyYAML CI
+
 on:
   push:
   pull_request:
@@ -8,6 +9,7 @@ on:
 env:
   LIBYAML_REPO: https://github.com/yaml/libyaml
   LIBYAML_REF: '0.2.5'
+
 jobs:
   python_sdist:
     name: pyyaml sdist
@@ -29,8 +31,10 @@ jobs:
 
     - name: build sdist
       run: |
-        export PYYAML_FORCE_CYTHON=1  # we DO want to force Cythoning, at least until 6.0
-        export PYYAML_FORCE_LIBYAML=0  # we don't actually want to build the lib
+        # we DO want to force Cythoning, at least until 6.0
+        export PYYAML_FORCE_CYTHON=1
+        # we don't actually want to build the lib
+        export PYYAML_FORCE_LIBYAML=0
 
         python -m build .
 
@@ -45,14 +49,15 @@ jobs:
     - name: test sdist
       run: |
         # install some libyaml headers
-        # TODO: should we smoke test the sdist against the libyaml we built?
+        # TODO should we smoke test the sdist against the libyaml we built?
         sudo apt update
         sudo apt install libyaml-dev -y
 
         # ensure Cython is not present so we use only what's in the sdist
         python -m pip uninstall Cython -y || true
 
-        # pass no extra args- we should auto-install with libyaml since it's present
+        # pass no extra args- we should auto-install with libyaml since it's
+        # present
         python -m pip install dist/*.tar.gz -v
 
         python packaging/build/smoketest.py
@@ -92,8 +97,14 @@ jobs:
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: build libyaml
-      run: |
-        docker run --rm -v $(pwd):/io -e LIBYAML_REF -e LIBYAML_REPO --workdir /io "$DOCKER_IMAGE" /io/packaging/build/libyaml.sh
+      run: >
+        docker run --rm
+        -v $(pwd):/io
+        -e LIBYAML_REF
+        -e LIBYAML_REPO
+        --workdir /io
+        "$DOCKER_IMAGE"
+        /io/packaging/build/libyaml.sh
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
   linux_pyyaml:
@@ -103,14 +114,16 @@ jobs:
     strategy:
       matrix:
         platform:
-        # so long as manylinux1 container builds work, they're forward-compatible to 2010/2014
+        # so long as manylinux1 container builds work, they're
+        # forward-compatible to 2010/2014
         # - manylinux2014
         # - manylinux2010
         - manylinux1
         arch:
         - x86_64
         python_tag:
-        # NB: manylinux >=2014 containers don't have Python 2.7, so we have to use exclude to skip it
+        # NB manylinux >=2014 containers don't have Python 2.7, so we have to
+        # use exclude to skip it
         - cp27-cp27mu
         - cp36-cp36m
         - cp37-cp37m
@@ -141,12 +154,21 @@ jobs:
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: start container
-      run: |
-        docker run --name worker -t -d --rm -v $(pwd):/io "$DOCKER_IMAGE" bash
+      run: >
+        docker run -t -d --rm
+        --name worker
+        -v $(pwd):/io
+        "$DOCKER_IMAGE"
+        bash
 
     - name: build/test/package
-      run: |
-        docker exec -e PYTHON_TAG -e PYYAML_RUN_TESTS -e PYYAML_BUILD_WHEELS -e AW_PLAT --workdir /io worker \
+      run: >
+        docker exec
+        -e PYTHON_TAG
+        -e PYYAML_RUN_TESTS
+        -e PYYAML_BUILD_WHEELS
+        -e AW_PLAT
+        --workdir /io worker
         /io/packaging/build/manylinux.sh
 
     - uses: actions/upload-artifact@v2
