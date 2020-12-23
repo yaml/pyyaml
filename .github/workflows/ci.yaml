@@ -12,54 +12,54 @@ env:
 
 jobs:
   python_sdist:
-    name: pyyaml sdist
+    name: PyYAML sdist
     runs-on: ubuntu-latest
     steps:
-    - name: checkout pyyaml
+    - name: Checkout pyyaml
       uses: actions/checkout@v2
 
-    - name: install a python
+    - name: Install a python
       uses: actions/setup-python@v2
       with:
         python-version: 3.x
 
-    - name: install build deps
+    - name: Install build deps
       run: |
         python -V
         python -m pip install build
 
-    - name: build sdist
+    - name: Build sdist
       run: |
-        # we DO want to force Cythoning, at least until 6.0
+        # We DO want to force Cythoning, at least until 6.0.
         export PYYAML_FORCE_CYTHON=1
-        # we don't actually want to build the lib
+        # We don't actually want to build the lib.
         export PYYAML_FORCE_LIBYAML=0
 
         python -m build .
 
-        # ensure exactly one artifact was produced
+        # Ensure exactly one artifact was produced.
         [[ $(shopt -s nullglob; ls dist/*.tar.gz | wc -w) == 1 ]] || {
-          echo "unexpected content in dist dir: $(ls dist/*.tar.gz)"
+          echo "Unexpected content in dist dir: '$(ls dist/*.tar.gz)'."
           exit 1
         }
 
-    - name: test sdist
+    - name: Test sdist
       run: |
-        # install some libyaml headers
-        # TODO should we smoke test the sdist against the libyaml we built?
+        # Install some libyaml headers.
+        # TODO Should we smoke test the sdist against the libyaml we built?
         sudo apt update
         sudo apt install libyaml-dev -y
 
-        # ensure Cython is not present so we use only what's in the sdist
+        # Ensure Cython is not present so we use only what's in the sdist.
         python -m pip uninstall Cython -y || true
 
-        # pass no extra args- we should auto-install with libyaml since it's
-        # present
+        # Pass no extra args.
+        # We should auto-install with libyaml since it's present.
         python -m pip install dist/*.tar.gz -v
 
         python packaging/build/smoketest.py
 
-    - name: upload sdist artifact
+    - name: Upload sdist artifact
       uses: actions/upload-artifact@v2
       with:
         name: dist
@@ -72,7 +72,7 @@ jobs:
     strategy:
       matrix:
         platform:
-        # manylinux1 is forward-compatible to 2010/2014
+        # manylinux1 is forward-compatible to 2010/2014.
         #- manylinux2014
         #- manylinux2010
         - manylinux1
@@ -81,18 +81,18 @@ jobs:
     env:
       DOCKER_IMAGE: quay.io/pypa/${{matrix.platform}}_${{matrix.arch}}
     steps:
-    - name: check cached libyaml state
+    - name: Check cached libyaml state
       id: cached_libyaml
       uses: actions/cache@v2
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
-    - name: checkout pyyaml
+    - name: Checkout pyyaml
       uses: actions/checkout@v2
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
-    - name: build libyaml
+    - name: Build libyaml
       run: >
         docker run --rm
         --volume "$(pwd):/io"
@@ -110,8 +110,8 @@ jobs:
     strategy:
       matrix:
         platform:
-        # so long as manylinux1 container builds work, they're
-        # forward-compatible to 2010/2014
+        # So long as manylinux1 container builds work, they're
+        # forward-compatible to 2010/2014.
         # - manylinux2014
         # - manylinux2010
         - manylinux1
@@ -119,7 +119,7 @@ jobs:
         - x86_64
         python_tag:
         # NB manylinux >=2014 containers don't have Python 2.7, so we have to
-        # use exclude to skip it
+        # use exclude to skip it.
         - cp27-cp27mu
         - cp36-cp36m
         - cp37-cp37m
@@ -137,18 +137,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: fetch cached libyaml
+    - name: Fetch cached libyaml
       id: cached_libyaml
       uses: actions/cache@v2
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
-    - name: ensure libyaml fetched
+    - name: Ensure libyaml fetched
       run: exit 1
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
-    - name: start container
+    - name: Start container
       run: >
         docker run --rm --tty --detach
         --name worker
@@ -156,7 +156,7 @@ jobs:
         "$DOCKER_IMAGE"
         bash
 
-    - name: build/test/package
+    - name: Build/Test/Package
       run: >
         docker exec
         --env PYTHON_TAG
@@ -181,18 +181,18 @@ jobs:
         arch:
         - x86_64
     steps:
-    - name: check cached libyaml state
+    - name: Check cached libyaml state
       id: cached_libyaml
       uses: actions/cache@v2
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
-    - name: checkout pyyaml
+    - name: Checkout pyyaml
       uses: actions/checkout@v2
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
-    - name: build libyaml
+    - name: Build libyaml
       env:
         MACOSX_DEPLOYMENT_TARGET: '10.9'
       run: |
@@ -217,26 +217,26 @@ jobs:
         - cp38*
         - cp39*
     steps:
-    - name: checkout pyyaml
+    - name: Checkout pyyaml
       uses: actions/checkout@v2
 
-    - name: get cached libyaml state
+    - name: Get cached libyaml state
       id: cached_libyaml
       uses: actions/cache@v2
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
-    - name: ensure libyaml fetched
+    - name: Ensure libyaml fetched
       run: exit 1
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
-    - name: install a python
+    - name: Install a python
       uses: actions/setup-python@v2
       with:
         python-version: 3.x
 
-    - name: build/test/package
+    - name: Build/Test/Package
       env:
         CIBW_BUILD: ${{matrix.python_tag}}
         CIBW_BUILD_VERBOSITY: 1
