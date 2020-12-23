@@ -70,7 +70,7 @@ jobs:
 
 
   linux_libyaml:
-    name: libyaml ${{ matrix.arch }} ${{ matrix.platform }}
+    name: libyaml ${{matrix.arch}} ${{matrix.platform}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -82,7 +82,7 @@ jobs:
         arch:
         - x86_64
     env:
-      DOCKER_IMAGE: quay.io/pypa/${{ matrix.platform }}_${{ matrix.arch }}
+      DOCKER_IMAGE: quay.io/pypa/${{matrix.platform}}_${{matrix.arch}}
     steps:
     - name: check cached libyaml state
       id: cached_libyaml
@@ -90,7 +90,7 @@ jobs:
       with:
         path: |
           libyaml
-        key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: checkout pyyaml
       uses: actions/checkout@v2
@@ -109,7 +109,7 @@ jobs:
 
   linux_pyyaml:
     needs: linux_libyaml
-    name: pyyaml ${{ matrix.arch }} ${{ matrix.platform }} ${{ matrix.python_tag }}
+    name: pyyaml ${{matrix.arch}} ${{matrix.platform}} ${{matrix.python_tag}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -134,9 +134,9 @@ jobs:
 #          arch: x86_64
 #          python_tag: cp27-cp27mu
     env:
-      AW_PLAT: ${{ matrix.platform }}_${{ matrix.arch }}
-      DOCKER_IMAGE: quay.io/pypa/${{ matrix.platform }}_${{ matrix.arch }}
-      PYTHON_TAG: ${{ matrix.python_tag }}
+      AW_PLAT: ${{matrix.platform}}_${{matrix.arch}}
+      DOCKER_IMAGE: quay.io/pypa/${{matrix.platform}}_${{matrix.arch}}
+      PYTHON_TAG: ${{matrix.python_tag}}
       PYYAML_BUILD_WHEELS: 1
     steps:
     - uses: actions/checkout@v2
@@ -147,7 +147,7 @@ jobs:
       with:
         path: |
           libyaml
-        key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: ensure libyaml fetched
       run: exit 1
@@ -177,8 +177,8 @@ jobs:
         path: dist/*.whl
 
   macos_libyaml:
-    name: libyaml ${{ matrix.arch }} ${{ matrix.platform }}
-    runs-on: ${{ matrix.platform }}
+    name: libyaml ${{matrix.arch}} ${{matrix.platform}}
+    runs-on: ${{matrix.platform}}
     strategy:
       matrix:
         platform:
@@ -192,7 +192,7 @@ jobs:
       with:
         path: |
           libyaml
-        key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: checkout pyyaml
       uses: actions/checkout@v2
@@ -208,8 +208,8 @@ jobs:
 
   macos_pyyaml:
     needs: macos_libyaml
-    name: pyyaml ${{ matrix.arch }} ${{ matrix.platform }} ${{ matrix.python_tag }}
-    runs-on: ${{ matrix.platform }}
+    name: pyyaml ${{matrix.arch}} ${{matrix.platform}} ${{matrix.python_tag}}
+    runs-on: ${{matrix.platform}}
     strategy:
       matrix:
         platform:
@@ -232,7 +232,7 @@ jobs:
       with:
         path: |
           libyaml
-        key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: ensure libyaml fetched
       run: exit 1
@@ -245,7 +245,7 @@ jobs:
 
     - name: build/test/package
       env:
-        CIBW_BUILD: ${{ matrix.python_tag }}
+        CIBW_BUILD: ${{matrix.python_tag}}
         CIBW_BUILD_VERBOSITY: 1
       run: |
         bash ./packaging/build/macos.sh
