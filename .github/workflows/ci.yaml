@@ -8,7 +8,7 @@ on:
 
 env:
   LIBYAML_REPO: https://github.com/yaml/libyaml
-  LIBYAML_REF: '0.2.5'
+  LIBYAML_REF: 0.2.5
 
 jobs:
   python_sdist:
