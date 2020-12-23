@@ -97,9 +97,9 @@ jobs:
     - name: build libyaml
       run: >
         docker run --rm
-        -v $(pwd):/io
-        -e LIBYAML_REF
-        -e LIBYAML_REPO
+        --volume $(pwd):/io
+        --env LIBYAML_REF
+        --env LIBYAML_REPO
         --workdir /io
         "$DOCKER_IMAGE"
         /io/packaging/build/libyaml.sh
@@ -152,19 +152,19 @@ jobs:
 
     - name: start container
       run: >
-        docker run -t -d --rm
+        docker run --rm --tty --detach
         --name worker
-        -v $(pwd):/io
+        --volume $(pwd):/io
         "$DOCKER_IMAGE"
         bash
 
     - name: build/test/package
       run: >
         docker exec
-        -e PYTHON_TAG
-        -e PYYAML_RUN_TESTS
-        -e PYYAML_BUILD_WHEELS
-        -e AW_PLAT
+        --env PYTHON_TAG
+        --env PYYAML_RUN_TESTS
+        --env PYYAML_BUILD_WHEELS
+        --env AW_PLAT
         --workdir /io worker
         /io/packaging/build/manylinux.sh
 
