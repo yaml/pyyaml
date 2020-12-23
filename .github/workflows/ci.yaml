@@ -26,7 +26,6 @@ jobs:
     - name: install build deps
       run: |
         python -V
-
         python -m pip install build
 
     - name: build sdist
@@ -88,8 +87,7 @@ jobs:
       id: cached_libyaml
       uses: actions/cache@v2
       with:
-        path: |
-          libyaml
+        path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: checkout pyyaml
@@ -145,8 +143,7 @@ jobs:
       id: cached_libyaml
       uses: actions/cache@v2
       with:
-        path: |
-          libyaml
+        path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: ensure libyaml fetched
@@ -190,8 +187,7 @@ jobs:
       id: cached_libyaml
       uses: actions/cache@v2
       with:
-        path: |
-          libyaml
+        path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: checkout pyyaml
@@ -230,8 +226,7 @@ jobs:
       id: cached_libyaml
       uses: actions/cache@v2
       with:
-        path: |
-          libyaml
+        path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: ensure libyaml fetched
@@ -247,8 +242,7 @@ jobs:
       env:
         CIBW_BUILD: ${{matrix.python_tag}}
         CIBW_BUILD_VERBOSITY: 1
-      run: |
-        bash ./packaging/build/macos.sh
+      run: bash ./packaging/build/macos.sh
 
     - uses: actions/upload-artifact@v2
       with:
