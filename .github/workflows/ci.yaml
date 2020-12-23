@@ -38,12 +38,10 @@ jobs:
         python -m build .
 
         # ensure exactly one artifact was produced
-        shopt -s nullglob
-        DISTFILES=(dist/*.tar.gz)
-        if [[ ${DISTFILES[@]} -ne 1 ]]; then
+        [[ $(shopt -s nullglob; ls dist/*.tar.gz | wc -w) == 1 ]] || {
           echo "unexpected content in dist dir: $(ls dist/*.tar.gz)"
           exit 1
-        fi
+        }
 
     - name: test sdist
       run: |
@@ -97,7 +95,7 @@ jobs:
     - name: build libyaml
       run: >
         docker run --rm
-        --volume $(pwd):/io
+        --volume "$(pwd):/io"
         --env LIBYAML_REF
         --env LIBYAML_REPO
         --workdir /io
@@ -154,7 +152,7 @@ jobs:
       run: >
         docker run --rm --tty --detach
         --name worker
-        --volume $(pwd):/io
+        --volume "$(pwd):/io"
         "$DOCKER_IMAGE"
         bash
 
