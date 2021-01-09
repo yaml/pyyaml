@@ -31,7 +31,7 @@ def test_recursive(recursive_filename, verbose=False):
     output2 = None
     try:
         output1 = yaml.dump(value1)
-        value2 = yaml.full_load(output1)
+        value2 = yaml.unsafe_load(output1)
         output2 = yaml.dump(value2)
         assert output1 == output2, (output1, output2)
     finally:
