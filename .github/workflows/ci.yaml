@@ -4,6 +4,7 @@ name: PyYAML CI
 on:
   push:
   pull_request:
+    types: [opened, synchronize, edited, reopened]
   workflow_dispatch:
 
 env:
