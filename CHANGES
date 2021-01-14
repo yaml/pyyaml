@@ -4,6 +4,18 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+5.4b2 (2021-01-14)
+
+* Update Copyright year to 2021
+
+5.4b1 (2021-01-13)
+
+* https://github.com/yaml/pyyaml/pull/407 -- build modernization, remove distutils, fix metadata, build wheels, CI to GHA
+* https://github.com/yaml/pyyaml/pull/472 -- fix for CVE-2020-14343, moves arbitrary python tags to UnsafeLoader
+* https://github.com/yaml/pyyaml/pull/441 -- fix memory leak in implicit resolver setup
+* https://github.com/yaml/pyyaml/pull/392 -- fix py2 copy support for timezone objects
+* https://github.com/yaml/pyyaml/pull/378 -- fix compatibility with Jython
+
 5.3.1 (2020-03-18)
 
 * https://github.com/yaml/pyyaml/pull/386 -- Prevents arbitrary code execution during python/object/new constructor
