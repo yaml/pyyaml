@@ -1,34 +1,25 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.4 Released
+Subject: [ANN] PyYAML-5.4.1 Released
 
-=====================
-Announcing PyYAML-5.4
-=====================
+=======================
+Announcing PyYAML-5.4.1
+=======================
 
 A new release of PyYAML is now available:
-https://github.com/yaml/pyyaml/releases/tag/5.4
+https://github.com/yaml/pyyaml/releases/tag/5.4.1
 
-This release contains a security fix for CVE-2020-14343. It removes the
-python/module, python/object, and python/object/new tags from the FullLoader.
-YAML that uses these tags must be loaded by UnsafeLoader, or a custom loader
-that has explicitly enabled them.
+This release contains a fix for AttributeError during module import in some
+mixed version installations.
 
-This release also adds Python wheels for manylinux1 (x86_64) and MacOS (x86_64)
-with the libyaml extension included (built on libyaml 0.2.5).
-
-PyYAML 5.4 will be the last release to support Python 2.7 (except for possible
+PyYAML 5.4.1 will be the last release to support Python 2.7 (except for possible
 critical bug fix releases).
 
 
 Changes
 =======
 
-* https://github.com/yaml/pyyaml/pull/407 -- build modernization, remove distutils, fix metadata, build wheels, CI to GHA
-* https://github.com/yaml/pyyaml/pull/472 -- fix for CVE-2020-14343, moves arbitrary python tags to UnsafeLoader
-* https://github.com/yaml/pyyaml/pull/441 -- fix memory leak in implicit resolver setup
-* https://github.com/yaml/pyyaml/pull/392 -- fix py2 copy support for timezone objects
-* https://github.com/yaml/pyyaml/pull/378 -- fix compatibility with Jython
+* https://github.com/yaml/pyyaml/pull/480 -- Fix stub compat with older pyyaml versions that may unwittingly load it
 
 
 Resources
