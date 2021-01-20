@@ -5,7 +5,9 @@
 # close enough for anyone who's relying on it even when they shouldn't.
 import yaml
 
-if not yaml.__with_libyaml__:
+# in some circumstances, the yaml module we imoprted may be from a different version, so we need
+# to tread carefully when poking at it here (it may not have the attributes we expect)
+if not getattr(yaml, '__with_libyaml__', False):
     from sys import version_info
 
     exc = ModuleNotFoundError if version_info >= (3, 6) else ImportError
