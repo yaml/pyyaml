@@ -915,7 +915,7 @@ class Scanner:
         length = 0
         ch = self.peek(length)
         while '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'  \
-                or ch in '-_':
+                or ch in '-_./':
             length += 1
             ch = self.peek(length)
         if not length:
