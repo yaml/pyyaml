@@ -85,10 +85,10 @@ class BaseRepresenter(object):
         cls.yaml_multi_representers[data_type] = representer
     add_multi_representer = classmethod(add_multi_representer)
 
-    def represent_scalar(self, tag, value, style=None):
+    def represent_scalar(self, tag, value, style=None, force_style=False):
         if style is None:
             style = self.default_style
-        node = ScalarNode(tag, value, style=style)
+        node = ScalarNode(tag, value, style=style, force_style=force_style)
         if self.alias_key is not None:
             self.represented_objects[self.alias_key] = node
         return node
