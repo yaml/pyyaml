@@ -322,6 +322,9 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
         match = self.timestamp_regexp.match(node.value)
+        if match is None:
+            raise ConstructorError("while constructing a timestamp", node.start_mark,
+                                   "unable to parse the given %s" % node.id, node.start_mark)
         values = match.groupdict()
         year = int(values['year'])
         month = int(values['month'])
