@@ -27,13 +27,13 @@ Resources
 
 PyYAML IRC Channel: #pyyaml on irc.freenode.net
 PyYAML homepage: https://github.com/yaml/pyyaml
-PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
+PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
 Source and binary installers: https://pypi.org/project/PyYAML/
 GitHub repository: https://github.com/yaml/pyyaml/
 Bug tracking: https://github.com/yaml/pyyaml/issues
 
 YAML homepage: http://yaml.org/
-YAML-core mailing list: http://lists.sourceforge.net/lists/listinfo/yaml-core
+YAML-core mailing list: https://sourceforge.net/projects/yaml/lists/yaml-core
 
 
 About PyYAML
