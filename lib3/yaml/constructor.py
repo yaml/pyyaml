@@ -129,6 +129,19 @@ class BaseConstructor:
         return [self.construct_object(child, deep=deep)
                 for child in node.value]
 
+    def get_hashable_key(self, key):
+        try:
+            hash(key)
+        except Exception as exc:
+            if isinstance(key, list):
+                for i in range(len(key)):
+                    if not isinstance(key[i], collections.Hashable):
+                        key[i] = self.get_hashable_key(key[i])
+                key = tuple(key)
+                return key
+            raise Exception("unhashable key (%s)" % exc)
+        return key
+
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
@@ -136,10 +149,13 @@ class BaseConstructor:
                     node.start_mark)
         mapping = {}
         for key_node, value_node in node.value:
-            key = self.construct_object(key_node, deep=deep)
+            key = self.construct_object(key_node, deep=True)
             if not isinstance(key, collections.abc.Hashable):
-                raise ConstructorError("while constructing a mapping", node.start_mark,
-                        "found unhashable key", key_node.start_mark)
+                try:
+                    key = self.get_hashable_key(key)
+                except Exception as exc:
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "found unhashable key (%s)" % exc, key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping
