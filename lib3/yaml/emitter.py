@@ -1078,8 +1078,6 @@ class Emitter:
             end += 1
 
     def write_plain(self, text, split=True):
-        if self.root_context:
-            self.open_ended = True
         if not text:
             return
         if not self.whitespace:
