@@ -185,9 +185,7 @@ class SafeRepresenter(BaseRepresenter):
     def represent_long(self, data):
         return self.represent_scalar(u'tag:yaml.org,2002:int', unicode(data))
 
-    inf_value = 1e300
-    while repr(inf_value) != repr(inf_value*inf_value):
-        inf_value *= inf_value
+    inf_value = float('inf')
 
     def represent_float(self, data):
         if data != data or (data == 0.0 and data == 1.0):
