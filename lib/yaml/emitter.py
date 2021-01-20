@@ -22,7 +22,7 @@ class ScalarAnalysis(object):
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
-            allow_block):
+            allow_literal_block, allow_folded_block):
         self.scalar = scalar
         self.empty = empty
         self.multiline = multiline
@@ -30,7 +30,8 @@ class ScalarAnalysis(object):
         self.allow_block_plain = allow_block_plain
         self.allow_single_quoted = allow_single_quoted
         self.allow_double_quoted = allow_double_quoted
-        self.allow_block = allow_block
+        self.allow_literal_block = allow_literal_block
+        self.allow_folded_block = allow_folded_block
 
 class Emitter(object):
 
@@ -507,9 +508,13 @@ class Emitter(object):
                 and (self.flow_level and self.analysis.allow_flow_plain
                     or (not self.flow_level and self.analysis.allow_block_plain))):
                 return ''
-        if self.event.style and self.event.style in '|>':
+        if self.event.style == '|':
             if (not self.flow_level and not self.simple_key_context
-                    and self.analysis.allow_block):
+                    and self.analysis.allow_literal_block):
+                return self.event.style
+        if self.event.style == '>':
+            if (not self.flow_level and not self.simple_key_context
+                    and self.analysis.allow_folded_block):
                 return self.event.style
         if not self.event.style or self.event.style == '\'':
             if (self.analysis.allow_single_quoted and
@@ -637,7 +642,7 @@ class Emitter(object):
             return ScalarAnalysis(scalar=scalar, empty=True, multiline=False,
                     allow_flow_plain=False, allow_block_plain=True,
                     allow_single_quoted=True, allow_double_quoted=True,
-                    allow_block=False)
+                    allow_literal_block=False, allow_folded_block = False)
 
         # Indicators and special characters.
         block_indicators = False
@@ -747,27 +752,30 @@ class Emitter(object):
         allow_block_plain = True
         allow_single_quoted = True
         allow_double_quoted = True
-        allow_block = True
+        allow_literal_block = True
+        allow_folded_block = True
 
         # Leading and trailing whitespaces are bad for plain scalars.
         if (leading_space or leading_break
                 or trailing_space or trailing_break):
             allow_flow_plain = allow_block_plain = False
 
-        # We do not permit trailing spaces for block scalars.
-        if trailing_space:
-            allow_block = False
-
-        # Spaces at the beginning of a new line are only acceptable for block
-        # scalars.
+        # Spaces at the beginning of a new line are only acceptable for double
+        # quoted and block scalars.
         if break_space:
             allow_flow_plain = allow_block_plain = allow_single_quoted = False
 
-        # Spaces followed by breaks, as well as special character are only
-        # allowed for double quoted scalars.
-        if space_break or special_characters:
+        # Spaces followed by breaks are only allowed for double quoted and
+        # literal block scalars.
+        if space_break:
             allow_flow_plain = allow_block_plain =  \
-            allow_single_quoted = allow_block = False
+            allow_single_quoted = allow_folded_block = False
+
+        # special character are only allowed for double quoted scalars.
+        if special_characters:
+            allow_flow_plain = allow_block_plain =  \
+            allow_single_quoted = allow_literal_block = \
+            allow_folded_block = False
 
         # Although the plain scalar writer supports breaks, we never emit
         # multiline plain scalars.
@@ -788,7 +796,8 @@ class Emitter(object):
                 allow_block_plain=allow_block_plain,
                 allow_single_quoted=allow_single_quoted,
                 allow_double_quoted=allow_double_quoted,
-                allow_block=allow_block)
+                allow_literal_block=allow_literal_block,
+                allow_folded_block=allow_folded_block)
 
     # Writers.
 
