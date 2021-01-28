@@ -48,7 +48,7 @@ def _fail(input, test):
     print(test);
 
 # The tests/data/yaml11.schema file is copied from
-# https://github.com/perlpunk/yaml-test-schema/blob/dev/data/schema-yaml11.json
+# https://github.com/perlpunk/yaml-test-schema/blob/dev/data/schema-yaml11.yaml
 def test_implicit_resolver(data_filename, skip_filename, verbose=False):
     types = {
         'str':   [str,   check_str],
