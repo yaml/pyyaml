@@ -49,14 +49,7 @@ def _fail(input, test):
 
 # The tests/data/yaml11.schema file is copied from
 # https://github.com/perlpunk/yaml-test-schema/blob/dev/data/schema-yaml11.json
-def test_implicit_resolver(data_filename, verbose=False):
-    skip = {
-        'Y': 1, 'y': 1, 'N': 1, 'n': 1,
-        '!!bool Y': 1, '!!bool N': 1, '!!bool n': 1, '!!bool y': 1,
-    }
-    skip_dump = {
-        '!!str N': 1, '!!str Y': 1, '!!str n': 1, '!!str y': 1,
-    }
+def test_implicit_resolver(data_filename, skip_filename, verbose=False):
     types = {
         'str':   [str,   check_str],
         'int':   [int,   check_int],
@@ -65,8 +58,11 @@ def test_implicit_resolver(data_filename, verbose=False):
         'nan':   [float, check_float],
         'bool':  [bool,  check_bool],
     }
+    skipdata = yaml.load(open(skip_filename, 'rb'), Loader=yaml.SafeLoader)
+    skip_load = skipdata['load'];
+    skip_dump = skipdata['dump'];
     if verbose:
-        print(skip)
+        print(skip_load)
     tests = yaml.load(open(data_filename, 'rb'), Loader=yaml.SafeLoader)
 
     i = 0;
@@ -78,7 +74,7 @@ def test_implicit_resolver(data_filename, verbose=False):
         i += 1
 
         # Skip known loader bugs
-        if input in skip:
+        if input in skip_load:
             continue
 
         exp_type = test[0];
@@ -144,10 +140,10 @@ def test_implicit_resolver(data_filename, verbose=False):
         assert(False)
     else:
         print("Passed " + str(i) + " tests");
-    print("Skipped " + str(len(skip)) + " load tests");
+    print("Skipped " + str(len(skip_load)) + " load tests");
     print("Skipped " + str(len(skip_dump)) + " dump tests");
 
-test_implicit_resolver.unittest = ['.schema']
+test_implicit_resolver.unittest = ['.schema', '.schema-skip']
 
 if __name__ == '__main__':
     import test_appliance
