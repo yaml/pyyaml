@@ -17,8 +17,6 @@ except ImportError:
 
 import io
 
-import ruyaml
-
 #------------------------------------------------------------------------------
 # Warnings control
 #------------------------------------------------------------------------------
@@ -162,6 +160,7 @@ def safe_load(stream, yaml_version='1.1'):
     to be safe for untrusted input.
     """
     if yaml_version == '1.2':
+        import ruyaml
         return ruyaml.YAML(typ='safe').load(stream)
     return load(stream, SafeLoader)
 
