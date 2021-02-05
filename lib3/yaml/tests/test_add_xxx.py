@@ -29,15 +29,15 @@ def test_dice_constructor():
     import yaml  # NOQA
 
     yaml.add_constructor(u'!dice', dice_constructor)
-    data = yaml.load('initial hit points: !dice 8d4', Loader=yaml.Loader)
+    data = yaml.load('initial hit points: !dice 8d4', Loader=yaml.YAML12Loader)
     assert str(data) == "{'initial hit points': Dice(8,4)}"
 
 
 def test_dice_constructor_with_loader():
     import yaml  # NOQA
 
-    yaml.add_constructor(u'!dice', dice_constructor, Loader=yaml.Loader)
-    data = yaml.load('initial hit points: !dice 8d4', Loader=yaml.Loader)
+    yaml.add_constructor(u'!dice', dice_constructor, Loader=yaml.YAML12Loader)
+    data = yaml.load('initial hit points: !dice 8d4', Loader=yaml.YAML12Loader)
     assert str(data) == "{'initial hit points': Dice(8,4)}"
 
 
@@ -60,7 +60,7 @@ def test_dice_implicit_resolver():
         yaml.dump(dict(treasure=Dice(10, 20)), default_flow_style=False)
         == 'treasure: 10d20\n'
     )
-    assert yaml.load('damage: 5d10', Loader=yaml.Loader) == dict(damage=Dice(5, 10))
+    assert yaml.load('damage: 5d10', Loader=yaml.YAML12Loader) == dict(damage=Dice(5, 10))
 
 
 class Obj1(dict):
@@ -102,7 +102,7 @@ def test_yaml_obj():
 
     yaml.add_representer(Obj1, YAMLObj1.to_yaml)
     yaml.add_multi_constructor(YAMLObj1.yaml_tag, YAMLObj1.from_yaml)
-    x = yaml.load('!obj:x.2\na: 1', Loader=yaml.Loader)
+    x = yaml.load('!obj:x.2\na: 1', Loader=yaml.YAML12Loader)
     print(x)
     assert yaml.dump(x) == """!obj:x.2 "{'a': 1}"\n"""
 
@@ -110,11 +110,11 @@ def test_yaml_obj():
 def test_yaml_obj_with_loader_and_dumper():
     import yaml  # NOQA
 
-    yaml.add_representer(Obj1, YAMLObj1.to_yaml, Dumper=yaml.Dumper)
+    yaml.add_representer(Obj1, YAMLObj1.to_yaml, Dumper=yaml.YAML12Dumper)
     yaml.add_multi_constructor(
-        YAMLObj1.yaml_tag, YAMLObj1.from_yaml, Loader=yaml.Loader
+        YAMLObj1.yaml_tag, YAMLObj1.from_yaml, Loader=yaml.YAML12Loader
     )
-    x = yaml.load('!obj:x.2\na: 1', Loader=yaml.Loader)
+    x = yaml.load('!obj:x.2\na: 1', Loader=yaml.YAML12Loader)
     print(x)
     assert yaml.dump(x) == """!obj:x.2 "{'a': 1}"\n"""
 
