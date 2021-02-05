@@ -121,7 +121,6 @@ jobs:
         python_tag:
         # NB manylinux >=2014 containers don't have Python 2.7, so we have to
         # use exclude to skip it.
-        - cp27-cp27mu
         - cp36-cp36m
         - cp37-cp37m
         - cp38-cp38
@@ -212,7 +211,6 @@ jobs:
         arch:
         - x86_64
         python_tag:
-        - cp27*
         - cp36*
         - cp37*
         - cp38*

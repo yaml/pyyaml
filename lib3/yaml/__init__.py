@@ -151,7 +151,7 @@ def full_load_all(stream):
     """
     return load_all(stream, FullLoader)
 
-def safe_load(stream):
+def safe_load(stream, yaml_version='1.1'):
     """
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
@@ -159,6 +159,8 @@ def safe_load(stream):
     Resolve only basic YAML tags. This is known
     to be safe for untrusted input.
     """
+    if yaml_version == '1.2':
+        return load(stream, YAML12SafeLoader)
     return load(stream, SafeLoader)
 
 def safe_load_all(stream):

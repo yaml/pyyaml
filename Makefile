@@ -18,10 +18,10 @@ forceext:
 	${PYTHON} setup.py --with-libyaml build -f ${PARAMETERS}
 
 install:
-	${PYTHON} setup.py install ${PARAMETERS}
+	${PYTHON} -m pip install --editable . ${PARAMETERS}
 
 installext:
-	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
+	${PYTHON} -m pip install --editable . --install-option="--with-libyaml" ${PARAMETERS}
 
 test: build
 	${PYTHON} tests/lib/test_build.py ${TEST}
@@ -29,7 +29,9 @@ test: build
 testext: buildext
 	${PYTHON} tests/lib/test_build_ext.py ${TEST}
 
-testall:
+testall: install
+	${PYTHON} -m pip install pytest
+	${PYTHON} -m pytest --pyargs yaml
 	${PYTHON} setup.py test
 
 dist:
