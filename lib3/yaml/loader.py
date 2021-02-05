@@ -1,5 +1,5 @@
 
-__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader']
+__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader', 'YAML12UnsafeLoader']
 
 from .reader import *
 from .scanner import *
@@ -7,6 +7,8 @@ from .parser import *
 from .composer import *
 from .constructor import *
 from .resolver import *
+
+from ruyaml import Loader as YAML12UnsafeLoader
 
 class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
 

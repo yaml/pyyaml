@@ -1,10 +1,12 @@
 
-__all__ = ['BaseDumper', 'SafeDumper', 'Dumper']
+__all__ = ['BaseDumper', 'SafeDumper', 'Dumper', 'YAML12Dumper']
 
 from .emitter import *
 from .serializer import *
 from .representer import *
 from .resolver import *
+
+from ruyaml import Dumper as YAML12Dumper
 
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 
