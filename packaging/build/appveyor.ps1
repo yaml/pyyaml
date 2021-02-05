@@ -103,7 +103,8 @@ Function Build-Wheel($python_path) {
     Invoke-Exe { cmake.exe --build . --config Release }
     popd
 
-    Invoke-Exe { & $python -m pip install --editable . --install-option="--with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build test bdist_wheel" }
+    Invoke-Exe { & $python -m pip install --editable . }
+    Invoke-Exe { & $python setup.py --with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build test bdist_wheel }
 }
 
 Function Upload-Artifacts() {
