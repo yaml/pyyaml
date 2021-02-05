@@ -28,7 +28,7 @@ def dice_representer(dumper, data):
 def test_dice_constructor():
     import yaml  # NOQA
 
-    yaml.add_constructor(u'!dice', dice_constructor)
+    yaml.add_constructor(u'!dice', dice_constructor, Loader=yaml.YAML12Loader)
     data = yaml.load('initial hit points: !dice 8d4', Loader=yaml.YAML12Loader)
     assert str(data) == "{'initial hit points': Dice(8,4)}"
 
@@ -44,9 +44,9 @@ def test_dice_constructor_with_loader():
 def test_dice_representer():
     import yaml  # NOQA
 
-    yaml.add_representer(Dice, dice_representer)
+    yaml.add_representer(Dice, dice_representer, Dumper=yaml.YAML12Dumper)
     assert (
-        yaml.dump(dict(gold=Dice(10, 6)), default_flow_style=False)
+        yaml.dump(dict(gold=Dice(10, 6)), default_flow_style=False, sort_keys=False, Dumper=yaml.YAML12Dumper)
         == 'gold: !dice 10d6\n'
     )
 
@@ -55,9 +55,9 @@ def test_dice_implicit_resolver():
     import yaml  # NOQA
 
     pattern = re.compile(r'^\d+d\d+$')
-    yaml.add_implicit_resolver(u'!dice', pattern)
+    yaml.add_implicit_resolver(u'!dice', pattern, Dumper=yaml.YAML12Dumper)
     assert (
-        yaml.dump(dict(treasure=Dice(10, 20)), default_flow_style=False)
+        yaml.dump(dict(treasure=Dice(10, 20)), default_flow_style=False, sort_keys=False, Dumper=yaml.YAML12Dumper)
         == 'treasure: 10d20\n'
     )
     assert yaml.load('damage: 5d10', Loader=yaml.YAML12Loader) == dict(damage=Dice(5, 10))
@@ -83,10 +83,10 @@ class YAMLObj1:
 
     @classmethod
     def from_yaml(cls, loader, suffix, node):
-        import yaml  # NOQA
+        import ruyaml  # NOQA
 
         obj1 = Obj1(suffix)
-        if isinstance(node, yaml.MappingNode):
+        if isinstance(node, ruyaml.MappingNode):
             obj1.add_node(loader.construct_mapping(node))
         else:
             raise NotImplementedError
@@ -100,11 +100,11 @@ class YAMLObj1:
 def test_yaml_obj():
     import yaml  # NOQA
 
-    yaml.add_representer(Obj1, YAMLObj1.to_yaml)
-    yaml.add_multi_constructor(YAMLObj1.yaml_tag, YAMLObj1.from_yaml)
+    yaml.add_representer(Obj1, YAMLObj1.to_yaml, Dumper=yaml.YAML12Dumper)
+    yaml.add_multi_constructor(YAMLObj1.yaml_tag, YAMLObj1.from_yaml, Loader=yaml.YAML12Loader)
     x = yaml.load('!obj:x.2\na: 1', Loader=yaml.YAML12Loader)
     print(x)
-    assert yaml.dump(x) == """!obj:x.2 "{'a': 1}"\n"""
+    assert yaml.dump(x, sort_keys=False, Dumper=yaml.YAML12Dumper) == """!obj:x.2 "{'a': 1}"\n"""
 
 
 def test_yaml_obj_with_loader_and_dumper():
@@ -116,5 +116,5 @@ def test_yaml_obj_with_loader_and_dumper():
     )
     x = yaml.load('!obj:x.2\na: 1', Loader=yaml.YAML12Loader)
     print(x)
-    assert yaml.dump(x) == """!obj:x.2 "{'a': 1}"\n"""
+    assert yaml.dump(x, sort_keys=False, Dumper=yaml.YAML12Dumper) == """!obj:x.2 "{'a': 1}"\n"""
 
