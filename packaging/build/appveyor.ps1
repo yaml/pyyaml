@@ -103,7 +103,11 @@ Function Build-Wheel($python_path) {
     Invoke-Exe { cmake.exe --build . --config Release }
     popd
 
-    Invoke-Exe { & $python setup.py --with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build test bdist_wheel }
+    Invoke-Exe { & $python -m pip install --editable . }
+    Invoke-Exe { & $python -m pip uninstall --yes pyyaml }
+    Invoke-Exe { & $python setup.py --with-libyaml build_ext -I libyaml\include -L libyaml\build\Release -D YAML_DECLARE_STATIC build }
+    # setup.py test does manual path-hacking to get the build directory
+    Invoke-Exe { & $python setup.py --with-libyaml test bdist_wheel }
 }
 
 Function Upload-Artifacts() {
@@ -117,8 +121,6 @@ Function Upload-Artifacts() {
 Bootstrap
 
 $pythons = @(
-"C:\Python27"
-"C:\Python27-x64"
 "C:\Python36"
 "C:\Python36-x64"
 "C:\Python37"
