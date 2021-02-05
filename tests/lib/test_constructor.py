@@ -265,6 +265,7 @@ def _serialize_value(data):
         return str(data)
 
 def test_constructor_types(data_filename, code_filename, verbose=False):
+    assert False
     _make_objects()
     native1 = None
     native2 = None
