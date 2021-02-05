@@ -30,6 +30,7 @@ testext: buildext
 	${PYTHON} tests/lib/test_build_ext.py ${TEST}
 
 testall: install
+	${PYTHON} -m pip install pytest
 	${PYTHON} -m pytest --pyargs yaml
 	${PYTHON} setup.py test
 
