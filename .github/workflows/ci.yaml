@@ -172,6 +172,53 @@ jobs:
         name: dist
         path: dist/*.whl
 
+  build_wheels_aarch64:
+    name: Build aarch64
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        os: [ubuntu-18.04]
+        arch: [aarch64]
+    steps:
+      - uses: actions/checkout@v2
+        # Include all history and tags
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-qemu-action@v1
+        name: Set up QEMU
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.8'
+
+      - name: upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+      - name: Install cibuildwheel
+        run: |
+          python -m pip install cibuildwheel~=1.8.0
+      - name: Build wheels
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_SKIP: "pp* cp27-* cp35-*"
+          CIBW_BEFORE_ALL: python -m pip install --upgrade pip
+            && python -m pip install Cython
+            && yum install -y libyaml-devel
+            && export PYYAML_FORCE_CYTHON=1
+            && export PYYAML_FORCE_LIBYAML=1
+            && export C_INCLUDE_PATH=libyaml/include
+            && export LIBRARY_PATH=libyaml/src/.libs
+            && export LD_LIBRARY_PATH=libyaml/src/.libs
+          CIBW_TEST_COMMAND: "python {project}/packaging/build/smoketest.py"
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
   macos_libyaml:
     name: libyaml ${{matrix.arch}} ${{matrix.platform}}
     runs-on: ${{matrix.platform}}
