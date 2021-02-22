@@ -123,6 +123,7 @@ def run(collections, args=None):
     for function in test_functions:
         if include_functions and function.__name__ not in include_functions:
             continue
+        print(f'\n{function.__name__}')
         if function.unittest:
             for base, exts in test_filenames:
                 if include_filenames and base not in include_filenames:
