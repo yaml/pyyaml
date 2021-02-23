@@ -119,8 +119,12 @@ def run(collections, args=None):
     test_functions = find_test_functions(collections)
     test_filenames = find_test_filenames(DATA)
     include_functions, include_filenames, verbose = parse_arguments(args)
+    print(f'include_functions: {include_functions}')
+    print(f'include_filenames: {include_filenames}')
+    print(f'verbose: {verbose}')
     results = []
     for function in test_functions:
+        print(f'\n  function: {function.__name__}')
         if include_functions and function.__name__ not in include_functions:
             continue
         if function.unittest:
