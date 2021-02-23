@@ -1,4 +1,6 @@
 
+import warnings
+
 import yaml
 import pprint
 
@@ -289,6 +291,56 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
         raise AssertionError("expected an exception")
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
+
+
+def test_constructor_default_mapping(*args, **kwargs):
+    # The safe_load method accepts a laoder argument, but it also emits a
+    # warning that we don't need to check for, so we ignore it
+    warnings.simplefilter("ignore", yaml.YAMLLoadWarning)
+
+    test_mapping = (
+        '---\n'
+        'foo: bar\n'
+        'foo: baz\n'
+    )
+
+    data = yaml.load(test_mapping)
+
+    assert isinstance(data, dict)
+    assert 'foo' in data
+    # This test isn't supposed to test which value wins, it is only supposed to
+    # test that the default mapping constructor allows duplicate keys to be
+    # specified. One of the two values will win out, but we don't care which
+    # one. We allow for either, that way if the behavior changes in the future
+    # it doesn't break this unrelated test.
+    assert data['foo'] in ['bar', 'baz']
+test_constructor_default_mapping.unittest = []
+
+
+def test_constructor_mapping_with_unique_keys(*args, verbose=False, **kwargs):
+    class UniqueKeyLoader(yaml.loader.SafeLoader):
+        def check_mapping_key(self, node, key_node, key, mapping):
+            super().check_mapping_key(node, key_node, key, mapping)
+            if key in mapping:
+                raise yaml.constructor.ConstructorError(
+                    "while constructing a mapping", node.start_mark,
+                    "found duplicate key", key_node.start_mark)
+
+    test_mapping = (
+        '---\n'
+        'foo: bar\n'
+        'foo: baz\n'
+    )
+
+    try:
+        result = yaml.load(test_mapping, UniqueKeyLoader)
+    except yaml.constructor.ConstructorError as exc:
+        if verbose:
+            print(f'{exc.__class__.__name__}: {exc}')
+    else:
+        raise AssertionError("expected an exception, result:\n{result}")
+test_constructor_mapping_with_unique_keys.unittest = []
+
 
 if __name__ == '__main__':
     import sys, test_constructor
