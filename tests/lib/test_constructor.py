@@ -317,6 +317,44 @@ def test_timezone_copy(verbose=False):
 
 test_timezone_copy.unittest = []
 
+
+def test_constructor_default_mapping():
+    test_mapping = '''
+    ---
+    foo: bar
+    foo: baz
+    '''
+    data = yaml.load(test_mapping)
+
+    self.assertIsSubclass(data, dict)
+    self.assertIn('foo', data)
+    # This test isn't supposed to test which value wins, it is only supposed to
+    # test that the default mapping constructor allows duplicate keys to be
+    # specified. One of the two values will win out, but we don't care which
+    # one. We allow for either, that way if the behavior changes in the future
+    # it doesn't break this unrelated test.
+    self.assertIn(data['foo'], ['bar', 'baz'])
+
+
+def test_constructor_mapping_with_unique_keys():
+    class UniqueKeyLoader(yaml.loader.Loader):
+        def construct_mapping_key(self, key, mapping):
+            if key in mapping:
+                raise ValueError("The {key} key is already in {mapping}".format(
+                    key=key,
+                    mapping=mapping))
+            return key
+
+    test_mapping = '''
+    ---
+    foo: bar
+    foo: baz
+    '''
+
+    with self.assertRaises(ValueError):
+        yaml.load(test_mapping)
+
+
 if __name__ == '__main__':
     import sys, test_constructor
     sys.modules['test_constructor'] = sys.modules['__main__']

@@ -129,6 +129,18 @@ class BaseConstructor:
         return [self.construct_object(child, deep=deep)
                 for child in node.value]
 
+    def construct_mapping_key(self, key, mapping):
+        """
+        This method simply returns key by default, but it can be overridden to
+        check that the key is not a duplicate:
+
+        def construct_mapping_key(self, key, mapping):
+            if key is in mapping:
+                raise ValueError(f"The {key} key is already in {mapping}")
+            return key
+        """
+        return key
+
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
@@ -140,6 +152,7 @@ class BaseConstructor:
             if not isinstance(key, collections.abc.Hashable):
                 raise ConstructorError("while constructing a mapping", node.start_mark,
                         "found unhashable key", key_node.start_mark)
+            key = self.construct_mapping_key(key, mapping)
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping

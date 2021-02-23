@@ -1,4 +1,6 @@
 
+import warnings
+
 import yaml
 import pprint
 
@@ -289,6 +291,55 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
         raise AssertionError("expected an exception")
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
+
+
+def test_constructor_default_mapping(*args, **kwargs):
+    # The safe_load method accepts a laoder argument, but it also emits a
+    # warning that we don't need to check for, so we ignore it
+    warnings.simplefilter("ignore", yaml.YAMLLoadWarning)
+
+    test_mapping = (
+        '---\n'
+        'foo: bar\n'
+        'foo: baz\n'
+    )
+
+    data = yaml.load(test_mapping)
+
+    assert isinstance(data, dict)
+    assert 'foo' in data
+    # This test isn't supposed to test which value wins, it is only supposed to
+    # test that the default mapping constructor allows duplicate keys to be
+    # specified. One of the two values will win out, but we don't care which
+    # one. We allow for either, that way if the behavior changes in the future
+    # it doesn't break this unrelated test.
+    assert data['foo'] in ['bar', 'baz']
+test_constructor_default_mapping.unittest = []
+
+
+def test_constructor_mapping_with_unique_keys(*args, verbose=False, **kwargs):
+    class UniqueKeyLoader(yaml.loader.SafeLoader):
+        def construct_mapping_key(self, key, mapping):
+            key = super().construct_mapping_key(key, mapping)
+            if key in mapping:
+                raise ValueError(f"Found disallowed duplicate '{key}' in {mapping}")
+            return key
+
+    test_mapping = (
+        '---\n'
+        'foo: bar\n'
+        'foo: baz\n'
+    )
+
+    try:
+        result = yaml.load(test_mapping, UniqueKeyLoader)
+    except ValueError as exc:
+        if verbose:
+            print(f'{exc.__class__.__name__}: {exc}')
+    else:
+        raise AssertionError("expected an exception, result:\n{result}")
+test_constructor_mapping_with_unique_keys.unittest = []
+
 
 if __name__ == '__main__':
     import sys, test_constructor
