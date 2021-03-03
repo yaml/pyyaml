@@ -71,6 +71,7 @@ class Reader(object):
         self.index = 0
         self.line = 0
         self.column = 0
+        self._non_printable = None
         if isinstance(stream, unicode):
             self.name = "<unicode string>"
             self.check_printable(stream)
@@ -136,15 +137,20 @@ class Reader(object):
                 self.encoding = 'utf-8'
         self.update(1)
 
-    if has_ucs4:
-        NON_PRINTABLE = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]'
-    elif sys.platform.startswith('java'):
-        # Jython doesn't support lone surrogates https://bugs.jython.org/issue2048 
-        NON_PRINTABLE = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]'
-    else:
-        # Need to use eval here due to the above Jython issue
-        NON_PRINTABLE = eval(r"u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uFFFD]|(?:^|[^\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?:[^\uDC00-\uDFFF]|$)'")
-    NON_PRINTABLE = re.compile(NON_PRINTABLE)
+    @property
+    def NON_PRINTABLE(self):
+        if self._non_printable is None:
+            if has_ucs4:
+                non_printable = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]'
+            elif sys.platform.startswith('java'):
+                # Jython doesn't support lone surrogates https://bugs.jython.org/issue2048 
+                non_printable = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]'
+            else:
+                # Need to use eval here due to the above Jython issue
+                non_printable = eval(r"u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uFFFD]|(?:^|[^\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF](?:[^\uDC00-\uDFFF]|$)'")
+            self._non_printable = re.compile(non_printable)
+        return self._non_printable
+
     def check_printable(self, data):
         match = self.NON_PRINTABLE.search(data)
         if match:
