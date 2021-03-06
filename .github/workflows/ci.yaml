@@ -68,26 +68,27 @@ jobs:
 
 
   linux_libyaml:
-    name: libyaml ${{matrix.arch}} ${{matrix.platform}}
+    name: libyaml ${{matrix.cfg.arch}} ${{matrix.cfg.platform}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform:
-        # manylinux1 is forward-compatible to 2010/2014.
-        #- manylinux2014
-        #- manylinux2010
-        - manylinux1
-        arch:
-        - x86_64
+        cfg:
+        - { platform: manylinux1, arch: x86_64 }
+        - { platform: manylinux2014, arch: aarch64 }
+        - { platform: manylinux2014, arch: s390x }
     env:
-      DOCKER_IMAGE: quay.io/pypa/${{matrix.platform}}_${{matrix.arch}}
+      DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
       uses: actions/cache@v2
       with:
         path: libyaml
-        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
+        key: libyamlX_${{matrix.cfg.platform}}_${{matrix.cfg.arch}}_${{env.LIBYAML_REF}}
+
+    - name: configure docker foreign arch support
+      uses: docker/setup-qemu-action@v1
+      if: matrix.cfg.arch != 'x86_64' && steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Checkout pyyaml
       uses: actions/checkout@v2
@@ -104,36 +105,36 @@ jobs:
         /io/packaging/build/libyaml.sh
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
+    - name: ensure output is world readable (or cache fill fails with Permission Denied)
+      run: >
+        sudo chmod -R a+r ./libyaml/
+      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+
   linux_pyyaml:
     needs: linux_libyaml
-    name: pyyaml ${{matrix.arch}} ${{matrix.platform}} ${{matrix.python_tag}}
+    name: pyyaml ${{matrix.cfg.arch}} ${{matrix.cfg.platform}} ${{matrix.cfg.python_tag}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform:
-        # So long as manylinux1 container builds work, they're
-        # forward-compatible to 2010/2014.
-        # - manylinux2014
-        # - manylinux2010
-        - manylinux1
-        arch:
-        - x86_64
-        python_tag:
-        # NB manylinux >=2014 containers don't have Python 2.7, so we have to
-        # use exclude to skip it.
-        - cp27-cp27mu
-        - cp36-cp36m
-        - cp37-cp37m
-        - cp38-cp38
-        - cp39-cp39
-#        exclude:
-#        - platform: manylinux2014
-#          arch: x86_64
-#          python_tag: cp27-cp27mu
+        cfg:
+        - { platform: manylinux1, arch: x86_64, python_tag: cp27-cp27mu }
+        - { platform: manylinux1, arch: x86_64, python_tag: cp36-cp36m }
+        - { platform: manylinux1, arch: x86_64, python_tag: cp37-cp37m }
+        - { platform: manylinux1, arch: x86_64, python_tag: cp38-cp38 }
+        - { platform: manylinux1, arch: x86_64, python_tag: cp39-cp39 }
+        - { platform: manylinux2014, arch: aarch64, python_tag: cp36-cp36m }
+        - { platform: manylinux2014, arch: aarch64, python_tag: cp37-cp37m }
+        - { platform: manylinux2014, arch: aarch64, python_tag: cp38-cp38 }
+        - { platform: manylinux2014, arch: aarch64, python_tag: cp39-cp39 }
+        - { platform: manylinux2014, arch: s390x, python_tag: cp36-cp36m }
+        - { platform: manylinux2014, arch: s390x, python_tag: cp37-cp37m }
+        - { platform: manylinux2014, arch: s390x, python_tag: cp38-cp38 }
+        - { platform: manylinux2014, arch: s390x, python_tag: cp39-cp39 }
     env:
-      AW_PLAT: ${{matrix.platform}}_${{matrix.arch}}
-      DOCKER_IMAGE: quay.io/pypa/${{matrix.platform}}_${{matrix.arch}}
-      PYTHON_TAG: ${{matrix.python_tag}}
+      AW_PLAT: ${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
+      DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
+      PYTHON_TAG: ${{matrix.cfg.python_tag}}
       PYYAML_BUILD_WHEELS: 1
     steps:
     - uses: actions/checkout@v2
@@ -143,11 +144,15 @@ jobs:
       uses: actions/cache@v2
       with:
         path: libyaml
-        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
+        key: libyamlX_${{matrix.cfg.platform}}_${{matrix.cfg.arch}}_${{env.LIBYAML_REF}}
 
     - name: Ensure libyaml fetched
       run: exit 1
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+    - name: configure docker foreign arch support
+      uses: docker/setup-qemu-action@v1
+      if: matrix.cfg.arch != 'x86_64'
 
     - name: Start container
       run: >
