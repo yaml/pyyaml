@@ -10,7 +10,8 @@ For a complete changelog, see:
 
 5.4 (2021-01-19)
 
-* https://github.com/yaml/pyyaml/pull/407 -- Build modernization, remove distutils, fix metadata, build wheels, CI to GHA
+* Drops support for Python 3.5
+* https://github.com/yaml/pyyaml/pull/407 -- Build modernization, remove distutils, fix metadata, build wheels, CI to GHA.
 * https://github.com/yaml/pyyaml/pull/472 -- Fix for CVE-2020-14343, moves arbitrary python tags to UnsafeLoader
 * https://github.com/yaml/pyyaml/pull/441 -- Fix memory leak in implicit resolver setup
 * https://github.com/yaml/pyyaml/pull/392 -- Fix py2 copy support for timezone objects
@@ -251,4 +252,3 @@ For a complete changelog, see:
 * Initial release.  The version number reflects the codename
   of the project (PyYAML 3000) and differentiates it from
   the abandoned PyYaml module.
-
