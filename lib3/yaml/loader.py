@@ -1,5 +1,6 @@
 
-__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader']
+__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader',
+  'CoreLoader', 'JSONLoader']
 
 from .reader import *
 from .scanner import *
@@ -37,6 +38,26 @@ class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
         Composer.__init__(self)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
+
+class CoreLoader(Reader, Scanner, Parser, Composer, CoreConstructor, CoreResolver):
+
+    def __init__(self, stream):
+        Reader.__init__(self, stream)
+        Scanner.__init__(self)
+        Parser.__init__(self)
+        Composer.__init__(self)
+        CoreConstructor.__init__(self)
+        CoreResolver.__init__(self)
+
+class JSONLoader(Reader, Scanner, Parser, Composer, JSONConstructor, JSONResolver):
+
+    def __init__(self, stream):
+        Reader.__init__(self, stream)
+        Scanner.__init__(self)
+        Parser.__init__(self)
+        Composer.__init__(self)
+        JSONConstructor.__init__(self)
+        JSONResolver.__init__(self)
 
 class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 

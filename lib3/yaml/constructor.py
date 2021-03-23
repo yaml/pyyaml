@@ -2,10 +2,12 @@
 __all__ = [
     'BaseConstructor',
     'SafeConstructor',
+    'CoreConstructor',
     'FullConstructor',
     'UnsafeConstructor',
     'Constructor',
-    'ConstructorError'
+    'ConstructorError',
+    'JSONConstructor',
 ]
 
 from .error import *
@@ -17,6 +19,12 @@ class ConstructorError(MarkedYAMLError):
     pass
 
 class BaseConstructor:
+
+    inf_value = 1e300
+    while inf_value != inf_value*inf_value:
+        inf_value *= inf_value
+    nan_value = -inf_value/inf_value   # Trying to make a quiet NaN (like C99).
+
 
     yaml_constructors = {}
     yaml_multi_constructors = {}
@@ -168,55 +176,6 @@ class BaseConstructor:
             cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
         cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
-class SafeConstructor(BaseConstructor):
-
-    def construct_scalar(self, node):
-        if isinstance(node, MappingNode):
-            for key_node, value_node in node.value:
-                if key_node.tag == 'tag:yaml.org,2002:value':
-                    return self.construct_scalar(value_node)
-        return super().construct_scalar(node)
-
-    def flatten_mapping(self, node):
-        merge = []
-        index = 0
-        while index < len(node.value):
-            key_node, value_node = node.value[index]
-            if key_node.tag == 'tag:yaml.org,2002:merge':
-                del node.value[index]
-                if isinstance(value_node, MappingNode):
-                    self.flatten_mapping(value_node)
-                    merge.extend(value_node.value)
-                elif isinstance(value_node, SequenceNode):
-                    submerge = []
-                    for subnode in value_node.value:
-                        if not isinstance(subnode, MappingNode):
-                            raise ConstructorError("while constructing a mapping",
-                                    node.start_mark,
-                                    "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_mark)
-                        self.flatten_mapping(subnode)
-                        submerge.append(subnode.value)
-                    submerge.reverse()
-                    for value in submerge:
-                        merge.extend(value)
-                else:
-                    raise ConstructorError("while constructing a mapping", node.start_mark,
-                            "expected a mapping or list of mappings for merging, but found %s"
-                            % value_node.id, value_node.start_mark)
-            elif key_node.tag == 'tag:yaml.org,2002:value':
-                key_node.tag = 'tag:yaml.org,2002:str'
-                index += 1
-            else:
-                index += 1
-        if merge:
-            node.value = merge + node.value
-
-    def construct_mapping(self, node, deep=False):
-        if isinstance(node, MappingNode):
-            self.flatten_mapping(node)
-        return super().construct_mapping(node, deep=deep)
-
     def construct_yaml_null(self, node):
         self.construct_scalar(node)
         return None
@@ -234,62 +193,40 @@ class SafeConstructor(BaseConstructor):
         value = self.construct_scalar(node)
         return self.bool_values[value.lower()]
 
-    def construct_yaml_int(self, node):
-        value = self.construct_scalar(node)
-        value = value.replace('_', '')
-        sign = +1
-        if value[0] == '-':
-            sign = -1
-        if value[0] in '+-':
-            value = value[1:]
-        if value == '0':
-            return 0
-        elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
-        elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
-        elif value[0] == '0':
-            return sign*int(value, 8)
-        elif ':' in value:
-            digits = [int(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*int(value)
+    def construct_yaml_str(self, node):
+        return self.construct_scalar(node)
 
-    inf_value = 1e300
-    while inf_value != inf_value*inf_value:
-        inf_value *= inf_value
-    nan_value = -inf_value/inf_value   # Trying to make a quiet NaN (like C99).
+    def construct_yaml_seq(self, node):
+        data = []
+        yield data
+        data.extend(self.construct_sequence(node))
 
-    def construct_yaml_float(self, node):
-        value = self.construct_scalar(node)
-        value = value.replace('_', '').lower()
-        sign = +1
-        if value[0] == '-':
-            sign = -1
-        if value[0] in '+-':
-            value = value[1:]
-        if value == '.inf':
-            return sign*self.inf_value
-        elif value == '.nan':
-            return self.nan_value
-        elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*float(value)
+    def construct_yaml_map(self, node):
+        data = {}
+        yield data
+        value = self.construct_mapping(node)
+        data.update(value)
+
+    def construct_undefined(self, node):
+        raise ConstructorError(None, None,
+                "could not determine a constructor for the tag %r" % node.tag,
+                node.start_mark)
+
+    @classmethod
+    def init_constructors(cls, keys):
+        for i in keys:
+            if i not in _constructors:
+                continue
+            for key in _constructors[i]:
+                callback = _constructors[i][key]
+                if (key is None):
+                    cls.add_constructor(key, callback)
+                else:
+                    cls.add_constructor('tag:yaml.org,2002:' + key, callback)
+
+
+# SafeConstructor implements YAML 1.1
+class SafeConstructor(BaseConstructor):
 
     def construct_yaml_binary(self, node):
         try:
@@ -399,19 +336,104 @@ class SafeConstructor(BaseConstructor):
         value = self.construct_mapping(node)
         data.update(value)
 
-    def construct_yaml_str(self, node):
-        return self.construct_scalar(node)
+    def construct_scalar(self, node):
+        if isinstance(node, MappingNode):
+            for key_node, value_node in node.value:
+                if key_node.tag == 'tag:yaml.org,2002:value':
+                    return self.construct_scalar(value_node)
+        return super().construct_scalar(node)
 
-    def construct_yaml_seq(self, node):
-        data = []
-        yield data
-        data.extend(self.construct_sequence(node))
+    def flatten_mapping(self, node):
+        merge = []
+        index = 0
+        while index < len(node.value):
+            key_node, value_node = node.value[index]
+            if key_node.tag == 'tag:yaml.org,2002:merge':
+                del node.value[index]
+                if isinstance(value_node, MappingNode):
+                    self.flatten_mapping(value_node)
+                    merge.extend(value_node.value)
+                elif isinstance(value_node, SequenceNode):
+                    submerge = []
+                    for subnode in value_node.value:
+                        if not isinstance(subnode, MappingNode):
+                            raise ConstructorError("while constructing a mapping",
+                                    node.start_mark,
+                                    "expected a mapping for merging, but found %s"
+                                    % subnode.id, subnode.start_mark)
+                        self.flatten_mapping(subnode)
+                        submerge.append(subnode.value)
+                    submerge.reverse()
+                    for value in submerge:
+                        merge.extend(value)
+                else:
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                            "expected a mapping or list of mappings for merging, but found %s"
+                            % value_node.id, value_node.start_mark)
+            elif key_node.tag == 'tag:yaml.org,2002:value':
+                key_node.tag = 'tag:yaml.org,2002:str'
+                index += 1
+            else:
+                index += 1
+        if merge:
+            node.value = merge + node.value
 
-    def construct_yaml_map(self, node):
-        data = {}
-        yield data
-        value = self.construct_mapping(node)
-        data.update(value)
+    def construct_yaml_int(self, node):
+        value = self.construct_scalar(node)
+        value = value.replace('_', '')
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
+        if value == '0':
+            return 0
+        elif value.startswith('0b'):
+            return sign*int(value[2:], 2)
+        elif value.startswith('0x'):
+            return sign*int(value[2:], 16)
+        elif value[0] == '0':
+            return sign*int(value, 8)
+        elif ':' in value:
+            digits = [int(part) for part in value.split(':')]
+            digits.reverse()
+            base = 1
+            value = 0
+            for digit in digits:
+                value += digit*base
+                base *= 60
+            return sign*value
+        else:
+            return sign*int(value)
+
+    def construct_yaml_float(self, node):
+        value = self.construct_scalar(node)
+        value = value.replace('_', '').lower()
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
+        if value == '.inf':
+            return sign*self.inf_value
+        elif value == '.nan':
+            return self.nan_value
+        elif ':' in value:
+            digits = [float(part) for part in value.split(':')]
+            digits.reverse()
+            base = 1
+            value = 0.0
+            for digit in digits:
+                value += digit*base
+                base *= 60
+            return sign*value
+        else:
+            return sign*float(value)
+
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, MappingNode):
+            self.flatten_mapping(node)
+        return super().construct_mapping(node, deep=deep)
 
     def construct_yaml_object(self, node, cls):
         data = cls.__new__(cls)
@@ -423,61 +445,108 @@ class SafeConstructor(BaseConstructor):
             state = self.construct_mapping(node)
             data.__dict__.update(state)
 
-    def construct_undefined(self, node):
-        raise ConstructorError(None, None,
-                "could not determine a constructor for the tag %r" % node.tag,
-                node.start_mark)
+# CoreConstructor implements YAML 1.2 Core Schema
+class CoreConstructor(BaseConstructor):
+    def construct_yaml_int(self, node):
+        value = self.construct_scalar(node)
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:null',
-        SafeConstructor.construct_yaml_null)
+        if value == '0':
+            return 0
+        elif value.startswith('0o'):
+            return sign*int(value[2:], 8)
+        elif value.startswith('0x'):
+            return sign*int(value[2:], 16)
+        else:
+            return sign*int(value)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:bool',
-        SafeConstructor.construct_yaml_bool)
+    def construct_yaml_float(self, node):
+        value = self.construct_scalar(node)
+        value = value.lower()
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
+        if value == '.inf':
+            return sign*self.inf_value
+        elif value == '.nan':
+            return self.nan_value
+        else:
+            return sign*float(value)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:int',
-        SafeConstructor.construct_yaml_int)
+# JSONConstructor implements YAML 1.2 JSON Schema
+class JSONConstructor(BaseConstructor):
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:float',
-        SafeConstructor.construct_yaml_float)
+    def construct_yaml_int(self, node):
+        value = self.construct_scalar(node)
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:binary',
-        SafeConstructor.construct_yaml_binary)
+        if value == '0':
+            return 0
+        else:
+            return sign*int(value)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:timestamp',
-        SafeConstructor.construct_yaml_timestamp)
+    def construct_yaml_float(self, node):
+        value = self.construct_scalar(node)
+        value = value.lower()
+        sign = +1
+        if value[0] == '-':
+            sign = -1
+        if value[0] in '+-':
+            value = value[1:]
+        return sign*float(value)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:omap',
-        SafeConstructor.construct_yaml_omap)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:pairs',
-        SafeConstructor.construct_yaml_pairs)
+_constructors = {
+    'yaml11':  {
+        'str': BaseConstructor.construct_yaml_str,
+        'seq': BaseConstructor.construct_yaml_seq,
+        'map': BaseConstructor.construct_yaml_map,
+        None: BaseConstructor.construct_undefined,
+        'int': SafeConstructor.construct_yaml_int,
+        'float': SafeConstructor.construct_yaml_float,
+        'null': BaseConstructor.construct_yaml_null,
+        'bool': BaseConstructor.construct_yaml_bool,
+        'binary': SafeConstructor.construct_yaml_binary,
+        'timestamp': SafeConstructor.construct_yaml_timestamp,
+        'omap': SafeConstructor.construct_yaml_omap,
+        'pairs': SafeConstructor.construct_yaml_pairs,
+        'set': SafeConstructor.construct_yaml_set,
+    },
+    'core':  {
+        'str': BaseConstructor.construct_yaml_str,
+        'seq': BaseConstructor.construct_yaml_seq,
+        'map': BaseConstructor.construct_yaml_map,
+        None: BaseConstructor.construct_undefined,
+        'int': CoreConstructor.construct_yaml_int,
+        'float': CoreConstructor.construct_yaml_float,
+        'null': BaseConstructor.construct_yaml_null,
+        'bool': BaseConstructor.construct_yaml_bool,
+    },
+    'json':  {
+        'str': BaseConstructor.construct_yaml_str,
+        'seq': BaseConstructor.construct_yaml_seq,
+        'map': BaseConstructor.construct_yaml_map,
+        None: BaseConstructor.construct_undefined,
+        'int': JSONConstructor.construct_yaml_int,
+        'float': JSONConstructor.construct_yaml_float,
+        'null': BaseConstructor.construct_yaml_null,
+        'bool': BaseConstructor.construct_yaml_bool,
+    },
+}
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:set',
-        SafeConstructor.construct_yaml_set)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:str',
-        SafeConstructor.construct_yaml_str)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:seq',
-        SafeConstructor.construct_yaml_seq)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:map',
-        SafeConstructor.construct_yaml_map)
-
-SafeConstructor.add_constructor(None,
-        SafeConstructor.construct_undefined)
+SafeConstructor.init_constructors(['yaml11'])
+CoreConstructor.init_constructors(['core'])
+JSONConstructor.init_constructors(['json'])
 
 class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by
