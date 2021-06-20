@@ -7,8 +7,14 @@ python setup.py install
 ```
 
 By default, the `setup.py` script checks whether LibYAML is installed and if so, builds and installs LibYAML bindings.
-* Skip the check and force installation of LibYAML bindings: `python setup.py --with-libyaml install`
-* Disable the check and skip building and installing LibYAML bindings: `python setup.py --without-libyaml install`.
+* Skip the check and force installation of LibYAML bindings:
+    ```shell script
+    python setup.py --with-libyaml install
+    ```
+* Disable the check and skip building and installing LibYAML bindings:
+    ```shell script
+    python setup.py --without-libyaml install
+    ```
 
 ## Usage
 When LibYAML bindings are installed, you may use fast LibYAML-based parser and emitter as follows:
