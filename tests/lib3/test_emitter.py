@@ -15,7 +15,8 @@ def _compare_events(events1, events2):
             assert event1.value == event2.value, (event1, event2)
 
 def test_emitter_on_data(data_filename, canonical_filename, verbose=False):
-    events = list(yaml.parse(open(data_filename, 'rb')))
+    with open(data_filename, 'rb') as fp:
+        events = list(yaml.parse(fp))
     output = yaml.emit(events)
     if verbose:
         print("OUTPUT:")
@@ -26,7 +27,8 @@ def test_emitter_on_data(data_filename, canonical_filename, verbose=False):
 test_emitter_on_data.unittest = ['.data', '.canonical']
 
 def test_emitter_on_canonical(canonical_filename, verbose=False):
-    events = list(yaml.parse(open(canonical_filename, 'rb')))
+    with open(canonical_filename, 'rb') as fp:
+        events = list(yaml.parse(fp))
     for canonical in [False, True]:
         output = yaml.emit(events, canonical=canonical)
         if verbose:
@@ -39,7 +41,8 @@ test_emitter_on_canonical.unittest = ['.canonical']
 
 def test_emitter_styles(data_filename, canonical_filename, verbose=False):
     for filename in [data_filename, canonical_filename]:
-        events = list(yaml.parse(open(filename, 'rb')))
+        with open(filename, 'rb') as fp:
+            events = list(yaml.parse(fp))
         for flow_style in [False, True]:
             for style in ['|', '>', '"', '\'', '']:
                 styled_events = []
@@ -86,7 +89,8 @@ class EventsLoader(yaml.Loader):
 EventsLoader.add_constructor(None, EventsLoader.construct_event)
 
 def test_emitter_events(events_filename, verbose=False):
-    events = list(yaml.load(open(events_filename, 'rb'), Loader=EventsLoader))
+    with open(events_filename, 'rb') as fp:
+        events = list(yaml.load(fp, Loader=EventsLoader))
     output = yaml.emit(events)
     if verbose:
         print("OUTPUT:")
