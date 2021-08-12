@@ -7,7 +7,7 @@ set -eux
 export PYBIN=/usr/bin/python3
 
 ${PYBIN} -V
-${PYBIN} -m pip install -U --user cibuildwheel
+${PYBIN} -m pip install -U --user "cibuildwheel<2.0"
 # run cibuildwheel; we can skip CIBW_ENVIRONMENT since the Mac version will directly inherit the envvars we set to
 # force Cython and --with-libyaml. cibuildwheel will install Cython before each version is built. We expect that
 # the calling environment will set CIBW_SKIP or CIBW_BUILD to control which Pythons we build for. (eg, CIBW_SKIP='pp* cp27* cp35*')
