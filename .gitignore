@@ -2,7 +2,6 @@
 /dist/*
 /build/*
 /lib/PyYAML.egg-info/*
-/lib3/PyYAML.egg-info/*
 /wheelhouse/*
 /yaml/_yaml.c
 MANIFEST

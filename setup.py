@@ -247,7 +247,7 @@ class test(Command):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        sys.path.insert(0, 'tests/lib3')
+        sys.path.insert(0, 'tests/lib')
         import test_all
         if not test_all.main([]):
             raise DistutilsError("Tests failed")
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         classifiers=CLASSIFIERS,
         project_urls=PROJECT_URLS,
 
-        package_dir={'': 'lib3'},
+        package_dir={'': 'lib'},
         packages=['yaml', '_yaml'],
         ext_modules=[
             Extension('yaml._yaml', ['yaml/_yaml.pyx'],
