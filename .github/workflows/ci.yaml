@@ -118,7 +118,6 @@ jobs:
     strategy:
       matrix:
         cfg:
-        - { platform: manylinux1, arch: x86_64, python_tag: cp27-cp27mu }
         - { platform: manylinux1, arch: x86_64, python_tag: cp36-cp36m }
         - { platform: manylinux1, arch: x86_64, python_tag: cp37-cp37m }
         - { platform: manylinux1, arch: x86_64, python_tag: cp38-cp38 }
@@ -217,7 +216,6 @@ jobs:
         arch:
         - x86_64
         python_tag:
-        - cp27*
         - cp36*
         - cp37*
         - cp38*

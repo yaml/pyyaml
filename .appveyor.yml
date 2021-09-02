@@ -14,8 +14,6 @@ environment:
   PYYAML_TEST_GROUP: all
 
 #  matrix:
-#    - PYTHON_VER: Python27
-#    - PYTHON_VER: Python27-x64
 #    - PYTHON_VER: Python35
 #    - PYTHON_VER: Python35-x64
 #    - PYTHON_VER: Python36
