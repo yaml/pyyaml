@@ -27,8 +27,6 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Cython",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
@@ -249,10 +247,7 @@ class test(Command):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
         sys.path.insert(0, build_cmd.build_lib)
-        if sys.version_info[0] < 3:
-            sys.path.insert(0, 'tests/lib')
-        else:
-            sys.path.insert(0, 'tests/lib3')
+        sys.path.insert(0, 'tests/lib3')
         import test_all
         if not test_all.main([]):
             raise DistutilsError("Tests failed")
@@ -282,7 +277,7 @@ if __name__ == '__main__':
         classifiers=CLASSIFIERS,
         project_urls=PROJECT_URLS,
 
-        package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
+        package_dir={'': 'lib3'},
         packages=['yaml', '_yaml'],
         ext_modules=[
             Extension('yaml._yaml', ['yaml/_yaml.pyx'],
@@ -292,5 +287,5 @@ if __name__ == '__main__':
 
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*',
+        python_requires='!=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*',
     )
