@@ -117,8 +117,6 @@ Function Upload-Artifacts() {
 Bootstrap
 
 $pythons = @(
-"C:\Python27"
-"C:\Python27-x64"
 "C:\Python36"
 "C:\Python36-x64"
 "C:\Python37"
