@@ -1217,7 +1217,7 @@ class Scanner(object):
                     for k in range(length):
                         if self.peek(k) not in u'0123456789ABCDEFabcdef':
                             raise ScannerError("while scanning a double-quoted scalar", start_mark,
-                                    "expected escape sequence of %d hexdecimal numbers, but found %r" %
+                                    "expected escape sequence of %d hexadecimal numbers, but found %r" %
                                         (length, self.peek(k).encode('utf-8')), self.get_mark())
                     code = int(self.prefix(length), 16)
                     chunks.append(unichr(code))
@@ -1412,7 +1412,7 @@ class Scanner(object):
             for k in range(2):
                 if self.peek(k) not in u'0123456789ABCDEFabcdef':
                     raise ScannerError("while scanning a %s" % name, start_mark,
-                            "expected URI escape sequence of 2 hexdecimal numbers, but found %r" %
+                            "expected URI escape sequence of 2 hexadecimal numbers, but found %r" %
                                 (self.peek(k).encode('utf-8')), self.get_mark())
             bytes.append(chr(int(self.prefix(2), 16)))
             self.forward(2)
