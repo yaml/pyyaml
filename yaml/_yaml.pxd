@@ -7,8 +7,6 @@ cdef extern from "_yaml.h":
     int PyString_CheckExact(object o)
     int PyUnicode_CheckExact(object o)
     char *PyString_AS_STRING(object o)
-    int PyString_GET_SIZE(object o)
-    object PyString_FromStringAndSize(char *v, int l)
     object PyUnicode_FromString(char *u)
     object PyUnicode_DecodeUTF8(char *u, int s, char *e)
     object PyUnicode_AsUTF8String(object o)
@@ -17,7 +15,11 @@ cdef extern from "_yaml.h":
     ctypedef unsigned char yaml_char_t
 
     object PyUnicode_FromYamlString(void *u)
-    yaml_char_t *PyString_AS_Yaml_STRING(object o)
+    yaml_char_t *PyBytes_AS_Yaml_STRING(object o)
+    const char *PyBytes_AS_STRING(object o)
+    int PyBytes_CheckExact(object o)
+    int PyBytes_GET_SIZE(object o)
+    object PyBytes_FromStringAndSize(char *v, int l)
 
     ctypedef enum:
         SIZEOF_VOID_P
