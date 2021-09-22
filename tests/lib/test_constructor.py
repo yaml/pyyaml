@@ -5,6 +5,9 @@ import pprint
 import datetime
 import yaml.tokens
 
+# Import any packages here that need to be referenced in .code files.
+import signal
+
 def execute(code):
     global value
     exec(code)
