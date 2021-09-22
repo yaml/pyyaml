@@ -1,5 +1,6 @@
 
-__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader']
+__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader',
+  ]
 
 from .reader import *
 from .scanner import *
@@ -17,6 +18,11 @@ class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolve
         Composer.__init__(self)
         BaseConstructor.__init__(self)
         BaseResolver.__init__(self)
+
+    @classmethod
+    def init_tags(cls, tagset):
+        cls.init_constructors(tagset)
+        cls.init_resolvers(tagset)
 
 class FullLoader(Reader, Scanner, Parser, Composer, FullConstructor, Resolver):
 
