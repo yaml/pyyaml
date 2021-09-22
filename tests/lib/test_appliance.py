@@ -103,7 +103,8 @@ def display(results, verbose):
         for filename in filenames:
             sys.stdout.write('-'*75+'\n')
             sys.stdout.write('%s:\n' % filename)
-            data = open(filename, 'r', errors='replace').read()
+            with open(filename, 'r', errors='replace') as file:
+                data = file.read()
             sys.stdout.write(data)
             if data and data[-1] != '\n':
                 sys.stdout.write('\n')
