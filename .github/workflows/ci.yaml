@@ -12,59 +12,59 @@ env:
   LIBYAML_REF: 0.2.5
 
 jobs:
-  python_sdist:
-    name: PyYAML sdist
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout pyyaml
-      uses: actions/checkout@v2
-
-    - name: Install a python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
-
-    - name: Install build deps
-      run: |
-        python -V
-        python -m pip install build
-
-    - name: Build sdist
-      run: |
-        # We DO want to force Cythoning, at least until 6.0.
-        export PYYAML_FORCE_CYTHON=1
-        # We don't actually want to build the lib.
-        export PYYAML_FORCE_LIBYAML=0
-
-        python -m build .
-
-        # Ensure exactly one artifact was produced.
-        [[ $(shopt -s nullglob; ls dist/*.tar.gz | wc -w) == 1 ]] || {
-          echo "Unexpected content in dist dir: '$(ls dist/*.tar.gz)'."
-          exit 1
-        }
-
-    - name: Test sdist
-      run: |
-        # Install some libyaml headers.
-        # TODO Should we smoke test the sdist against the libyaml we built?
-        sudo apt update
-        sudo apt install libyaml-dev -y
-
-        # Ensure Cython is not present so we use only what's in the sdist.
-        python -m pip uninstall Cython -y || true
-
-        # Pass no extra args.
-        # We should auto-install with libyaml since it's present.
-        python -m pip install dist/*.tar.gz -v
-
-        python packaging/build/smoketest.py
-
-    - name: Upload sdist artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: dist
-        path: dist/*.tar.gz
+#  python_sdist:
+#    name: PyYAML sdist
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Checkout pyyaml
+#      uses: actions/checkout@v2
+#
+#    - name: Install a python
+#      uses: actions/setup-python@v2
+#      with:
+#        python-version: 3.x
+#
+#    - name: Install build deps
+#      run: |
+#        python -V
+#        python -m pip install build
+#
+#    - name: Build sdist
+#      run: |
+#        # We DO want to force Cythoning, at least until 6.0.
+#        export PYYAML_FORCE_CYTHON=1
+#        # We don't actually want to build the lib.
+#        export PYYAML_FORCE_LIBYAML=0
+#
+#        python -m build .
+#
+#        # Ensure exactly one artifact was produced.
+#        [[ $(shopt -s nullglob; ls dist/*.tar.gz | wc -w) == 1 ]] || {
+#          echo "Unexpected content in dist dir: '$(ls dist/*.tar.gz)'."
+#          exit 1
+#        }
+#
+#    - name: Test sdist
+#      run: |
+#        # Install some libyaml headers.
+#        # TODO Should we smoke test the sdist against the libyaml we built?
+#        sudo apt update
+#        sudo apt install libyaml-dev -y
+#
+#        # Ensure Cython is not present so we use only what's in the sdist.
+#        python -m pip uninstall Cython -y || true
+#
+#        # Pass no extra args.
+#        # We should auto-install with libyaml since it's present.
+#        python -m pip install dist/*.tar.gz -v
+#
+#        python packaging/build/smoketest.py
+#
+#    - name: Upload sdist artifact
+#      uses: actions/upload-artifact@v2
+#      with:
+#        name: dist
+#        path: dist/*.tar.gz
 
 
   linux_libyaml:
@@ -74,8 +74,8 @@ jobs:
       matrix:
         cfg:
         - { platform: manylinux1, arch: x86_64 }
-        - { platform: manylinux2014, arch: aarch64 }
-        - { platform: manylinux2014, arch: s390x }
+#        - { platform: manylinux2014, arch: aarch64 }
+#        - { platform: manylinux2014, arch: s390x }
     env:
       DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
     steps:
@@ -86,9 +86,9 @@ jobs:
         path: libyaml
         key: libyamlX_${{matrix.cfg.platform}}_${{matrix.cfg.arch}}_${{env.LIBYAML_REF}}
 
-    - name: configure docker foreign arch support
-      uses: docker/setup-qemu-action@v1
-      if: matrix.cfg.arch != 'x86_64' && steps.cached_libyaml.outputs.cache-hit != 'true'
+#    - name: configure docker foreign arch support
+#      uses: docker/setup-qemu-action@v1
+#      if: matrix.cfg.arch != 'x86_64' && steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Checkout pyyaml
       uses: actions/checkout@v2
@@ -118,18 +118,18 @@ jobs:
     strategy:
       matrix:
         cfg:
-        - { platform: manylinux1, arch: x86_64, python_tag: cp36-cp36m }
-        - { platform: manylinux1, arch: x86_64, python_tag: cp37-cp37m }
-        - { platform: manylinux1, arch: x86_64, python_tag: cp38-cp38 }
+#        - { platform: manylinux1, arch: x86_64, python_tag: cp36-cp36m }
+#        - { platform: manylinux1, arch: x86_64, python_tag: cp37-cp37m }
+#        - { platform: manylinux1, arch: x86_64, python_tag: cp38-cp38 }
         - { platform: manylinux1, arch: x86_64, python_tag: cp39-cp39 }
-        - { platform: manylinux2014, arch: aarch64, python_tag: cp36-cp36m }
-        - { platform: manylinux2014, arch: aarch64, python_tag: cp37-cp37m }
-        - { platform: manylinux2014, arch: aarch64, python_tag: cp38-cp38 }
-        - { platform: manylinux2014, arch: aarch64, python_tag: cp39-cp39 }
-        - { platform: manylinux2014, arch: s390x, python_tag: cp36-cp36m }
-        - { platform: manylinux2014, arch: s390x, python_tag: cp37-cp37m }
-        - { platform: manylinux2014, arch: s390x, python_tag: cp38-cp38 }
-        - { platform: manylinux2014, arch: s390x, python_tag: cp39-cp39 }
+#        - { platform: manylinux2014, arch: aarch64, python_tag: cp36-cp36m }
+#        - { platform: manylinux2014, arch: aarch64, python_tag: cp37-cp37m }
+#        - { platform: manylinux2014, arch: aarch64, python_tag: cp38-cp38 }
+#        - { platform: manylinux2014, arch: aarch64, python_tag: cp39-cp39 }
+#        - { platform: manylinux2014, arch: s390x, python_tag: cp36-cp36m }
+#        - { platform: manylinux2014, arch: s390x, python_tag: cp37-cp37m }
+#        - { platform: manylinux2014, arch: s390x, python_tag: cp38-cp38 }
+#        - { platform: manylinux2014, arch: s390x, python_tag: cp39-cp39 }
     env:
       AW_PLAT: ${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
       DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
@@ -176,78 +176,78 @@ jobs:
         name: dist
         path: dist/*.whl
 
-  macos_libyaml:
-    name: libyaml ${{matrix.arch}} ${{matrix.platform}}
-    runs-on: ${{matrix.platform}}
-    strategy:
-      matrix:
-        platform:
-        - macos-10.15
-        arch:
-        - x86_64
-    steps:
-    - name: Check cached libyaml state
-      id: cached_libyaml
-      uses: actions/cache@v2
-      with:
-        path: libyaml
-        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
-
-    - name: Checkout pyyaml
-      uses: actions/checkout@v2
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
-
-    - name: Build libyaml
-      env:
-        MACOSX_DEPLOYMENT_TARGET: '10.9'
-      run: |
-        brew install automake coreutils
-        bash ./packaging/build/libyaml.sh
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
-
-  macos_pyyaml:
-    needs: macos_libyaml
-    name: pyyaml ${{matrix.arch}} ${{matrix.platform}} ${{matrix.python_tag}}
-    runs-on: ${{matrix.platform}}
-    strategy:
-      matrix:
-        platform:
-        - macos-10.15
-        arch:
-        - x86_64
-        python_tag:
-        - cp36*
-        - cp37*
-        - cp38*
-        - cp39*
-    steps:
-    - name: Checkout pyyaml
-      uses: actions/checkout@v2
-
-    - name: Get cached libyaml state
-      id: cached_libyaml
-      uses: actions/cache@v2
-      with:
-        path: libyaml
-        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
-
-    - name: Ensure libyaml fetched
-      run: exit 1
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
-
-    - name: Install a python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
-
-    - name: Build/Test/Package
-      env:
-        CIBW_BUILD: ${{matrix.python_tag}}
-        CIBW_BUILD_VERBOSITY: 1
-      run: bash ./packaging/build/macos.sh
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: dist
-        path: dist/*.whl
+#  macos_libyaml:
+#    name: libyaml ${{matrix.arch}} ${{matrix.platform}}
+#    runs-on: ${{matrix.platform}}
+#    strategy:
+#      matrix:
+#        platform:
+#        - macos-10.15
+#        arch:
+#        - x86_64
+#    steps:
+#    - name: Check cached libyaml state
+#      id: cached_libyaml
+#      uses: actions/cache@v2
+#      with:
+#        path: libyaml
+#        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
+#
+#    - name: Checkout pyyaml
+#      uses: actions/checkout@v2
+#      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+#
+#    - name: Build libyaml
+#      env:
+#        MACOSX_DEPLOYMENT_TARGET: '10.9'
+#      run: |
+#        brew install automake coreutils
+#        bash ./packaging/build/libyaml.sh
+#      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+#
+#  macos_pyyaml:
+#    needs: macos_libyaml
+#    name: pyyaml ${{matrix.arch}} ${{matrix.platform}} ${{matrix.python_tag}}
+#    runs-on: ${{matrix.platform}}
+#    strategy:
+#      matrix:
+#        platform:
+#        - macos-10.15
+#        arch:
+#        - x86_64
+#        python_tag:
+#        - cp36*
+#        - cp37*
+#        - cp38*
+#        - cp39*
+#    steps:
+#    - name: Checkout pyyaml
+#      uses: actions/checkout@v2
+#
+#    - name: Get cached libyaml state
+#      id: cached_libyaml
+#      uses: actions/cache@v2
+#      with:
+#        path: libyaml
+#        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
+#
+#    - name: Ensure libyaml fetched
+#      run: exit 1
+#      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+#
+#    - name: Install a python
+#      uses: actions/setup-python@v2
+#      with:
+#        python-version: 3.x
+#
+#    - name: Build/Test/Package
+#      env:
+#        CIBW_BUILD: ${{matrix.python_tag}}
+#        CIBW_BUILD_VERBOSITY: 1
+#      run: bash ./packaging/build/macos.sh
+#
+#    - uses: actions/upload-artifact@v2
+#      with:
+#        name: dist
+#        path: dist/*.whl
 ...
