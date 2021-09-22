@@ -44,11 +44,13 @@ _replaces = {
 
 def test_tokens(data_filename, tokens_filename, verbose=False):
     tokens1 = []
-    tokens2 = open(tokens_filename, 'r').read().split()
+    with open(tokens_filename, 'r') as file:
+        tokens2 = file.read().split()
     try:
-        for token in yaml.scan(open(data_filename, 'rb')):
-            if not isinstance(token, (yaml.StreamStartToken, yaml.StreamEndToken)):
-                tokens1.append(_replaces[token.__class__])
+        with open(data_filename, 'rb') as file:
+            for token in yaml.scan(file):
+                if not isinstance(token, (yaml.StreamStartToken, yaml.StreamEndToken)):
+                    tokens1.append(_replaces[token.__class__])
     finally:
         if verbose:
             print("TOKENS1:", ' '.join(tokens1))
@@ -63,8 +65,9 @@ def test_scanner(data_filename, canonical_filename, verbose=False):
     for filename in [data_filename, canonical_filename]:
         tokens = []
         try:
-            for token in yaml.scan(open(filename, 'rb')):
-                tokens.append(token.__class__.__name__)
+            with open(filename, 'rb') as file:
+                for token in yaml.scan(file):
+                    tokens.append(token.__class__.__name__)
         finally:
             if verbose:
                 pprint.pprint(tokens)

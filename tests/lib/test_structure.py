@@ -34,15 +34,19 @@ def _convert_structure(loader):
 
 def test_structure(data_filename, structure_filename, verbose=False):
     nodes1 = []
-    nodes2 = eval(open(structure_filename, 'r').read())
+    with open(structure_filename, 'r') as file:
+        nodes2 = eval(file.read())
     try:
-        loader = yaml.Loader(open(data_filename, 'rb'))
-        while loader.check_event():
-            if loader.check_event(yaml.StreamStartEvent, yaml.StreamEndEvent,
-                                yaml.DocumentStartEvent, yaml.DocumentEndEvent):
-                loader.get_event()
-                continue
-            nodes1.append(_convert_structure(loader))
+        with open(data_filename, 'rb') as file:
+            loader = yaml.Loader(file)
+            while loader.check_event():
+                if loader.check_event(
+                    yaml.StreamStartEvent, yaml.StreamEndEvent,
+                    yaml.DocumentStartEvent, yaml.DocumentEndEvent
+                ):
+                    loader.get_event()
+                    continue
+                nodes1.append(_convert_structure(loader))
         if len(nodes1) == 1:
             nodes1 = nodes1[0]
         assert nodes1 == nodes2, (nodes1, nodes2)
@@ -71,8 +75,10 @@ def test_parser(data_filename, canonical_filename, verbose=False):
     events1 = None
     events2 = None
     try:
-        events1 = list(yaml.parse(open(data_filename, 'rb')))
-        events2 = list(yaml.canonical_parse(open(canonical_filename, 'rb')))
+        with open(data_filename, 'rb') as file:
+            events1 = list(yaml.parse(file))
+        with open(canonical_filename, 'rb') as file:
+            events2 = list(yaml.canonical_parse(file))
         _compare_events(events1, events2)
     finally:
         if verbose:
@@ -87,8 +93,10 @@ def test_parser_on_canonical(canonical_filename, verbose=False):
     events1 = None
     events2 = None
     try:
-        events1 = list(yaml.parse(open(canonical_filename, 'rb')))
-        events2 = list(yaml.canonical_parse(open(canonical_filename, 'rb')))
+        with open(canonical_filename, 'rb') as file:
+            events1 = list(yaml.parse(file))
+        with open(canonical_filename, 'rb') as file:
+            events2 = list(yaml.canonical_parse(file))
         _compare_events(events1, events2, full=True)
     finally:
         if verbose:
@@ -117,8 +125,10 @@ def test_composer(data_filename, canonical_filename, verbose=False):
     nodes1 = None
     nodes2 = None
     try:
-        nodes1 = list(yaml.compose_all(open(data_filename, 'rb')))
-        nodes2 = list(yaml.canonical_compose_all(open(canonical_filename, 'rb')))
+        with open(data_filename, 'rb') as file:
+            nodes1 = list(yaml.compose_all(file))
+        with open(canonical_filename, 'rb') as file:
+            nodes2 = list(yaml.canonical_compose_all(file))
         assert len(nodes1) == len(nodes2), (len(nodes1), len(nodes2))
         for node1, node2 in zip(nodes1, nodes2):
             _compare_nodes(node1, node2)
@@ -169,8 +179,10 @@ def test_constructor(data_filename, canonical_filename, verbose=False):
     native1 = None
     native2 = None
     try:
-        native1 = list(yaml.load_all(open(data_filename, 'rb'), Loader=MyLoader))
-        native2 = list(yaml.load_all(open(canonical_filename, 'rb'), Loader=MyCanonicalLoader))
+        with open(data_filename, 'rb') as file:
+            native1 = list(yaml.load_all(file, Loader=MyLoader))
+        with open(canonical_filename, 'rb') as file:
+            native2 = list(yaml.load_all(file, Loader=MyCanonicalLoader))
         assert native1 == native2, (native1, native2)
     finally:
         if verbose:
