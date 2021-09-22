@@ -754,19 +754,6 @@ cdef class CParser:
         elif self.parsed_event.type == YAML_MAPPING_START_EVENT    \
                 and self.parsed_event.data.mapping_start.anchor != NULL:
             anchor = PyUnicode_FromString(self.parsed_event.data.mapping_start.anchor)
-        if anchor is not None:
-            if anchor in self.anchors:
-                mark = Mark(self.stream_name,
-                        self.parsed_event.start_mark.index,
-                        self.parsed_event.start_mark.line,
-                        self.parsed_event.start_mark.column,
-                        None, None)
-                if PY_MAJOR_VERSION < 3:
-                    raise ComposerError("found duplicate anchor; first occurrence",
-                            self.anchors[anchor].start_mark, "second occurrence", mark)
-                else:
-                    raise ComposerError(u"found duplicate anchor; first occurrence",
-                            self.anchors[anchor].start_mark, u"second occurrence", mark)
         self.descend_resolver(parent, index)
         if self.parsed_event.type == YAML_SCALAR_EVENT:
             node = self._compose_scalar_node(anchor)
