@@ -1,7 +1,7 @@
 
 .PHONY: default build buildext force forceext install installext test testext dist clean
 
-PYTHON=/usr/bin/python
+PYTHON=/usr/bin/python3
 TEST=
 PARAMETERS=
 
