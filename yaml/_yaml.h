@@ -7,9 +7,9 @@
 
 #else
 
-#ifndef PyString_CheckExact
+// really puzzling, but, not being a string is required
+#undef PyString_CheckExact
 #define PyString_CheckExact PyBytes_CheckExact
-#endif
 #define PyString_AS_STRING  PyBytes_AS_STRING
 #define PyString_GET_SIZE   PyBytes_GET_SIZE
 #define PyString_FromStringAndSize  PyBytes_FromStringAndSize
