@@ -250,4 +250,138 @@ jobs:
       with:
         name: dist
         path: dist/*.whl
+
+  windows_libyaml:
+    name: libyaml ${{matrix.platform}} ${{matrix.arch}}
+    runs-on: ${{matrix.platform}}
+    strategy:
+      matrix:
+        include:
+        - platform: windows-2016
+          arch: x64
+        - platform: windows-2016
+          arch: win32
+    steps:
+    - name: Get cached libyaml state
+      id: cached_libyaml
+      uses: actions/cache@v2
+      with:
+        path: libyaml
+        key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
+
+    - name: build libyaml
+      shell: bash
+      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+      run: |
+        # git spews all over stderr unless we tell it not to
+        export GIT_REDIRECT_STDERR="2>&1"
+
+        if [[ ! -d ./libyaml ]]; then
+          git clone -b ${{ env.LIBYAML_REF }} ${{ env.LIBYAML_REPO }} 2>&1
+        fi
+
+        pushd libyaml
+        git clean -fdx
+        popd
+
+        mkdir libyaml/build
+
+        pushd libyaml/build
+        cmake.exe -G "Visual Studio 15 2017" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml ..
+        cmake.exe --build . --config Release
+        popd
+
+
+  windows_pyyaml:
+    needs: windows_libyaml
+    name: pyyaml ${{ matrix.platform }} ${{matrix.python_arch}} ${{matrix.spec}}
+    runs-on: ${{matrix.platform}}
+    strategy:
+      matrix:
+        include:
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.6
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.7
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.8
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.9
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.10.0-rc.2
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.6
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.7
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.8
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.9
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.10.0-rc.2
+    steps:
+    # autocrlf screws up tests under Windows
+    - name: Set git to use LF
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Checkout pyyaml
+      uses: actions/checkout@v2
+
+    - name: Get cached libyaml state
+      id: cached_libyaml
+      uses: actions/cache@v2
+      with:
+        path: libyaml
+        key: libyaml_${{matrix.platform}}_${{matrix.build_arch}}_${{env.LIBYAML_REF}}
+
+    - name: Ensure libyaml fetched
+      run: exit 1
+      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+
+    - name: Install python ${{ matrix.spec }}
+      uses: actions/setup-python@v2
+      with:
+        architecture: ${{ matrix.python_arch }}
+        python-version: ${{ matrix.spec }}
+
+    - name: Build/Test/Package
+      shell: bash
+      run: |
+        set -eux
+        python -V
+        python -m pip install Cython wheel
+
+        PYYAML_FORCE_LIBYAML=1 PYYAML_FORCE_CYTHON=1 python setup.py --with-libyaml build_ext -I libyaml/include -L libyaml/build/Release -D YAML_DECLARE_STATIC build bdist_wheel
+
+        # run tests on built wheel
+        python -m pip install dist/*.whl
+        python tests/lib/test_all.py
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist/*.whl
+        if-no-files-found: error
 ...
