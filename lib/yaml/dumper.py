@@ -83,3 +83,8 @@ class Dumper(Emitter, Serializer, Representer, Resolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
+class _12_CoreDumper(CommonDumper): pass
+_12_CoreDumper.init_tags('core')
+class _12_JSONDumper(CommonDumper): pass
+_12_JSONDumper.init_tags('json')
+

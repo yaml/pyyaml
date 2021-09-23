@@ -67,3 +67,9 @@ class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
         Composer.__init__(self)
         Constructor.__init__(self)
         Resolver.__init__(self)
+
+class _12_CoreLoader(BaseLoader): pass
+_12_CoreLoader.init_tags('core')
+class _12_JSONLoader(BaseLoader): pass
+_12_JSONLoader.init_tags('json')
+
