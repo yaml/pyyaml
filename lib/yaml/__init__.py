@@ -15,6 +15,12 @@ try:
 except ImportError:
     __with_libyaml__ = False
 
+try:
+    from .fyaml import *
+    __with_libfyaml__ = True
+except ImportError:
+    __with_libfyaml__ = False
+
 import io
 
 #------------------------------------------------------------------------------

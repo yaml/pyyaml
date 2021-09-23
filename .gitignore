@@ -4,6 +4,7 @@
 /lib/PyYAML.egg-info/*
 /wheelhouse/*
 /yaml/_yaml.c
+/fyaml/_fyaml.c
 MANIFEST
 **/*.so
 **/*.dylib

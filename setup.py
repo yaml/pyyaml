@@ -62,6 +62,22 @@ int main(void) {
 }
 """
 
+LIBFYAML_CHECK = """
+#include <libfyaml.h>
+
+int main(void) {
+    struct fy_parse_cfg cfg;
+    struct fy_parser *fyp;
+
+    memset(&cfg, 0, sizeof(cfg));
+    fyp = fy_parser_create(&cfg);
+    fy_parser_destroy(fyp);
+
+    return 0;
+}
+"""
+
+
 
 import sys, os, os.path, platform, warnings
 
@@ -283,6 +299,10 @@ if __name__ == '__main__':
             Extension('yaml._yaml', ['yaml/_yaml.pyx'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,
                 libraries=['yaml']),
+            Extension('yaml._fyaml', ['fyaml/_fyaml.pyx'],
+                'libfyaml', "libfyaml bindings", LIBYAML_CHECK,
+                libraries=['fyaml-0.7'],
+                language="c"),
         ],
 
         distclass=Distribution,
