@@ -344,7 +344,17 @@ def add_multi_representer(data_type, multi_representer, Dumper=Dumper):
     """
     Dumper.add_multi_representer(data_type, multi_representer)
 
+def experimental_12_Core_loader():
+    return loader._12_CoreLoader
+def experimental_12_JSON_loader():
+    return loader._12_JSONLoader
+
+def experimental_12_Core_dumper():
+    return dumper._12_CoreDumper
+def experimental_12_JSON_dumper():
+    return dumper._12_JSONDumper
 class YAMLObjectMetaclass(type):
+
     """
     The metaclass for YAMLObject.
     """
