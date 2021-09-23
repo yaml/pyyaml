@@ -18,28 +18,28 @@ def new_parse(stream, Loader=yaml.CLoader):
     return old_parse(stream, Loader)
 
 old_compose = yaml.compose
-def new_compose(stream, Loader=yaml.CLoader):
-    return old_compose(stream, Loader)
+def new_compose(stream, Loader=yaml.CLoader, reuse_anchors=False):
+    return old_compose(stream, Loader, reuse_anchors=reuse_anchors)
 
 old_compose_all = yaml.compose_all
-def new_compose_all(stream, Loader=yaml.CLoader):
-    return old_compose_all(stream, Loader)
+def new_compose_all(stream, Loader=yaml.CLoader, reuse_anchors=False):
+    return old_compose_all(stream, Loader, reuse_anchors=reuse_anchors)
 
 old_load = yaml.load
-def new_load(stream, Loader=yaml.CLoader):
-    return old_load(stream, Loader)
+def new_load(stream, Loader=yaml.CLoader, reuse_anchors=False):
+    return old_load(stream, Loader, reuse_anchors=reuse_anchors)
 
 old_load_all = yaml.load_all
-def new_load_all(stream, Loader=yaml.CLoader):
-    return old_load_all(stream, Loader)
+def new_load_all(stream, Loader=yaml.CLoader, reuse_anchors=False):
+    return old_load_all(stream, Loader, reuse_anchors=reuse_anchors)
 
 old_safe_load = yaml.safe_load
-def new_safe_load(stream):
-    return old_load(stream, yaml.CSafeLoader)
+def new_safe_load(stream, reuse_anchors=False):
+    return old_load(stream, yaml.CSafeLoader, reuse_anchors=reuse_anchors)
 
 old_safe_load_all = yaml.safe_load_all
-def new_safe_load_all(stream):
-    return old_load_all(stream, yaml.CSafeLoader)
+def new_safe_load_all(stream, reuse_anchors=False):
+    return old_load_all(stream, yaml.CSafeLoader, reuse_anchors=reuse_anchors)
 
 old_emit = yaml.emit
 def new_emit(events, stream=None, Dumper=yaml.CDumper, **kwds):

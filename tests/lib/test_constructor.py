@@ -258,7 +258,7 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
     native2 = None
     try:
         with open(data_filename, 'rb') as file:
-            native1 = list(yaml.load_all(file, Loader=MyLoader, reuse_anchors=True))
+            native1 = list(yaml.load_all(file, Loader=MyLoader))
         if len(native1) == 1:
             native1 = native1[0]
         with open(code_filename, 'rb') as file:
@@ -295,6 +295,34 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
         raise AssertionError("expected an exception")
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
+
+def test_reuse_anchors(data_filename, code_filename, verbose=False):
+    try:
+        with open(data_filename, 'rb') as file:
+            native1 = list(yaml.load_all(file, Loader=yaml.SafeLoader, reuse_anchors=True))
+        if len(native1) == 1:
+            native1 = native1[0]
+        with open(code_filename, 'rb') as file:
+            native2 = _load_code(file.read())
+        try:
+            if native1 == native2:
+                return
+        except TypeError:
+            pass
+        if verbose:
+            print("SERIALIZED NATIVE1:")
+            print(_serialize_value(native1))
+            print("SERIALIZED NATIVE2:")
+            print(_serialize_value(native2))
+        assert _serialize_value(native1) == _serialize_value(native2), (native1, native2)
+    finally:
+        if verbose:
+            print("NATIVE1:")
+            pprint.pprint(native1)
+            print("NATIVE2:")
+            pprint.pprint(native2)
+
+test_reuse_anchors.unittest = ['.reuse-anchors-data', '.reuse-anchors-code']
 
 if __name__ == '__main__':
     import sys, test_constructor

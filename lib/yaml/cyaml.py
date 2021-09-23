@@ -15,36 +15,36 @@ from .resolver import *
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
 
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
+    def __init__(self, stream, reuse_anchors=False):
+        CParser.__init__(self, stream, reuse_anchors=reuse_anchors)
         BaseConstructor.__init__(self)
         BaseResolver.__init__(self)
 
 class CSafeLoader(CParser, SafeConstructor, Resolver):
 
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
+    def __init__(self, stream, reuse_anchors=False):
+        CParser.__init__(self, stream, reuse_anchors=reuse_anchors)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
 class CFullLoader(CParser, FullConstructor, Resolver):
 
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
+    def __init__(self, stream, reuse_anchors=False):
+        CParser.__init__(self, stream, reuse_anchors=reuse_anchors)
         FullConstructor.__init__(self)
         Resolver.__init__(self)
 
 class CUnsafeLoader(CParser, UnsafeConstructor, Resolver):
 
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
+    def __init__(self, stream, reuse_anchors=False):
+        CParser.__init__(self, stream, reuse_anchors=reuse_anchors)
         UnsafeConstructor.__init__(self)
         Resolver.__init__(self)
 
 class CLoader(CParser, Constructor, Resolver):
 
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
+    def __init__(self, stream, reuse_anchors=False):
+        CParser.__init__(self, stream, reuse_anchors=reuse_anchors)
         Constructor.__init__(self)
         Resolver.__init__(self)
 

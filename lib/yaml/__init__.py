@@ -48,7 +48,7 @@ def parse(stream, Loader=Loader, reuse_anchors=False):
     finally:
         loader.dispose()
 
-def compose(stream, Loader=Loader):
+def compose(stream, Loader=Loader, reuse_anchors=False):
     """
     Parse the first YAML document in a stream
     and produce the corresponding representation tree.
