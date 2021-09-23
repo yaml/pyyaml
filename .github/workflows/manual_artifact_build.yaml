@@ -1,14 +1,12 @@
 ---
-# This is the CI workflow (not the artifact build/release workflow). The workflows
-# are split because GHA doesn't support a dynamic/conditional matrix. This workflow
-# has slow jobs and jobs that require private GHA runners (eg, M1 Mac) commented out.defaults:
-# Ensure changes are synced with manual_artifact_build.yaml.
-name: PyYAML CI
+# This is the actual artifact build/release workflow. This workflow exists temporarily
+# because GHA doesn't support a dynamic/conditional matrix. Ensure changes are synced with ci.yaml.
+name: Manual Artifact Build
 
 on:
-  push:
-  pull_request:
-    types: [opened, synchronize, edited, reopened]
+#  push:
+#  pull_request:
+#    types: [opened, synchronize, edited, reopened]
   workflow_dispatch:
 
 env:
@@ -75,8 +73,8 @@ jobs:
         cfg:
         - { platform: manylinux1, arch: x86_64 }
         - { platform: manylinux2014, arch: x86_64 }
-#        - { platform: manylinux2014, arch: aarch64 }
-#        - { platform: manylinux2014, arch: s390x }
+        - { platform: manylinux2014, arch: aarch64 }
+        - { platform: manylinux2014, arch: s390x }
     env:
       DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
     steps:
@@ -120,20 +118,20 @@ jobs:
       matrix:
         include:
         - { platform: manylinux1, arch: x86_64, spec: cp36 }
-#        - { platform: manylinux1, arch: x86_64, spec: cp37 }
-#        - { platform: manylinux1, arch: x86_64, spec: cp38 }
-#        - { platform: manylinux1, arch: x86_64, spec: cp39 }
+        - { platform: manylinux1, arch: x86_64, spec: cp37 }
+        - { platform: manylinux1, arch: x86_64, spec: cp38 }
+        - { platform: manylinux1, arch: x86_64, spec: cp39 }
         - { platform: manylinux2014, arch: x86_64, spec: cp310 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp36 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp37 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp38 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp39 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp310 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp36 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp37 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp38 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp39 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp310 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp36 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp37 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp38 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp39 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp310 }
+        - { platform: manylinux2014, arch: s390x, spec: cp36 }
+        - { platform: manylinux2014, arch: s390x, spec: cp37 }
+        - { platform: manylinux2014, arch: s390x, spec: cp38 }
+        - { platform: manylinux2014, arch: s390x, spec: cp39 }
+        - { platform: manylinux2014, arch: s390x, spec: cp310 }
 
     steps:
     - name: Checkout PyYAML
@@ -186,11 +184,11 @@ jobs:
       matrix:
         include:
         - arch: x86_64
-#        - arch: arm64
-#          runs_on: [self-hosted, macOS, arm64]
-#          deployment_target: '11.0'
-#          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
-#          sdkroot: macosx11.3
+        - arch: arm64
+          runs_on: [self-hosted, macOS, arm64]
+          deployment_target: '11.0'
+          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+          sdkroot: macosx11.3
     defaults:
       run:
         shell: ${{ matrix.run_wrapper || 'bash --noprofile --norc -eo pipefail {0}' }}
@@ -230,26 +228,26 @@ jobs:
       matrix:
         include:
         - spec: cp36-macosx_x86_64
-#        - spec: cp37-macosx_x86_64
-#        - spec: cp38-macosx_x86_64
-#        - spec: cp39-macosx_x86_64
+        - spec: cp37-macosx_x86_64
+        - spec: cp38-macosx_x86_64
+        - spec: cp39-macosx_x86_64
         - spec: cp310-macosx_x86_64
 
-#        # build for arm64 under a hacked macOS 12 self-hosted x86_64-on-arm64 runner until arm64 is fully supported
-#        # FIXME: ? cp38-macosx_arm64 requires special handling and fails some test_zdist tests under cibw 2.1.2, skip it (so Apple's XCode python3 won't have a wheel)
-#        - spec: cp39-macosx_arm64
-#          deployment_target: '11.0'
-#          runs_on: [self-hosted, macOS, arm64]
-#          arch: arm64
-#          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
-#          sdkroot: macosx11.3
-#
-#        - spec: cp310-macosx_arm64
-#          deployment_target: '11.0'
-#          runs_on: [self-hosted, macOS, arm64]
-#          arch: arm64
-#          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
-#          sdkroot: macosx11.3
+        # build for arm64 under a hacked macOS 12 self-hosted x86_64-on-arm64 runner until arm64 is fully supported
+        # FIXME: ? cp38-macosx_arm64 requires special handling and fails some test_zdist tests under cibw 2.1.2, skip it (so Apple's XCode python3 won't have a wheel)
+        - spec: cp39-macosx_arm64
+          deployment_target: '11.0'
+          runs_on: [self-hosted, macOS, arm64]
+          arch: arm64
+          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+          sdkroot: macosx11.3
+
+        - spec: cp310-macosx_arm64
+          deployment_target: '11.0'
+          runs_on: [self-hosted, macOS, arm64]
+          arch: arm64
+          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+          sdkroot: macosx11.3
 
     steps:
     - name: Checkout PyYAML
@@ -339,18 +337,18 @@ jobs:
           build_arch: x64
           python_arch: x64
           spec: 3.6
-#        - platform: windows-2016
-#          build_arch: x64
-#          python_arch: x64
-#          spec: 3.7
-#        - platform: windows-2016
-#          build_arch: x64
-#          python_arch: x64
-#          spec: 3.8
-#        - platform: windows-2016
-#          build_arch: x64
-#          python_arch: x64
-#          spec: 3.9
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.7
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.8
+        - platform: windows-2016
+          build_arch: x64
+          python_arch: x64
+          spec: 3.9
         - platform: windows-2016
           build_arch: x64
           python_arch: x64
@@ -359,18 +357,18 @@ jobs:
           build_arch: win32
           python_arch: x86
           spec: 3.6
-#        - platform: windows-2016
-#          build_arch: win32
-#          python_arch: x86
-#          spec: 3.7
-#        - platform: windows-2016
-#          build_arch: win32
-#          python_arch: x86
-#          spec: 3.8
-#        - platform: windows-2016
-#          build_arch: win32
-#          python_arch: x86
-#          spec: 3.9
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.7
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.8
+        - platform: windows-2016
+          build_arch: win32
+          python_arch: x86
+          spec: 3.9
         - platform: windows-2016
           build_arch: win32
           python_arch: x86
