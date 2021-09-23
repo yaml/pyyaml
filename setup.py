@@ -32,6 +32,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -63,11 +64,15 @@ int main(void) {
 """
 
 
-import sys, os, os.path, platform, warnings
+import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings
 
-from distutils import log
+# for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
+os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
+
 from setuptools import setup, Command, Distribution as _Distribution, Extension as _Extension
 from setuptools.command.build_ext import build_ext as _build_ext
+# NB: distutils imports must remain below setuptools to ensure we use the embedded version
+from distutils import log
 from distutils.errors import DistutilsError, CompileError, LinkError, DistutilsPlatformError
 
 with_cython = False
@@ -246,11 +251,28 @@ class test(Command):
     def run(self):
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
-        sys.path.insert(0, build_cmd.build_lib)
-        sys.path.insert(0, 'tests/lib')
-        import test_all
-        if not test_all.main([]):
-            raise DistutilsError("Tests failed")
+
+        # running the tests this way can pollute the post-MANIFEST build sources
+        # (see https://github.com/yaml/pyyaml/issues/527#issuecomment-921058344)
+        # until we remove the test command, run tests from an ephemeral copy of the intermediate build sources
+        tempdir = tempfile.TemporaryDirectory(prefix='test_pyyaml')
+
+        try:
+            # have to create a subdir since we don't get dir_exists_ok on copytree until 3.8
+            temp_test_path = pathlib.Path(tempdir.name) / 'pyyaml'
+            shutil.copytree(build_cmd.build_lib, temp_test_path)
+            sys.path.insert(0, str(temp_test_path))
+            sys.path.insert(0, 'tests/lib')
+
+            import test_all
+            if not test_all.main([]):
+                raise DistutilsError("Tests failed")
+        finally:
+            try:
+                # this can fail under Windows; best-effort cleanup
+                tempdir.cleanup()
+            except Exception:
+                pass
 
 
 cmdclass = {
