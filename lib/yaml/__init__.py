@@ -30,7 +30,12 @@ def scan(stream, Loader=Loader):
     """
     Scan a YAML stream and produce scanning tokens.
     """
-    loader = Loader(stream)
+
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
     try:
         while loader.check_token():
             yield loader.get_token()
@@ -41,7 +46,12 @@ def parse(stream, Loader=Loader):
     """
     Parse a YAML stream and produce parsing events.
     """
-    loader = Loader(stream)
+
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
     try:
         while loader.check_event():
             yield loader.get_event()
@@ -53,7 +63,12 @@ def compose(stream, Loader=Loader):
     Parse the first YAML document in a stream
     and produce the corresponding representation tree.
     """
-    loader = Loader(stream)
+
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
     try:
         return loader.get_single_node()
     finally:
@@ -64,7 +79,15 @@ def compose_all(stream, Loader=Loader):
     Parse all YAML documents in a stream
     and produce corresponding representation trees.
     """
-    loader = Loader(stream)
+
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
+    if hasattr(loader, '_load_init'):
+        loader._load_init(stream)
+
     try:
         while loader.check_node():
             yield loader.get_node()
@@ -76,18 +99,27 @@ def load(stream, Loader):
     Parse the first YAML document in a stream
     and produce the corresponding Python object.
     """
-    loader = Loader(stream)
-    try:
-        return loader.get_single_data()
-    finally:
-        loader.dispose()
+
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
+    return loader.load(stream)
 
 def load_all(stream, Loader):
     """
     Parse all YAML documents in a stream
     and produce corresponding Python objects.
     """
-    loader = Loader(stream)
+    if hasattr(Loader, '_yaml_instance'):
+        loader = Loader
+    else:
+        loader = Loader(stream)
+
+    if hasattr(loader, '_load_init'):
+        loader._load_init(stream)
+
     try:
         while loader.check_data():
             yield loader.get_data()

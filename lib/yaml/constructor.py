@@ -22,6 +22,12 @@ class BaseConstructor:
     yaml_multi_constructors = {}
 
     def __init__(self):
+        self._yaml_constructors = {}
+        self.add_constructor = self._add_constructor
+        self._yaml_multi_constructors = {}
+        self.add_multi_constructor = self._add_multi_constructor
+        self._add_constructors()
+
         self.constructed_objects = {}
         self.recursive_objects = {}
         self.state_generators = []
@@ -76,9 +82,24 @@ class BaseConstructor:
         self.recursive_objects[node] = None
         constructor = None
         tag_suffix = None
-        if node.tag in self.yaml_constructors:
-            constructor = self.yaml_constructors[node.tag]
-        else:
+
+        if (hasattr(self, '_yaml_constructors') and
+            node.tag in self._yaml_constructors
+           ):
+            constructor = self._yaml_constructors[node.tag]
+
+        if constructor is None:
+            if node.tag in self.yaml_constructors:
+                constructor = self.yaml_constructors[node.tag]
+
+        if constructor is None and hasattr(self, '_yaml_constructors'):
+            for tag_prefix in self._yaml_multi_constructors:
+                if tag_prefix is not None and node.tag.startswith(tag_prefix):
+                    tag_suffix = node.tag[len(tag_prefix):]
+                    constructor = self._yaml_multi_constructors[tag_prefix]
+                    break
+
+        if constructor is None:
             for tag_prefix in self.yaml_multi_constructors:
                 if tag_prefix is not None and node.tag.startswith(tag_prefix):
                     tag_suffix = node.tag[len(tag_prefix):]
@@ -157,18 +178,56 @@ class BaseConstructor:
         return pairs
 
     @classmethod
-    def add_constructor(cls, tag, constructor):
+    def add_constructors(cls):
         if not 'yaml_constructors' in cls.__dict__:
             cls.yaml_constructors = cls.yaml_constructors.copy()
+
+        for tag in cls.constructors:
+            if tag is not None and tag.endswith(':'):
+                cls.add_multi_constructor(tag, getattr(cls, cls.constructors[tag]))
+            else:
+                cls.add_constructor(tag, getattr(cls, cls.constructors[tag]))
+
+    @classmethod
+    def add_constructor(cls, tag, constructor):
         cls.yaml_constructors[tag] = constructor
 
     @classmethod
     def add_multi_constructor(cls, tag_prefix, multi_constructor):
-        if not 'yaml_multi_constructors' in cls.__dict__:
-            cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
         cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
+    def _add_constructors(self):
+        cls = type(self)
+        if hasattr(cls, 'constructors'):
+            for tag in cls.constructors:
+                if tag is not None and tag.endswith(':'):
+                    self._add_multi_constructor(tag, getattr(cls, cls.constructors[tag]))
+                else:
+                    self._add_constructor(tag, getattr(cls, cls.constructors[tag]))
+
+    def _add_constructor(self, tag, constructor):
+        self._yaml_constructors[tag] = constructor
+
+    def _add_multi_constructor(self, tag_prefix, multi_constructor):
+        self._yaml_multi_constructors[tag_prefix] = multi_constructor
+
 class SafeConstructor(BaseConstructor):
+
+    constructors = {
+        'tag:yaml.org,2002:null':       'construct_yaml_null',
+        'tag:yaml.org,2002:bool':       'construct_yaml_bool',
+        'tag:yaml.org,2002:int':        'construct_yaml_int',
+        'tag:yaml.org,2002:float':      'construct_yaml_float',
+        'tag:yaml.org,2002:binary':     'construct_yaml_binary',
+        'tag:yaml.org,2002:timestamp':  'construct_yaml_timestamp',
+        'tag:yaml.org,2002:omap':       'construct_yaml_omap',
+        'tag:yaml.org,2002:pairs':      'construct_yaml_pairs',
+        'tag:yaml.org,2002:set':        'construct_yaml_set',
+        'tag:yaml.org,2002:str':        'construct_yaml_str',
+        'tag:yaml.org,2002:seq':        'construct_yaml_seq',
+        'tag:yaml.org,2002:map':        'construct_yaml_map',
+        None:                           'construct_undefined',
+    }
 
     def construct_scalar(self, node):
         if isinstance(node, MappingNode):
@@ -428,61 +487,29 @@ class SafeConstructor(BaseConstructor):
                 "could not determine a constructor for the tag %r" % node.tag,
                 node.start_mark)
 
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:null',
-        SafeConstructor.construct_yaml_null)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:bool',
-        SafeConstructor.construct_yaml_bool)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:int',
-        SafeConstructor.construct_yaml_int)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:float',
-        SafeConstructor.construct_yaml_float)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:binary',
-        SafeConstructor.construct_yaml_binary)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:timestamp',
-        SafeConstructor.construct_yaml_timestamp)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:omap',
-        SafeConstructor.construct_yaml_omap)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:pairs',
-        SafeConstructor.construct_yaml_pairs)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:set',
-        SafeConstructor.construct_yaml_set)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:str',
-        SafeConstructor.construct_yaml_str)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:seq',
-        SafeConstructor.construct_yaml_seq)
-
-SafeConstructor.add_constructor(
-        'tag:yaml.org,2002:map',
-        SafeConstructor.construct_yaml_map)
-
-SafeConstructor.add_constructor(None,
-        SafeConstructor.construct_undefined)
+SafeConstructor.add_constructors()
 
 class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by
     # construct_python_object_apply to add `listitems` to a newly generate
     # python instance
+
+    constructors = {
+        'tag:yaml.org,2002:python/none':    'construct_yaml_null',
+        'tag:yaml.org,2002:python/bool':    'construct_yaml_bool',
+        'tag:yaml.org,2002:python/str':     'construct_python_str',
+        'tag:yaml.org,2002:python/unicode': 'construct_python_unicode',
+        'tag:yaml.org,2002:python/bytes':   'construct_python_bytes',
+        'tag:yaml.org,2002:python/int':     'construct_yaml_int',
+        'tag:yaml.org,2002:python/long':    'construct_python_long',
+        'tag:yaml.org,2002:python/float':   'construct_yaml_float',
+        'tag:yaml.org,2002:python/complex': 'construct_python_complex',
+        'tag:yaml.org,2002:python/list':    'construct_yaml_seq',
+        'tag:yaml.org,2002:python/tuple':   'construct_python_tuple',
+        'tag:yaml.org,2002:python/dict':    'construct_yaml_map',
+        'tag:yaml.org,2002:python/name:':   'construct_python_name',
+    }
+
     def get_state_keys_blacklist(self):
         return ['^extend$', '^__.*__$']
 
@@ -658,59 +685,16 @@ class FullConstructor(SafeConstructor):
     def construct_python_object_new(self, suffix, node):
         return self.construct_python_object_apply(suffix, node, newobj=True)
 
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/none',
-    FullConstructor.construct_yaml_null)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/bool',
-    FullConstructor.construct_yaml_bool)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/str',
-    FullConstructor.construct_python_str)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/unicode',
-    FullConstructor.construct_python_unicode)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/bytes',
-    FullConstructor.construct_python_bytes)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/int',
-    FullConstructor.construct_yaml_int)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/long',
-    FullConstructor.construct_python_long)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/float',
-    FullConstructor.construct_yaml_float)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/complex',
-    FullConstructor.construct_python_complex)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/list',
-    FullConstructor.construct_yaml_seq)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/tuple',
-    FullConstructor.construct_python_tuple)
-
-FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/dict',
-    FullConstructor.construct_yaml_map)
-
-FullConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/name:',
-    FullConstructor.construct_python_name)
+FullConstructor.add_constructors()
 
 class UnsafeConstructor(FullConstructor):
+
+    constructors = {
+        'tag:yaml.org,2002:python/module:':         'construct_python_module',
+        'tag:yaml.org,2002:python/object:':         'construct_python_object',
+        'tag:yaml.org,2002:python/object/new:':     'construct_python_object_new',
+        'tag:yaml.org,2002:python/object/apply:':   'construct_python_object_apply',
+    }
 
     def find_python_module(self, name, mark):
         return super(UnsafeConstructor, self).find_python_module(name, mark, unsafe=True)
@@ -726,21 +710,7 @@ class UnsafeConstructor(FullConstructor):
         return super(UnsafeConstructor, self).set_python_instance_state(
             instance, state, unsafe=True)
 
-UnsafeConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/module:',
-    UnsafeConstructor.construct_python_module)
-
-UnsafeConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object:',
-    UnsafeConstructor.construct_python_object)
-
-UnsafeConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object/new:',
-    UnsafeConstructor.construct_python_object_new)
-
-UnsafeConstructor.add_multi_constructor(
-    'tag:yaml.org,2002:python/object/apply:',
-    UnsafeConstructor.construct_python_object_apply)
+UnsafeConstructor.add_constructors()
 
 # Constructor is same as UnsafeConstructor. Need to leave this in place in case
 # people have extended it directly.
