@@ -258,7 +258,7 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
     native2 = None
     try:
         with open(data_filename, 'rb') as file:
-            native1 = list(yaml.load_all(file, Loader=MyLoader))
+            native1 = list(yaml.load_all(file, Loader=MyLoader, reuse_anchors=True))
         if len(native1) == 1:
             native1 = native1[0]
         with open(code_filename, 'rb') as file:
