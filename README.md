@@ -31,14 +31,16 @@ To run the tests, type `python setup.py test`.
 
 ## Further Information
 
-- For more information, check the
+* For more information, check the
   [PyYAML homepage](https://github.com/yaml/pyyaml).
 
-- [PyYAML tutorial and reference](http://pyyaml.org/wiki/PyYAMLDocumentation).
+* [PyYAML tutorial and reference](http://pyyaml.org/wiki/PyYAMLDocumentation).
 
-- Discuss PyYAML with the maintainers in IRC #pyyaml irc.freenode.net.
+* Discuss PyYAML with the maintainers on
+  Matrix at https://matrix.to/#/#pyyaml:yaml.io or
+  IRC #pyyaml irc.libera.chat
 
-- Submit bug reports and feature requests to the
+* Submit bug reports and feature requests to the
   [PyYAML bug tracker](https://github.com/yaml/pyyaml/issues).
 
 ## License

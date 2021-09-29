@@ -1,31 +1,44 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.4.1 Released
+Subject: [ANN] PyYAML-6.0b1 Released
 
 =======================
-Announcing PyYAML-5.4.1
+Announcing PyYAML-6.0b1
 =======================
 
-A new release of PyYAML is now available:
-https://github.com/yaml/pyyaml/releases/tag/5.4.1
+A new beta release of PyYAML is now available:
+https://github.com/yaml/pyyaml/releases/tag/6.0b1
 
-This release contains a fix for AttributeError during module import in some
-mixed version installations.
+The previously-deprecated default loader selection in `yaml.load()` has
+been removed; `Loader` is now a required argument.
 
-PyYAML 5.4.1 will be the last release to support Python 2.7 (except for possible
-critical bug fix releases).
+Support for Python 2.7 and 3.5 has been dropped, and support for Python 3.10
+added. It now includes libyaml 0.2.5 extension wheels for MacOS M1
+(Apple Silicon/arm64), Linux s390x and Linux aarch64.
+
+Numerous other bugfixes and code cleanups are included in this release.
 
 
 Changes
 =======
 
-* https://github.com/yaml/pyyaml/pull/480 -- Fix stub compat with older pyyaml versions that may unwittingly load it
+* https://github.com/yaml/pyyaml/pull/327 -- Change README format to Markdown
+* https://github.com/yaml/pyyaml/pull/483 -- Add a test for YAML 1.1 types
+* https://github.com/yaml/pyyaml/pull/497 -- fix float resolver to ignore `.` and `._`
+* https://github.com/yaml/pyyaml/pull/550 -- drop Python 2.7
+* https://github.com/yaml/pyyaml/pull/553 -- Fix spelling of “hexadecimal”
+* https://github.com/yaml/pyyaml/pull/556 -- fix representation of Enum subclasses
+* https://github.com/yaml/pyyaml/pull/557 -- fix libyaml extension compiler warnings
+* https://github.com/yaml/pyyaml/pull/560 -- fix ResourceWarning on leaked file descriptors
+* https://github.com/yaml/pyyaml/pull/561 -- always require `Loader` arg to `yaml.load()`
+* https://github.com/yaml/pyyaml/pull/564 -- remove remaining direct distutils usage
 
 
 Resources
 =========
 
-PyYAML IRC Channel: #pyyaml on irc.freenode.net
+PyYAML Matrix: https://matrix.to/#/#pyyaml:yaml.io
+PyYAML IRC Channel: #pyyaml on irc.libera.chat
 PyYAML homepage: https://github.com/yaml/pyyaml
 PyYAML documentation: http://pyyaml.org/wiki/PyYAMLDocumentation
 Source and binary installers: https://pypi.org/project/PyYAML/
@@ -83,7 +96,7 @@ The following people are currently responsible for maintaining PyYAML:
 * Ingy döt Net
 * Matt Davis
 
-and many thanks to all who have contribributed!
+and many thanks to all who have contributed!
 See: https://github.com/yaml/pyyaml/pulls
 
 
