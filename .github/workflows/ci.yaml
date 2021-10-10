@@ -354,7 +354,7 @@ jobs:
         - platform: windows-2016
           build_arch: x64
           python_arch: x64
-          spec: 3.10.0-rc.2
+          spec: "3.10"
         - platform: windows-2016
           build_arch: win32
           python_arch: x86
@@ -374,7 +374,7 @@ jobs:
         - platform: windows-2016
           build_arch: win32
           python_arch: x86
-          spec: 3.10.0-rc.2
+          spec: "3.10"
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
