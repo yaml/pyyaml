@@ -4,7 +4,7 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
-6.0b1 (2021-10-04)
+6.0 (2021-10-13)
 
 * https://github.com/yaml/pyyaml/pull/327 -- Change README format to Markdown
 * https://github.com/yaml/pyyaml/pull/483 -- Add a test for YAML 1.1 types
