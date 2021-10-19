@@ -1,13 +1,13 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-6.0b1 Released
+Subject: [ANN] PyYAML-6.0 Released
 
-=======================
-Announcing PyYAML-6.0b1
-=======================
+=====================
+Announcing PyYAML-6.0
+=====================
 
-A new beta release of PyYAML is now available:
-https://github.com/yaml/pyyaml/releases/tag/6.0b1
+A new release of PyYAML is now available:
+https://github.com/yaml/pyyaml/releases/tag/6.0
 
 The previously-deprecated default loader selection in `yaml.load()` has
 been removed; `Loader` is now a required argument.
