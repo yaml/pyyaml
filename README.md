@@ -3,54 +3,11 @@ PyYAML
 
 A full-featured YAML processing framework for Python.
 
-## Table of Contents
+The documentation is available on the
+[PyYAML website](https://pyyaml.org/wiki/PyYAMLDocumentation)
+or in the form of
+[GitHub flavoured markdown](https://github.com/yaml/pyyaml#readme).
 
-- [PyYAML](#pyyaml)
-- * [Table of Contents](#table-of-contents)
-  * [Installation](#installation)
-    + [Default](#default)
-    + [From Source](#from-source)
-    + [with LibYAML](#with-libyaml)
-      - [Why LibYAML?](#why-libyaml)
-      - [Force installation **with** LibYAML `--with-libyaml`](#force-installation-with-libyaml---with-libyaml)
-      - [Force installation **without** LibYAML `--without-libyaml`](#force-installation-without-libyaml---without-libyaml)
-  * [Testing](#testing)
-  * [Loadings and Dumping](#loadings-and-dumping)
-    + [`safe_load` and `safe_dump`](#safe_load-and-safe_dump)
-    + [`load` and `dump`](#load-and-dump)
-    + [The `Loader` options](#the-loader-options)
-  * [The yaml package](#the-yaml-package)
-    + [The keyword arguments](#the-keyword-arguments)
-  * [Constructors, representers, resolvers](#constructors-representers-resolvers)
-  * [YAML syntax](#yaml-syntax)
-    + [Documents](#documents)
-    + [Block sequences](#block-sequences)
-    + [Block mappings](#block-mappings)
-    + [Flow collections](#flow-collections)
-    + [Scalars](#scalars)
-    + [Aliases](#aliases)
-  * [YAML tags and Python types](#yaml-tags-and-python-types)
-    + [String conversion (Python 2 only)](#string-conversion-python-2-only)
-    + [String conversion (Python 3 only)](#string-conversion-python-3-only)
-    + [Names and modules](#names-and-modules)
-    + [Objects](#objects)
-  * [Deviations from the specification](#deviations-from-the-specification)
-  * [Reference](#reference)
-    + [The yaml package](#the-yaml-package-1)
-    + [Mark](#mark)
-    + [YAMLError](#yamlerror)
-    + [Tokens](#tokens)
-    + [Events](#events)
-    + [Nodes](#nodes)
-    + [Loader](#loader)
-    + [Dumper](#dumper)
-    + [YAMLObject](#yamlobject)
-  * [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
-    + [YAML Specification Suppport](#yaml-specification-suppport)
-    + [Dictionaries without nested collections are not dumped correctly](#dictionaries-without-nested-collections-are-not-dumped-correctly)
-  * [Python 3 support](#python-3-support)
-  * [Further Information](#further-information)
-  * [License](#license)
 
 ## Installation
 
