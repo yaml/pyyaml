@@ -25,8 +25,12 @@
 
 __all__ = ["Scanner", "ScannerError"]
 
+from typing import Dict, List, Literal, Optional, Tuple, Type, TypeVar, cast
 from .error import MarkedYAMLError
 from .tokens import *
+from .reader import Reader
+
+_TokenClass = TypeVar("_TokenClass", bound=Token)
 
 
 class ScannerError(MarkedYAMLError):
@@ -45,9 +49,10 @@ class SimpleKey:
         self.mark = mark
 
 
-class Scanner:
+class Scanner(Reader):
     def __init__(self):
         """Initialize the scanner."""
+        super().__init__()
         # It is assumed that Scanner and Reader will have a common descendant.
         # Reader do the dirty work of checking for BOM and converting the
         # input data to Unicode. It also adds NUL to the end.
@@ -65,7 +70,7 @@ class Scanner:
         self.flow_level = 0
 
         # List of processed tokens that are not yet emitted.
-        self.tokens = []
+        self.tokens: List[Token] = []
 
         # Add the STREAM-START token.
         self.fetch_stream_start()
@@ -107,7 +112,7 @@ class Scanner:
         #   (token_number, required, index, line, column, mark)
         # A simple key may start with ALIAS, ANCHOR, TAG, SCALAR(flow),
         # '[', or '{' tokens.
-        self.possible_simple_keys = {}
+        self.possible_simple_keys: Dict[int, SimpleKey] = {}
 
     # Public methods.
 
@@ -420,7 +425,7 @@ class Scanner:
     def fetch_document_end(self):
         self.fetch_document_indicator(DocumentEndToken)
 
-    def fetch_document_indicator(self, TokenClass):
+    def fetch_document_indicator(self, TokenClass: Type[Token]):
 
         # Set the current indentation to -1.
         self.unwind_indent(-1)
@@ -442,7 +447,7 @@ class Scanner:
     def fetch_flow_mapping_start(self):
         self.fetch_flow_collection_start(FlowMappingStartToken)
 
-    def fetch_flow_collection_start(self, TokenClass):
+    def fetch_flow_collection_start(self, TokenClass: Type[Token]):
 
         # '[' and '{' may start a simple key.
         self.save_possible_simple_key()
@@ -465,7 +470,7 @@ class Scanner:
     def fetch_flow_mapping_end(self):
         self.fetch_flow_collection_end(FlowMappingEndToken)
 
-    def fetch_flow_collection_end(self, TokenClass):
+    def fetch_flow_collection_end(self, TokenClass: Type[Token]):
 
         # Reset possible simple key on the current level.
         self.remove_possible_simple_key()
@@ -701,33 +706,33 @@ class Scanner:
 
     # Checkers.
 
-    def check_directive(self):
+    def check_directive(self) -> Optional[bool]:
 
         # DIRECTIVE:        ^ '%' ...
         # The '%' indicator is already checked.
         if self.column == 0:
             return True
 
-    def check_document_start(self):
+    def check_document_start(self) -> Optional[bool]:
 
         # DOCUMENT-START:   ^ '---' (' '|'\n')
         if self.column == 0:
             if self.prefix(3) == "---" and self.peek(3) in "\0 \t\r\n\x85\u2028\u2029":
                 return True
 
-    def check_document_end(self):
+    def check_document_end(self) -> Optional[bool]:
 
         # DOCUMENT-END:     ^ '...' (' '|'\n')
         if self.column == 0:
             if self.prefix(3) == "..." and self.peek(3) in "\0 \t\r\n\x85\u2028\u2029":
                 return True
 
-    def check_block_entry(self):
+    def check_block_entry(self) -> Optional[bool]:
 
         # BLOCK-ENTRY:      '-' (' '|'\n')
         return self.peek(1) in "\0 \t\r\n\x85\u2028\u2029"
 
-    def check_key(self):
+    def check_key(self) -> Optional[bool]:
 
         # KEY(flow context):    '?'
         if self.flow_level:
@@ -737,7 +742,7 @@ class Scanner:
         else:
             return self.peek(1) in "\0 \t\r\n\x85\u2028\u2029"
 
-    def check_value(self):
+    def check_value(self) -> Optional[bool]:
 
         # VALUE(flow context):  ':'
         if self.flow_level:
@@ -747,7 +752,7 @@ class Scanner:
         else:
             return self.peek(1) in "\0 \t\r\n\x85\u2028\u2029"
 
-    def check_plain(self):
+    def check_plain(self) -> Optional[bool]:
 
         # A plain scalar may start with any non-space character except:
         #   '-', '?', ':', ',', '[', ']', '{', '}',
@@ -804,7 +809,7 @@ class Scanner:
             else:
                 found = True
 
-    def scan_directive(self):
+    def scan_directive(self) -> DirectiveToken:
         # See the specification for details.
         start_mark = self.get_mark()
         self.forward()
@@ -823,7 +828,7 @@ class Scanner:
         self.scan_directive_ignored_line(start_mark)
         return DirectiveToken(name, value, start_mark, end_mark)
 
-    def scan_directive_name(self, start_mark):
+    def scan_directive_name(self, start_mark: Mark) -> str:
         # See the specification for details.
         length = 0
         ch = self.peek(length)
@@ -849,7 +854,7 @@ class Scanner:
             )
         return value
 
-    def scan_yaml_directive_value(self, start_mark):
+    def scan_yaml_directive_value(self, start_mark: Mark) -> Tuple[int, int]:
         # See the specification for details.
         while self.peek() == " ":
             self.forward()
@@ -872,7 +877,7 @@ class Scanner:
             )
         return (major, minor)
 
-    def scan_yaml_directive_number(self, start_mark):
+    def scan_yaml_directive_number(self, start_mark: Mark) -> int:
         # See the specification for details.
         ch = self.peek()
         if not ("0" <= ch <= "9"):
@@ -889,7 +894,7 @@ class Scanner:
         self.forward(length)
         return value
 
-    def scan_tag_directive_value(self, start_mark):
+    def scan_tag_directive_value(self, start_mark: Mark):
         # See the specification for details.
         while self.peek() == " ":
             self.forward()
@@ -899,7 +904,7 @@ class Scanner:
         prefix = self.scan_tag_directive_prefix(start_mark)
         return (handle, prefix)
 
-    def scan_tag_directive_handle(self, start_mark):
+    def scan_tag_directive_handle(self, start_mark: Mark):
         # See the specification for details.
         value = self.scan_tag_handle("directive", start_mark)
         ch = self.peek()
@@ -912,7 +917,7 @@ class Scanner:
             )
         return value
 
-    def scan_tag_directive_prefix(self, start_mark):
+    def scan_tag_directive_prefix(self, start_mark: Mark):
         # See the specification for details.
         value = self.scan_tag_uri("directive", start_mark)
         ch = self.peek()
@@ -925,7 +930,7 @@ class Scanner:
             )
         return value
 
-    def scan_directive_ignored_line(self, start_mark):
+    def scan_directive_ignored_line(self, start_mark: Mark):
         # See the specification for details.
         while self.peek() == " ":
             self.forward()
@@ -942,7 +947,7 @@ class Scanner:
             )
         self.scan_line_break()
 
-    def scan_anchor(self, TokenClass):
+    def scan_anchor(self, TokenClass: Type[_TokenClass]) -> _TokenClass:
         # The specification does not restrict characters for anchors and
         # aliases. This may lead to problems, for instance, the document:
         #   [ *alias, value ]
@@ -981,9 +986,9 @@ class Scanner:
                 self.get_mark(),
             )
         end_mark = self.get_mark()
-        return TokenClass(value, start_mark, end_mark)
+        return TokenClass(value, start_mark=start_mark, end_mark=end_mark)
 
-    def scan_tag(self):
+    def scan_tag(self) -> TagToken:
         # See the specification for details.
         start_mark = self.get_mark()
         ch = self.peek(1)
@@ -1031,7 +1036,7 @@ class Scanner:
         end_mark = self.get_mark()
         return TagToken(value, start_mark, end_mark)
 
-    def scan_block_scalar(self, style):
+    def scan_block_scalar(self, style: str) -> ScalarToken:
         # See the specification for details.
 
         if style == ">":
@@ -1110,7 +1115,7 @@ class Scanner:
         # We are done.
         return ScalarToken("".join(chunks), False, start_mark, end_mark, style)
 
-    def scan_block_scalar_indicators(self, start_mark):
+    def scan_block_scalar_indicators(self, start_mark: Mark):
         # See the specification for details.
         chomping = None
         increment = None
@@ -1191,7 +1196,7 @@ class Scanner:
                     max_indent = self.column
         return chunks, max_indent, end_mark
 
-    def scan_block_scalar_breaks(self, indent):
+    def scan_block_scalar_breaks(self, indent: int):
         # See the specification for details.
         chunks = []
         end_mark = self.get_mark()
@@ -1204,7 +1209,7 @@ class Scanner:
                 self.forward()
         return chunks, end_mark
 
-    def scan_flow_scalar(self, style):
+    def scan_flow_scalar(self, style: str):
         # See the specification for details.
         # Note that we loose indentation rules for quoted scalars. Quoted
         # scalars don't need to adhere indentation because " and ' clearly
@@ -1254,7 +1259,7 @@ class Scanner:
         "U": 8,
     }
 
-    def scan_flow_scalar_non_spaces(self, double, start_mark):
+    def scan_flow_scalar_non_spaces(self, double: bool, start_mark: Mark):
         # See the specification for details.
         chunks = []
         while True:
@@ -1305,7 +1310,7 @@ class Scanner:
             else:
                 return chunks
 
-    def scan_flow_scalar_spaces(self, double, start_mark):
+    def scan_flow_scalar_spaces(self, double: bool, start_mark: Mark):
         # See the specification for details.
         chunks = []
         length = 0
@@ -1333,7 +1338,7 @@ class Scanner:
             chunks.append(whitespaces)
         return chunks
 
-    def scan_flow_scalar_breaks(self, double, start_mark):
+    def scan_flow_scalar_breaks(self, double: bool, start_mark: Mark):
         # See the specification for details.
         chunks = []
         while True:
@@ -1356,7 +1361,7 @@ class Scanner:
             else:
                 return chunks
 
-    def scan_plain(self):
+    def scan_plain(self) -> ScalarToken:
         # See the specification for details.
         # We add an additional restriction for the flow context:
         #   plain scalars in the flow context cannot contain ',' or '?'.
@@ -1370,7 +1375,7 @@ class Scanner:
         # document separators at the beginning of the line.
         # if indent == 0:
         #    indent = 1
-        spaces = []
+        spaces: List[str] = []
         while True:
             length = 0
             if self.peek() == "#":
@@ -1405,11 +1410,11 @@ class Scanner:
                 break
         return ScalarToken("".join(chunks), True, start_mark, end_mark)
 
-    def scan_plain_spaces(self, indent, start_mark):
+    def scan_plain_spaces(self, indent: int, start_mark: Mark):
         # See the specification for details.
         # The specification is really confusing about tabs in plain scalars.
         # We just forbid them completely. Do not use tabs in YAML!
-        chunks = []
+        chunks: List[str] = []
         length = 0
         while self.peek(length) in " ":
             length += 1
@@ -1424,7 +1429,7 @@ class Scanner:
                 3
             ) in "\0 \t\r\n\x85\u2028\u2029":
                 return
-            breaks = []
+            breaks: List[str] = []
             while self.peek() in " \r\n\x85\u2028\u2029":
                 if self.peek() == " ":
                     self.forward()
@@ -1444,7 +1449,7 @@ class Scanner:
             chunks.append(whitespaces)
         return chunks
 
-    def scan_tag_handle(self, name, start_mark):
+    def scan_tag_handle(self, name: str, start_mark: Mark):
         # See the specification for details.
         # For some strange reasons, the specification does not allow '_' in
         # tag handles. I have allowed it anyway.
@@ -1477,7 +1482,7 @@ class Scanner:
         self.forward(length)
         return value
 
-    def scan_tag_uri(self, name, start_mark):
+    def scan_tag_uri(self, name: str, start_mark: Mark) -> str:
         # See the specification for details.
         # Note: we do not check if URI is well-formed.
         chunks = []
@@ -1510,7 +1515,7 @@ class Scanner:
             )
         return "".join(chunks)
 
-    def scan_uri_escapes(self, name, start_mark):
+    def scan_uri_escapes(self, name: str, start_mark: Mark):
         # See the specification for details.
         codes = []
         mark = self.get_mark()
@@ -1533,7 +1538,7 @@ class Scanner:
             raise ScannerError("while scanning a %s" % name, start_mark, str(exc), mark)
         return value
 
-    def scan_line_break(self):
+    def scan_line_break(self) -> Literal["\n", "\u2028", "\u2029", ""]:
         # Transforms:
         #   '\r\n'      :   '\n'
         #   '\r'        :   '\n'
@@ -1551,5 +1556,5 @@ class Scanner:
             return "\n"
         elif ch in "\u2028\u2029":
             self.forward()
-            return ch
+            return cast(Literal["\u2028", "\u2029"], ch)
         return ""

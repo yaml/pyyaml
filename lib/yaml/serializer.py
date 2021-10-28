@@ -1,5 +1,6 @@
 __all__ = ["Serializer", "SerializerError"]
 
+from typing import Dict, Optional
 from .error import YAMLError
 from .events import *
 from .nodes import *
@@ -27,9 +28,9 @@ class Serializer:
         self.use_version = version
         self.use_tags = tags
         self.serialized_nodes = {}
-        self.anchors = {}
-        self.last_anchor_id = 0
-        self.closed = None
+        self.anchors: Dict[Node, Optional[str]] = {}
+        self.last_anchor_id: int = 0
+        self.closed: bool = None
 
     def open(self):
         if self.closed is None:
@@ -69,7 +70,7 @@ class Serializer:
         self.anchors = {}
         self.last_anchor_id = 0
 
-    def anchor_node(self, node):
+    def anchor_node(self, node: Node):
         if node in self.anchors:
             if self.anchors[node] is None:
                 self.anchors[node] = self.generate_anchor(node)
@@ -83,7 +84,7 @@ class Serializer:
                     self.anchor_node(key)
                     self.anchor_node(value)
 
-    def generate_anchor(self, node):
+    def generate_anchor(self, node) -> str:
         self.last_anchor_id += 1
         return self.ANCHOR_TEMPLATE % self.last_anchor_id
 

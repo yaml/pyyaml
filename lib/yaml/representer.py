@@ -1,9 +1,11 @@
 __all__ = ["BaseRepresenter", "SafeRepresenter", "Representer", "RepresenterError"]
 
+from typing import Dict, Iterable, Optional, Type, Union
 from .error import *
 from .nodes import *
 
 import datetime, copyreg, types, base64, collections
+from .types import _Tag
 
 
 class RepresenterError(YAMLError):
@@ -15,7 +17,12 @@ class BaseRepresenter:
     yaml_representers = {}
     yaml_multi_representers = {}
 
-    def __init__(self, default_style=None, default_flow_style=False, sort_keys=True):
+    def __init__(
+        self,
+        default_style=None,
+        default_flow_style: Optional[bool] = False,
+        sort_keys: bool = True,
+    ):
         self.default_style = default_style
         self.sort_keys = sort_keys
         self.default_flow_style = default_flow_style
@@ -63,18 +70,18 @@ class BaseRepresenter:
         return node
 
     @classmethod
-    def add_representer(cls, data_type, representer):
+    def add_representer(cls, data_type: type, representer):
         if not "yaml_representers" in cls.__dict__:
             cls.yaml_representers = cls.yaml_representers.copy()
         cls.yaml_representers[data_type] = representer
 
     @classmethod
-    def add_multi_representer(cls, data_type, representer):
+    def add_multi_representer(cls, data_type: type, representer):
         if not "yaml_multi_representers" in cls.__dict__:
             cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
         cls.yaml_multi_representers[data_type] = representer
 
-    def represent_scalar(self, tag, value, style=None):
+    def represent_scalar(self, tag: _Tag, value: Any, style: str = None):
         if style is None:
             style = self.default_style
         node = ScalarNode(tag, value, style=style)
@@ -82,7 +89,7 @@ class BaseRepresenter:
             self.represented_objects[self.alias_key] = node
         return node
 
-    def represent_sequence(self, tag, sequence, flow_style=None):
+    def represent_sequence(self, tag: _Tag, sequence: Iterable[Any], flow_style=None):
         value = []
         node = SequenceNode(tag, value, flow_style=flow_style)
         if self.alias_key is not None:
@@ -100,7 +107,12 @@ class BaseRepresenter:
                 node.flow_style = best_style
         return node
 
-    def represent_mapping(self, tag, mapping, flow_style=None):
+    def represent_mapping(
+        self,
+        tag: _Tag,
+        mapping: Union[Dict[Any, Any], List[Tuple[Any, ...]]],
+        flow_style=None,
+    ):
         value = []
         node = MappingNode(tag, value, flow_style=flow_style)
         if self.alias_key is not None:
@@ -141,34 +153,34 @@ class SafeRepresenter(BaseRepresenter):
         if isinstance(data, (str, bytes, bool, int, float)):
             return True
 
-    def represent_none(self, data):
+    def represent_none(self, data: Type[None]):
         return self.represent_scalar("tag:yaml.org,2002:null", "null")
 
-    def represent_str(self, data):
+    def represent_str(self, data: str):
         return self.represent_scalar("tag:yaml.org,2002:str", data)
 
-    def represent_binary(self, data):
+    def represent_binary(self, data: bytes):
         if hasattr(base64, "encodebytes"):
             data = base64.encodebytes(data).decode("ascii")
         else:
             data = base64.encodestring(data).decode("ascii")
         return self.represent_scalar("tag:yaml.org,2002:binary", data, style="|")
 
-    def represent_bool(self, data):
+    def represent_bool(self, data: bool):
         if data:
             value = "true"
         else:
             value = "false"
         return self.represent_scalar("tag:yaml.org,2002:bool", value)
 
-    def represent_int(self, data):
+    def represent_int(self, data: int):
         return self.represent_scalar("tag:yaml.org,2002:int", str(data))
 
     inf_value = 1e300
     while repr(inf_value) != repr(inf_value * inf_value):
         inf_value *= inf_value
 
-    def represent_float(self, data):
+    def represent_float(self, data: float):
         if data != data or (data == 0.0 and data == 1.0):
             value = ".nan"
         elif data == self.inf_value:
@@ -188,7 +200,7 @@ class SafeRepresenter(BaseRepresenter):
                 value = value.replace("e", ".0e", 1)
         return self.represent_scalar("tag:yaml.org,2002:float", value)
 
-    def represent_list(self, data):
+    def represent_list(self, data: List[Any]):
         # pairs = (len(data) > 0 and isinstance(data, list))
         # if pairs:
         #    for item in data:
@@ -204,31 +216,31 @@ class SafeRepresenter(BaseRepresenter):
     #        [(item_key, item_value)]))
     # return SequenceNode(u'tag:yaml.org,2002:pairs', value)
 
-    def represent_dict(self, data):
+    def represent_dict(self, data: Dict[Any, Any]):
         return self.represent_mapping("tag:yaml.org,2002:map", data)
 
-    def represent_set(self, data):
+    def represent_set(self, data: set):
         value = {}
         for key in data:
             value[key] = None
         return self.represent_mapping("tag:yaml.org,2002:set", value)
 
-    def represent_date(self, data):
+    def represent_date(self, data: datetime.date):
         value = data.isoformat()
         return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
-    def represent_datetime(self, data):
+    def represent_datetime(self, data: datetime.datetime):
         value = data.isoformat(" ")
         return self.represent_scalar("tag:yaml.org,2002:timestamp", value)
 
-    def represent_yaml_object(self, tag, data, cls, flow_style=None):
+    def represent_yaml_object(self, tag: _Tag, data, cls: object, flow_style=None):
         if hasattr(data, "__getstate__"):
             state = data.__getstate__()
         else:
             state = data.__dict__.copy()
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
-    def represent_undefined(self, data):
+    def represent_undefined(self, data: Any):
         raise RepresenterError("cannot represent an object", data)
 
 
@@ -260,30 +272,30 @@ SafeRepresenter.add_representer(None, SafeRepresenter.represent_undefined)
 
 
 class Representer(SafeRepresenter):
-    def represent_complex(self, data):
+    def represent_complex(self, data: complex):
         if data.imag == 0.0:
-            data = "%r" % data.real
+            data_str = "%r" % data.real
         elif data.real == 0.0:
-            data = "%rj" % data.imag
+            data_str = "%rj" % data.imag
         elif data.imag > 0:
-            data = "%r+%rj" % (data.real, data.imag)
+            data_str = "%r+%rj" % (data.real, data.imag)
         else:
-            data = "%r%rj" % (data.real, data.imag)
-        return self.represent_scalar("tag:yaml.org,2002:python/complex", data)
+            data_str = "%r%rj" % (data.real, data.imag)
+        return self.represent_scalar("tag:yaml.org,2002:python/complex", data_str)
 
-    def represent_tuple(self, data):
+    def represent_tuple(self, data: tuple):
         return self.represent_sequence("tag:yaml.org,2002:python/tuple", data)
 
-    def represent_name(self, data):
+    def represent_name(self, data: Any):
         name = "%s.%s" % (data.__module__, data.__name__)
         return self.represent_scalar("tag:yaml.org,2002:python/name:" + name, "")
 
-    def represent_module(self, data):
+    def represent_module(self, data: types.ModuleType):
         return self.represent_scalar(
             "tag:yaml.org,2002:python/module:" + data.__name__, ""
         )
 
-    def represent_object(self, data):
+    def represent_object(self, data: object):
         # We use __reduce__ API to save the data. data.__reduce__ returns
         # a tuple of length 2-5:
         #   (function, args, state, listitems, dictitems)
@@ -350,7 +362,7 @@ class Representer(SafeRepresenter):
             value["dictitems"] = dictitems
         return self.represent_mapping(tag + function_name, value)
 
-    def represent_ordered_dict(self, data):
+    def represent_ordered_dict(self, data: collections.OrderedDict):
         # Provide uniform representation across different Python versions.
         data_type = type(data)
         tag = "tag:yaml.org,2002:python/object/apply:%s.%s" % (

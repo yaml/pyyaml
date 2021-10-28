@@ -1,5 +1,10 @@
+from .error import Mark
+
+
 class Token(object):
-    def __init__(self, start_mark, end_mark):
+    id: str
+
+    def __init__(self, start_mark: Mark, end_mark: Mark):
         self.start_mark = start_mark
         self.end_mark = end_mark
 
@@ -19,7 +24,13 @@ class Token(object):
 class DirectiveToken(Token):
     id = "<directive>"
 
-    def __init__(self, name, value, start_mark, end_mark):
+    def __init__(
+        self,
+        name: str,
+        value,
+        start_mark: Mark,
+        end_mark: Mark,
+    ):
         self.name = name
         self.value = value
         self.start_mark = start_mark
@@ -37,7 +48,12 @@ class DocumentEndToken(Token):
 class StreamStartToken(Token):
     id = "<stream start>"
 
-    def __init__(self, start_mark=None, end_mark=None, encoding=None):
+    def __init__(
+        self,
+        start_mark: Mark = None,
+        end_mark: Mark = None,
+        encoding: str = None,
+    ):
         self.start_mark = start_mark
         self.end_mark = end_mark
         self.encoding = encoding
@@ -94,7 +110,7 @@ class FlowEntryToken(Token):
 class AliasToken(Token):
     id = "<alias>"
 
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value: str, start_mark: Mark, end_mark: Mark):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
@@ -103,7 +119,7 @@ class AliasToken(Token):
 class AnchorToken(Token):
     id = "<anchor>"
 
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value: str, start_mark: Mark, end_mark: Mark):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
@@ -112,7 +128,7 @@ class AnchorToken(Token):
 class TagToken(Token):
     id = "<tag>"
 
-    def __init__(self, value, start_mark, end_mark):
+    def __init__(self, value: str, start_mark: Mark, end_mark: Mark):
         self.value = value
         self.start_mark = start_mark
         self.end_mark = end_mark
@@ -121,7 +137,14 @@ class TagToken(Token):
 class ScalarToken(Token):
     id = "<scalar>"
 
-    def __init__(self, value, plain, start_mark, end_mark, style=None):
+    def __init__(
+        self,
+        value: str,
+        plain: str,
+        start_mark: Mark,
+        end_mark: Mark,
+        style: str = None,
+    ):
         self.value = value
         self.plain = plain
         self.start_mark = start_mark

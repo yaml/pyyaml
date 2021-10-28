@@ -17,13 +17,17 @@
 
 __all__ = ["Reader", "ReaderError"]
 
+from typing import AnyStr
 from .error import YAMLError, Mark
+from .types import _Stream
 
 import codecs, re
 
 
 class ReaderError(YAMLError):
-    def __init__(self, name, position, character, encoding, reason):
+    def __init__(
+        self, name: str, position: int, character: AnyStr, encoding: str, reason: str
+    ):
         self.name = name
         self.character = character
         self.position = position
@@ -66,7 +70,7 @@ class Reader(object):
 
     # Yeah, it's ugly and slow.
 
-    def __init__(self, stream):
+    def __init__(self, stream: _Stream):
         self.name = None
         self.stream = None
         self.stream_pointer = 0
@@ -94,19 +98,19 @@ class Reader(object):
             self.raw_buffer = None
             self.determine_encoding()
 
-    def peek(self, index=0):
+    def peek(self, index: int = 0) -> str:
         try:
             return self.buffer[self.pointer + index]
         except IndexError:
             self.update(index + 1)
             return self.buffer[self.pointer + index]
 
-    def prefix(self, length=1):
+    def prefix(self, length: int = 1) -> str:
         if self.pointer + length >= len(self.buffer):
             self.update(length)
         return self.buffer[self.pointer : self.pointer + length]
 
-    def forward(self, length=1):
+    def forward(self, length: int = 1):
         if self.pointer + length + 1 >= len(self.buffer):
             self.update(length + 1)
         while length:
@@ -122,7 +126,7 @@ class Reader(object):
                 self.column += 1
             length -= 1
 
-    def get_mark(self):
+    def get_mark(self) -> Mark:
         if self.stream is None:
             return Mark(
                 self.name, self.index, self.line, self.column, self.buffer, self.pointer
@@ -149,7 +153,7 @@ class Reader(object):
         "[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]"
     )
 
-    def check_printable(self, data):
+    def check_printable(self, data: AnyStr):
         match = self.NON_PRINTABLE.search(data)
         if match:
             character = match.group()
@@ -162,7 +166,7 @@ class Reader(object):
                 "special characters are not allowed",
             )
 
-    def update(self, length):
+    def update(self, length: int):
         if self.raw_buffer is None:
             return
         self.buffer = self.buffer[self.pointer :]
@@ -197,7 +201,7 @@ class Reader(object):
                 self.raw_buffer = None
                 break
 
-    def update_raw(self, size=4096):
+    def update_raw(self, size: int = 4096):
         data = self.stream.read(size)
         if self.raw_buffer is None:
             self.raw_buffer = data

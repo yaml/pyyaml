@@ -1,5 +1,18 @@
+from typing import Any, List, Tuple
+
+from .error import Mark
+
+
 class Node(object):
-    def __init__(self, tag, value, start_mark, end_mark):
+    id: str
+
+    def __init__(
+        self,
+        tag: str,
+        value: Any,
+        start_mark: Mark,
+        end_mark: Mark,
+    ):
         self.tag = tag
         self.value = value
         self.start_mark = start_mark
@@ -26,7 +39,14 @@ class Node(object):
 class ScalarNode(Node):
     id = "scalar"
 
-    def __init__(self, tag, value, start_mark=None, end_mark=None, style=None):
+    def __init__(
+        self,
+        tag: str,
+        value: str,
+        start_mark: Mark = None,
+        end_mark: Mark = None,
+        style=None,
+    ):
         self.tag = tag
         self.value = value
         self.start_mark = start_mark
@@ -35,7 +55,14 @@ class ScalarNode(Node):
 
 
 class CollectionNode(Node):
-    def __init__(self, tag, value, start_mark=None, end_mark=None, flow_style=None):
+    def __init__(
+        self,
+        tag: str,
+        value: Any,
+        start_mark: Mark = None,
+        end_mark: Mark = None,
+        flow_style=None,
+    ):
         self.tag = tag
         self.value = value
         self.start_mark = start_mark
@@ -45,7 +72,9 @@ class CollectionNode(Node):
 
 class SequenceNode(CollectionNode):
     id = "sequence"
+    value: List[Node]
 
 
 class MappingNode(CollectionNode):
     id = "mapping"
+    value: List[Tuple[Node, Node]]

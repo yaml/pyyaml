@@ -1,8 +1,19 @@
 __all__ = ["Mark", "YAMLError", "MarkedYAMLError"]
 
 
+from typing import Optional
+
+
 class Mark:
-    def __init__(self, name, index, line, column, buffer, pointer):
+    def __init__(
+        self,
+        name: str,
+        index: int,
+        line: int,
+        column: int,
+        buffer: Optional[str],
+        pointer: Optional[int],
+    ):
         self.name = name
         self.index = index
         self.line = line
@@ -10,7 +21,7 @@ class Mark:
         self.buffer = buffer
         self.pointer = pointer
 
-    def get_snippet(self, indent=4, max_length=75):
+    def get_snippet(self, indent: int = 4, max_length: int = 75):
         if self.buffer is None:
             return None
         head = ""
@@ -62,10 +73,10 @@ class MarkedYAMLError(YAMLError):
     def __init__(
         self,
         context=None,
-        context_mark=None,
+        context_mark: Mark = None,
         problem=None,
-        problem_mark=None,
-        note=None,
+        problem_mark: Mark = None,
+        note: str = None,
     ):
         self.context = context
         self.context_mark = context_mark

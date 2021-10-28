@@ -60,6 +60,7 @@
 
 __all__ = ["Parser", "ParserError"]
 
+from typing import Iterable
 from .error import MarkedYAMLError
 from .tokens import *
 from .events import *
@@ -92,7 +93,7 @@ class Parser:
         self.states = []
         self.state = None
 
-    def check_event(self, *choices):
+    def check_event(self, *choices: Iterable[Event]) -> bool:
         # Check the type of the next event.
         if self.current_event is None:
             if self.state:

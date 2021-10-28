@@ -7,8 +7,18 @@
 
 __all__ = ["Emitter", "EmitterError"]
 
+from typing import List, Literal, Optional, Tuple
 from .error import YAMLError
 from .events import *
+from .types import _Stream
+
+
+def is_line_breaking(ch: str) -> bool:
+    return ch in "\n\x85\u2028\u2029"
+
+
+def is_white_space(ch: str) -> bool:
+    return (ch in "\0 \t\r") or is_line_breaking(ch)
 
 
 class EmitterError(YAMLError):
@@ -18,14 +28,14 @@ class EmitterError(YAMLError):
 class ScalarAnalysis:
     def __init__(
         self,
-        scalar,
-        empty,
-        multiline,
-        allow_flow_plain,
-        allow_block_plain,
-        allow_single_quoted,
-        allow_double_quoted,
-        allow_block,
+        scalar: str,
+        empty: bool,
+        multiline: bool,
+        allow_flow_plain: bool,
+        allow_block_plain: bool,
+        allow_single_quoted: bool,
+        allow_double_quoted: bool,
+        allow_block: bool,
     ):
         self.scalar = scalar
         self.empty = empty
@@ -46,19 +56,19 @@ class Emitter:
 
     def __init__(
         self,
-        stream,
-        canonical=None,
-        indent=None,
-        width=None,
-        allow_unicode=None,
-        line_break=None,
+        stream: _Stream,
+        canonical: bool = None,
+        indent: int = None,
+        width: int = None,
+        allow_unicode: bool = None,
+        line_break: Literal["\r", "\n", "\r\n"] = None,
     ):
 
         # The stream should have the methods `write` and possibly `flush`.
         self.stream = stream
 
         # Encoding can be overridden by STREAM-START.
-        self.encoding = None
+        self.encoding: str = None
 
         # Emitter is a state machine with a stack of states to handle nested
         # structures.
@@ -66,7 +76,7 @@ class Emitter:
         self.state = self.expect_stream_start
 
         # Current event and the event queue.
-        self.events = []
+        self.events: List[Event] = []
         self.event = None
 
         # The current indentation level and the stack of previous indents.
@@ -124,7 +134,7 @@ class Emitter:
         self.states = []
         self.state = None
 
-    def emit(self, event):
+    def emit(self, event: Event):
         self.events.append(event)
         while not self.need_more_events():
             self.event = self.events.pop(0)
@@ -146,7 +156,7 @@ class Emitter:
         else:
             return False
 
-    def need_events(self, count):
+    def need_events(self, count: int) -> bool:
         level = 0
         for event in self.events[1:]:
             if isinstance(event, (DocumentStartEvent, CollectionStartEvent)):
@@ -159,7 +169,7 @@ class Emitter:
                 return False
         return len(self.events) < count + 1
 
-    def increase_indent(self, flow=False, indentless=False):
+    def increase_indent(self, flow: bool = False, indentless: bool = False):
         self.indents.append(self.indent)
         if self.indent is None:
             if flow:
@@ -190,7 +200,7 @@ class Emitter:
     def expect_first_document_start(self):
         return self.expect_document_start(first=True)
 
-    def expect_document_start(self, first=False):
+    def expect_document_start(self, first: bool = False):
         if isinstance(self.event, DocumentStartEvent):
             if (self.event.version or self.event.tags) and self.open_ended:
                 self.write_indicator("...", True)
@@ -247,7 +257,13 @@ class Emitter:
 
     # Node handlers.
 
-    def expect_node(self, root=False, sequence=False, mapping=False, simple_key=False):
+    def expect_node(
+        self,
+        root: bool = False,
+        sequence: bool = False,
+        mapping: bool = False,
+        simple_key: bool = False,
+    ):
         self.root_context = root
         self.sequence_context = sequence
         self.mapping_context = mapping
@@ -398,7 +414,7 @@ class Emitter:
     def expect_first_block_sequence_item(self):
         return self.expect_block_sequence_item(first=True)
 
-    def expect_block_sequence_item(self, first=False):
+    def expect_block_sequence_item(self, first: bool = False):
         if not first and isinstance(self.event, SequenceEndEvent):
             self.indent = self.indents.pop()
             self.state = self.states.pop()
@@ -417,7 +433,7 @@ class Emitter:
     def expect_first_block_mapping_key(self):
         return self.expect_block_mapping_key(first=True)
 
-    def expect_block_mapping_key(self, first=False):
+    def expect_block_mapping_key(self, first: bool = False):
         if not first and isinstance(self.event, MappingEndEvent):
             self.indent = self.indents.pop()
             self.state = self.states.pop()
@@ -500,7 +516,7 @@ class Emitter:
 
     # Anchor, Tag, and Scalar processors.
 
-    def process_anchor(self, indicator):
+    def process_anchor(self, indicator: str):
         if self.event.anchor is None:
             self.prepared_anchor = None
             return
@@ -589,13 +605,13 @@ class Emitter:
 
     # Analyzers.
 
-    def prepare_version(self, version):
+    def prepare_version(self, version: Tuple[int, int]):
         major, minor = version
         if major != 1:
             raise EmitterError("unsupported YAML version: %d.%d" % (major, minor))
         return "%d.%d" % (major, minor)
 
-    def prepare_tag_handle(self, handle):
+    def prepare_tag_handle(self, handle: str):
         if not handle:
             raise EmitterError("tag handle must not be empty")
         if handle[0] != "!" or handle[-1] != "!":
@@ -609,7 +625,7 @@ class Emitter:
                 )
         return handle
 
-    def prepare_tag_prefix(self, prefix):
+    def prepare_tag_prefix(self, prefix: str):
         if not prefix:
             raise EmitterError("tag prefix must not be empty")
         chunks = []
@@ -636,7 +652,7 @@ class Emitter:
             chunks.append(prefix[start:end])
         return "".join(chunks)
 
-    def prepare_tag(self, tag):
+    def prepare_tag(self, tag: str):
         if not tag:
             raise EmitterError("tag must not be empty")
         if tag == "!":
@@ -675,7 +691,7 @@ class Emitter:
         else:
             return "!<%s>" % suffix_text
 
-    def prepare_anchor(self, anchor):
+    def prepare_anchor(self, anchor: str):
         if not anchor:
             raise EmitterError("anchor must not be empty")
         for ch in anchor:
@@ -687,7 +703,7 @@ class Emitter:
                 )
         return anchor
 
-    def analyze_scalar(self, scalar):
+    def analyze_scalar(self, scalar: str) -> ScalarAnalysis:
 
         # Empty scalar is a special case.
         if not scalar:
@@ -877,7 +893,11 @@ class Emitter:
         self.flush_stream()
 
     def write_indicator(
-        self, indicator, need_whitespace, whitespace=False, indention=False
+        self,
+        indicator: str,
+        need_whitespace: bool,
+        whitespace: bool = False,
+        indention: bool = False,
     ):
         if self.whitespace or not need_whitespace:
             data = indicator
@@ -907,7 +927,7 @@ class Emitter:
                 data = data.encode(self.encoding)
             self.stream.write(data)
 
-    def write_line_break(self, data=None):
+    def write_line_break(self, data: str = None):
         if data is None:
             data = self.best_line_break
         self.whitespace = True
@@ -918,14 +938,14 @@ class Emitter:
             data = data.encode(self.encoding)
         self.stream.write(data)
 
-    def write_version_directive(self, version_text):
+    def write_version_directive(self, version_text: str):
         data = "%%YAML %s" % version_text
         if self.encoding:
             data = data.encode(self.encoding)
         self.stream.write(data)
         self.write_line_break()
 
-    def write_tag_directive(self, handle_text, prefix_text):
+    def write_tag_directive(self, handle_text: str, prefix_text: str):
         data = "%%TAG %s %s" % (handle_text, prefix_text)
         if self.encoding:
             data = data.encode(self.encoding)
@@ -934,7 +954,7 @@ class Emitter:
 
     # Scalar streams.
 
-    def write_single_quoted(self, text, split=True):
+    def write_single_quoted(self, text: str, split: bool = True):
         self.write_indicator("'", True)
         spaces = False
         breaks = False
@@ -1011,7 +1031,7 @@ class Emitter:
         "\u2029": "P",
     }
 
-    def write_double_quoted(self, text, split=True):
+    def write_double_quoted(self, text: str, split: bool = True):
         self.write_indicator('"', True)
         start = end = 0
         while end <= len(text):
@@ -1075,7 +1095,7 @@ class Emitter:
             end += 1
         self.write_indicator('"', False)
 
-    def determine_block_hints(self, text):
+    def determine_block_hints(self, text: str):
         hints = ""
         if text:
             if text[0] in " \n\x85\u2028\u2029":
@@ -1086,7 +1106,7 @@ class Emitter:
                 hints += "+"
         return hints
 
-    def write_folded(self, text):
+    def write_folded(self, text: str):
         hints = self.determine_block_hints(text)
         self.write_indicator(">" + hints, True)
         if hints[-1:] == "+":
@@ -1144,7 +1164,7 @@ class Emitter:
                 spaces = ch == " "
             end += 1
 
-    def write_literal(self, text):
+    def write_literal(self, text: str):
         hints = self.determine_block_hints(text)
         self.write_indicator("|" + hints, True)
         if hints[-1:] == "+":
@@ -1179,7 +1199,7 @@ class Emitter:
                 breaks = ch in "\n\x85\u2028\u2029"
             end += 1
 
-    def write_plain(self, text, split=True):
+    def write_plain(self, text: str, split: bool = True):
         if self.root_context:
             self.open_ended = True
         if not text:

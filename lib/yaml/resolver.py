@@ -1,9 +1,15 @@
 __all__ = ["BaseResolver", "Resolver"]
 
+from typing import Dict, Iterable, Optional, Pattern, Type, Union
 from .error import *
 from .nodes import *
 
 import re
+from .types import _Tag
+
+_NodeCheck = Optional[Type[Node]]
+_IndexCheck = Optional[Union[bool, str, int]]
+_NodePath = Tuple[_NodeCheck, _IndexCheck]
 
 
 class ResolverError(YAMLError):
@@ -16,15 +22,15 @@ class BaseResolver:
     DEFAULT_SEQUENCE_TAG = "tag:yaml.org,2002:seq"
     DEFAULT_MAPPING_TAG = "tag:yaml.org,2002:map"
 
-    yaml_implicit_resolvers = {}
-    yaml_path_resolvers = {}
+    yaml_implicit_resolvers: Dict[Any, List[Tuple[_Tag, Pattern[str]]]] = {}
+    yaml_path_resolvers: Dict[Tuple[_NodePath, _NodeCheck], _Tag] = {}
 
     def __init__(self):
         self.resolver_exact_paths = []
         self.resolver_prefix_paths = []
 
     @classmethod
-    def add_implicit_resolver(cls, tag, regexp, first):
+    def add_implicit_resolver(cls, tag: _Tag, regexp: Pattern[str], first: List[str]):
         if not "yaml_implicit_resolvers" in cls.__dict__:
             implicit_resolvers = {}
             for key in cls.yaml_implicit_resolvers:
@@ -36,7 +42,12 @@ class BaseResolver:
             cls.yaml_implicit_resolvers.setdefault(ch, []).append((tag, regexp))
 
     @classmethod
-    def add_path_resolver(cls, tag, path, kind=None):
+    def add_path_resolver(
+        cls,
+        tag: _Tag,
+        path: Union[Iterable[_NodePath], Iterable[_IndexCheck]],
+        kind: _NodeCheck = None,
+    ):
         # Note: `add_path_resolver` is experimental.  The API could be changed.
         # `new_path` is a pattern that is matched against the path from the
         # root to the node that is being considered.  `node_path` elements are
@@ -51,7 +62,9 @@ class BaseResolver:
         # against a sequence value with the index equal to `index_check`.
         if not "yaml_path_resolvers" in cls.__dict__:
             cls.yaml_path_resolvers = cls.yaml_path_resolvers.copy()
-        new_path = []
+        new_path: List[_NodePath] = []
+        node_check: _NodeCheck
+        index_check: _IndexCheck
         for element in path:
             if isinstance(element, (list, tuple)):
                 if len(element) == 2:
@@ -89,7 +102,7 @@ class BaseResolver:
             raise ResolverError("Invalid node kind: %s" % kind)
         cls.yaml_path_resolvers[tuple(new_path), kind] = tag
 
-    def descend_resolver(self, current_node, current_index):
+    def descend_resolver(self, current_node: Optional[Node], current_index: int):
         if not self.yaml_path_resolvers:
             return
         exact_paths = {}
@@ -119,7 +132,14 @@ class BaseResolver:
         self.resolver_exact_paths.pop()
         self.resolver_prefix_paths.pop()
 
-    def check_resolver_prefix(self, depth, path, kind, current_node, current_index):
+    def check_resolver_prefix(
+        self,
+        depth: int,
+        path,
+        kind: Optional[Node],
+        current_node: Node,
+        current_index: int,
+    ):
         node_check, index_check = path[depth - 1]
         if isinstance(node_check, str):
             if current_node.tag != node_check:
@@ -142,7 +162,7 @@ class BaseResolver:
                 return
         return True
 
-    def resolve(self, kind, value, implicit):
+    def resolve(self, kind: Optional[None], value: str, implicit):
         if kind is ScalarNode and implicit[0]:
             if value == "":
                 resolvers = self.yaml_implicit_resolvers.get("", [])
