@@ -1,5 +1,4 @@
-PyYAML
-======
+# PyYAML
 
 A full-featured YAML processing framework for Python.
 
