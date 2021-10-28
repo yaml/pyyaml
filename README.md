@@ -118,56 +118,82 @@ safe_dump_all(data, stream=None, ...)
 ```
 -->
 Mention that these are the keyword arguments of the `Dumper` class and subclasses.
-- `documents` - the python object to serialise
-- `stream` - where to output
+#### `data` / `documents` {#arg-data-documents}
+
+- the python object to serialise
+
+Applies to `safe_dump()`, `safe_dump_all()` `dump()`, `dump_all` functions
+and the `Dumper` class
+#### `stream` - where to output {#arg-stream}
   - IOObject - anything with a `.write()`, will be written to
   - `None` - returns a string.
-- `Dumper` - `Type[Dumper]` class/subclass of `Dumper`
+#### `Dumper` {#arg-dumper}
+- `Type[Dumper]` class/subclass of `Dumper`
 ...
-- `default_flow_style` - `Optional[bool]`
+#### `default_flow_style`  {#arg-default_flow_style}
+
+- `Optional[bool]`
   - `True` - what true does
   - `False` - what false does
   - `None` - what None does
 
 
 Mention that these are the keyword arguments of the `Loader` class and subclasses.
-- `stream`
+#### `stream`  {#arg-stream}
 
 <!--
 Old Documentation TOC
-- [PyYAML Documentation](#pyyaml-documentation)
-  * [Installation](#installation)
-  * [Frequently Asked Questions](#frequently-asked-questions)
-    + [Dictionaries without nested collections are not dumped correctly](#dictionaries-without-nested-collections-are-not-dumped-correctly)
-  * [Python 3 support](#python-3-support)
-  * [Tutorial](#tutorial)
-    + [Loading YAML](#loading-yaml)
-    + [Dumping YAML](#dumping-yaml)
-    + [Constructors, representers, resolvers](#constructors--representers--resolvers)
-  * [YAML syntax](#yaml-syntax)
-    + [Documents](#documents)
-    + [Block sequences](#block-sequences)
-    + [Block mappings](#block-mappings)
-    + [Flow collections](#flow-collections)
-    + [Scalars](#scalars)
-    + [Aliases](#aliases)
-    + [Tags](#tags)
-  * [YAML tags and Python types](#yaml-tags-and-python-types)
-    + [String conversion (Python 2 only)](#string-conversion--python-2-only-)
-    + [String conversion (Python 3 only)](#string-conversion--python-3-only-)
-    + [Names and modules](#names-and-modules)
-    + [Objects](#objects)
-  * [Reference](#reference)
-    + [The yaml package](#the-yaml-package)
-    + [Mark](#mark)
-    + [YAMLError](#yamlerror)
-    + [Tokens](#tokens)
-    + [Events](#events)
-    + [Nodes](#nodes)
-    + [Loader](#loader)
-    + [Dumper](#dumper)
-    + [YAMLObject](#yamlobject)
-  * [Deviations from the specification](#deviations-from-the-specification)
+- [PyYAML](#pyyaml)
+  - [Installation](#installation)
+    - [Default](#default)
+    - [From Source](#from-source)
+    - [with LibYAML](#with-libyaml)
+      - [Why LibYAML?](#why-libyaml)
+      - [Force installation **with** LibYAML `--with-libyaml`](#force-installation-with-libyaml---with-libyaml)
+      - [Force installation **without** LibYAML `--without-libyaml`](#force-installation-without-libyaml---without-libyaml)
+  - [Testing](#testing)
+  - [Loadings and Dumping](#loadings-and-dumping)
+    - [`safe_load` and `safe_dump`](#safe_load-and-safe_dump)
+    - [`load` and `dump`](#load-and-dump)
+    - [The `Loader` options](#the-loader-options)
+  - [The yaml package](#the-yaml-package)
+    - [The keyword arguments](#the-keyword-arguments)
+      - [`data` / `documents` {#arg-data-documents}](#data--documents-arg-data-documents)
+      - [`stream` - where to output {#arg-stream}](#stream---where-to-output-arg-stream)
+      - [`Dumper` {#arg-dumper}](#dumper-arg-dumper)
+      - [`default_flow_style`  {#arg-default_flow_style}](#default_flow_style--arg-default_flow_style)
+      - [`stream`  {#arg-stream}](#stream--arg-stream)
+  - [Constructors, representers, resolvers](#constructors-representers-resolvers)
+  - [YAML syntax](#yaml-syntax)
+    - [Documents](#documents)
+    - [Block sequences](#block-sequences)
+    - [Block mappings](#block-mappings)
+    - [Flow collections](#flow-collections)
+    - [Scalars](#scalars)
+    - [Aliases](#aliases)
+  - [YAML tags and Python types](#yaml-tags-and-python-types)
+    - [String conversion (Python 2 only)](#string-conversion-python-2-only)
+    - [String conversion (Python 3 only)](#string-conversion-python-3-only)
+    - [Names and modules](#names-and-modules)
+    - [Objects](#objects)
+  - [Deviations from the specification](#deviations-from-the-specification)
+  - [Reference](#reference)
+    - [The yaml package](#the-yaml-package-1)
+    - [Mark](#mark)
+    - [YAMLError](#yamlerror)
+    - [Tokens](#tokens)
+    - [Events](#events)
+    - [Nodes](#nodes)
+    - [Loader](#loader)
+    - [Dumper](#dumper)
+    - [YAMLObject](#yamlobject)
+  - [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
+    - [YAML Specification Suppport](#yaml-specification-suppport)
+    - [Dictionaries without nested collections are not dumped correctly](#dictionaries-without-nested-collections-are-not-dumped-correctly)
+  - [Python 3 support](#python-3-support)
+  - [Further Information](#further-information)
+  - [License](#license)
+  - [Security](#security)
  -->
 
 ## Constructors, representers, resolvers
@@ -206,7 +232,9 @@ Old Documentation TOC
 
 ### YAML Specification Suppport
 
-1.2 vs 1.1 and what pyyaml versions support what
+- YAML Spec 1.1 - Mostly supported.
+- [YAML Spec 1.2](https://spec.yaml.io/main/spec/1.3.0/) - Partial Support.
+- [YAML Spec 1.3](https://spec.yaml.io/main/spec/1.2.2/) - Not Supported Yet.
 
 
 ### Dictionaries without nested collections are not dumped correctly
@@ -221,12 +249,12 @@ document = """
     c: 3
     d: 4
 """
-print yaml.dump(yaml.load(document))
+print(yaml.dump(yaml.load(document)))
 ```
 
 _give_
 
-```
+```yaml
 a: 1
 b: {c: 3, d: 4}
 ```
@@ -246,7 +274,7 @@ parameter `default_flow_style` of `dump()` to `False`.
 For instance,
 
 ```python
->>> print yaml.dump(yaml.load(document), default_flow_style=False)
+>>> print(yaml.dump(yaml.load(document), default_flow_style=False))
 a: 1
 b:
   c: 3
@@ -310,3 +338,7 @@ It is currently maintained by the YAML and Python communities.
 PyYAML is released under the MIT license.
 
 See the file LICENSE for more details.
+
+## Security
+
+Please report any security vulnerabilities to : []()
