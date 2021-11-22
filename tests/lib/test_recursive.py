@@ -23,24 +23,26 @@ class AnInstanceWithState(AnInstance):
         self.foo, self.bar = state['attributes']
 
 def test_recursive(recursive_filename, verbose=False):
-    exec open(recursive_filename, 'rb').read()
-    value1 = value
+    context = globals().copy()
+    with open(recursive_filename, 'rb') as file:
+        exec(file.read(), context)
+    value1 = context['value']
     output1 = None
     value2 = None
     output2 = None
     try:
         output1 = yaml.dump(value1)
-        value2 = yaml.load(output1, yaml.FullLoader)
+        value2 = yaml.unsafe_load(output1)
         output2 = yaml.dump(value2)
         assert output1 == output2, (output1, output2)
     finally:
         if verbose:
-            #print "VALUE1:", value1
-            #print "VALUE2:", value2
-            print "OUTPUT1:"
-            print output1
-            print "OUTPUT2:"
-            print output2
+            print("VALUE1:", value1)
+            print("VALUE2:", value2)
+            print("OUTPUT1:")
+            print(output1)
+            print("OUTPUT2:")
+            print(output2)
 
 test_recursive.unittest = ['.recursive']
 

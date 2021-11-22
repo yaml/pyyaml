@@ -4,6 +4,31 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+6.0 (2021-10-13)
+
+* https://github.com/yaml/pyyaml/pull/327 -- Change README format to Markdown
+* https://github.com/yaml/pyyaml/pull/483 -- Add a test for YAML 1.1 types
+* https://github.com/yaml/pyyaml/pull/497 -- fix float resolver to ignore `.` and `._`
+* https://github.com/yaml/pyyaml/pull/550 -- drop Python 2.7
+* https://github.com/yaml/pyyaml/pull/553 -- Fix spelling of “hexadecimal”
+* https://github.com/yaml/pyyaml/pull/556 -- fix representation of Enum subclasses
+* https://github.com/yaml/pyyaml/pull/557 -- fix libyaml extension compiler warnings
+* https://github.com/yaml/pyyaml/pull/560 -- fix ResourceWarning on leaked file descriptors
+* https://github.com/yaml/pyyaml/pull/561 -- always require `Loader` arg to `yaml.load()`
+* https://github.com/yaml/pyyaml/pull/564 -- remove remaining direct distutils usage
+
+5.4.1 (2021-01-20)
+
+* https://github.com/yaml/pyyaml/pull/480 -- Fix stub compat with older pyyaml versions that may unwittingly load it
+
+5.4 (2021-01-19)
+
+* https://github.com/yaml/pyyaml/pull/407 -- Build modernization, remove distutils, fix metadata, build wheels, CI to GHA
+* https://github.com/yaml/pyyaml/pull/472 -- Fix for CVE-2020-14343, moves arbitrary python tags to UnsafeLoader
+* https://github.com/yaml/pyyaml/pull/441 -- Fix memory leak in implicit resolver setup
+* https://github.com/yaml/pyyaml/pull/392 -- Fix py2 copy support for timezone objects
+* https://github.com/yaml/pyyaml/pull/378 -- Fix compatibility with Jython
+
 5.3.1 (2020-03-18)
 
 * https://github.com/yaml/pyyaml/pull/386 -- Prevents arbitrary code execution during python/object/new constructor
@@ -11,7 +36,7 @@ For a complete changelog, see:
 5.3 (2020-01-06)
 
 * https://github.com/yaml/pyyaml/pull/290 -- Use `is` instead of equality for comparing with `None`
-* https://github.com/yaml/pyyaml/pull/270 -- fix typos and stylistic nit
+* https://github.com/yaml/pyyaml/pull/270 -- Fix typos and stylistic nit
 * https://github.com/yaml/pyyaml/pull/309 -- Fix up small typo
 * https://github.com/yaml/pyyaml/pull/161 -- Fix handling of __slots__
 * https://github.com/yaml/pyyaml/pull/358 -- Allow calling add_multi_constructor with None
@@ -21,8 +46,8 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/pull/359 -- Use full_load in yaml-highlight example
 * https://github.com/yaml/pyyaml/pull/244 -- Document that PyYAML is implemented with Cython
 * https://github.com/yaml/pyyaml/pull/329 -- Fix for Python 3.10
-* https://github.com/yaml/pyyaml/pull/310 -- increase size of index, line, and column fields
-* https://github.com/yaml/pyyaml/pull/260 -- remove some unused imports
+* https://github.com/yaml/pyyaml/pull/310 -- Increase size of index, line, and column fields
+* https://github.com/yaml/pyyaml/pull/260 -- Remove some unused imports
 * https://github.com/yaml/pyyaml/pull/163 -- Create timezone-aware datetimes when parsed as such
 * https://github.com/yaml/pyyaml/pull/363 -- Add tests for timezone
 

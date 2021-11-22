@@ -1,8 +1,14 @@
 # build outputs
 /dist/*
 /build/*
-/ext/_yaml.c
+/lib/PyYAML.egg-info/*
+/wheelhouse/*
+/yaml/_yaml.c
 MANIFEST
+**/*.so
+**/*.dylib
+**/*.pyd
+
 
 # cached Python binaries
 *.py[cdo]

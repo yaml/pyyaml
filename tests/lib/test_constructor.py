@@ -3,14 +3,14 @@ import yaml
 import pprint
 
 import datetime
-try:
-    set
-except NameError:
-    from sets import Set as set
 import yaml.tokens
 
+# Import any packages here that need to be referenced in .code files.
+import signal
+
 def execute(code):
-    exec code
+    global value
+    exec(code)
     return value
 
 def _make_objects():
@@ -114,7 +114,7 @@ def _make_objects():
             else:
                 return False
 
-    class AnObject(object):
+    class AnObject:
         def __new__(cls, foo=None, bar=None, baz=None):
             self = object.__new__(cls)
             self.foo = foo
@@ -158,20 +158,6 @@ def _make_objects():
         def __setstate__(self, state):
             self.foo, self.bar, self.baz = state
 
-    class InitArgs(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar, self.baz)
-        def __getstate__(self):
-            return {}
-
-    class InitArgsWithState(AnInstance):
-        def __getinitargs__(self):
-            return (self.foo, self.bar)
-        def __getstate__(self):
-            return self.baz
-        def __setstate__(self, state):
-            self.baz = state
-
     class NewArgs(AnObject):
         def __getnewargs__(self):
             return (self.foo, self.bar, self.baz)
@@ -186,6 +172,10 @@ def _make_objects():
         def __setstate__(self, state):
             self.baz = state
 
+    InitArgs = NewArgs
+
+    InitArgsWithState = NewArgsWithState
+
     class Reduce(AnObject):
         def __reduce__(self):
             return self.__class__, (self.foo, self.bar, self.baz)
@@ -196,7 +186,7 @@ def _make_objects():
         def __setstate__(self, state):
             self.baz = state
 
-    class Slots(object):
+    class Slots:
         __slots__ = ("foo", "bar", "baz")
         def __init__(self, foo=None, bar=None, baz=None):
             self.foo = foo
@@ -237,7 +227,7 @@ def _make_objects():
 
     class MyFullLoader(yaml.FullLoader):
         def get_state_keys_blacklist(self):
-            return super(MyFullLoader, self).get_state_keys_blacklist() + ['^mymethod$', '^wrong_.*$']
+            return super().get_state_keys_blacklist() + ['^mymethod$', '^wrong_.*$']
 
     today = datetime.date.today()
 
@@ -257,8 +247,6 @@ def _serialize_value(data):
         return '{%s}' % ', '.join(items)
     elif isinstance(data, datetime.datetime):
         return repr(data.utctimetuple())
-    elif isinstance(data, unicode):
-        return data.encode('utf-8')
     elif isinstance(data, float) and data != data:
         return '?'
     else:
@@ -269,26 +257,28 @@ def test_constructor_types(data_filename, code_filename, verbose=False):
     native1 = None
     native2 = None
     try:
-        native1 = list(yaml.load_all(open(data_filename, 'rb'), Loader=MyLoader))
+        with open(data_filename, 'rb') as file:
+            native1 = list(yaml.load_all(file, Loader=MyLoader))
         if len(native1) == 1:
             native1 = native1[0]
-        native2 = _load_code(open(code_filename, 'rb').read())
+        with open(code_filename, 'rb') as file:
+            native2 = _load_code(file.read())
         try:
             if native1 == native2:
                 return
         except TypeError:
             pass
         if verbose:
-            print "SERIALIZED NATIVE1:"
-            print _serialize_value(native1)
-            print "SERIALIZED NATIVE2:"
-            print _serialize_value(native2)
+            print("SERIALIZED NATIVE1:")
+            print(_serialize_value(native1))
+            print("SERIALIZED NATIVE2:")
+            print(_serialize_value(native2))
         assert _serialize_value(native1) == _serialize_value(native2), (native1, native2)
     finally:
         if verbose:
-            print "NATIVE1:"
+            print("NATIVE1:")
             pprint.pprint(native1)
-            print "NATIVE2:"
+            print("NATIVE2:")
             pprint.pprint(native2)
 
 test_constructor_types.unittest = ['.data', '.code']
@@ -296,7 +286,8 @@ test_constructor_types.unittest = ['.data', '.code']
 def test_subclass_blacklist_types(data_filename, verbose=False):
     _make_objects()
     try:
-        yaml.load(open(data_filename, 'rb').read(), MyFullLoader)
+        with open(data_filename, 'rb') as file:
+            yaml.load(file.read(), MyFullLoader)
     except yaml.YAMLError as exc:
         if verbose:
             print("%s:" % exc.__class__.__name__, exc)

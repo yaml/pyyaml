@@ -29,8 +29,10 @@ class Multi2(yaml.FullLoader):
     pass
 
 def test_multi_constructor(input_filename, code_filename, verbose=False):
-    input = open(input_filename, 'rb').read().decode('utf-8')
-    native = _load_code(open(code_filename, 'rb').read())
+    with open(input_filename, 'rb') as file:
+        input = file.read().decode('utf-8')
+    with open(code_filename, 'rb') as file:
+        native = _load_code(file.read())
 
     # default multi constructor for ! and !! tags
     Multi1.add_multi_constructor('!', myconstructor1)
