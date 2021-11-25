@@ -1,5 +1,3 @@
-
-from test_dump_load import *
 from test_mark import *
 from test_reader import *
 from test_canonical import *

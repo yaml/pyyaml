@@ -250,6 +250,7 @@ class test(Command):
         pass
 
     def run(self):
+        warnings.warn('Running tests via `setup.py test` is deprecated and will be removed in a future release. Use `pytest` instead to ensure that the complete test suite is run.', DeprecationWarning)
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
 
@@ -263,7 +264,7 @@ class test(Command):
             temp_test_path = pathlib.Path(tempdir.name) / 'pyyaml'
             shutil.copytree(build_cmd.build_lib, temp_test_path)
             sys.path.insert(0, str(temp_test_path))
-            sys.path.insert(0, 'tests/lib')
+            sys.path.insert(0, 'tests/legacy_tests')
 
             import test_all
             if not test_all.main([]):

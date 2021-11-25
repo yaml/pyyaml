@@ -120,22 +120,16 @@ jobs:
     strategy:
       matrix:
         include:
-        - { platform: manylinux1, arch: x86_64, spec: cp36 }
-#        - { platform: manylinux1, arch: x86_64, spec: cp37 }
-#        - { platform: manylinux1, arch: x86_64, spec: cp38 }
+        - { platform: manylinux1, arch: x86_64, spec: cp38 }
 #        - { platform: manylinux1, arch: x86_64, spec: cp39 }
 #        - { platform: manylinux2014, arch: x86_64, spec: cp310 }
 #        - { platform: manylinux2014, arch: x86_64, spec: cp311 }
         - { platform: manylinux2014, arch: x86_64, spec: cp312 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp36 }
-#        - { platform: manylinux2014, arch: aarch64, spec: cp37 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp38 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp39 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp310 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp311 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp312 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp36 }
-#        - { platform: manylinux2014, arch: s390x, spec: cp37 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp38 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp39 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp310 }
@@ -176,7 +170,8 @@ jobs:
           LD_LIBRARY_PATH=libyaml/src/.libs
           PYYAML_FORCE_CYTHON=1
           PYYAML_FORCE_LIBYAML=1
-        CIBW_TEST_COMMAND: cd {project}; python tests/lib/test_all.py
+        CIBW_TEST_COMMAND: cd {project}; pytest
+        CIBW_TEST_REQUIRES: pytest
       run: |
         set -eux
         python3 -V
@@ -239,10 +234,6 @@ jobs:
     strategy:
       matrix:
         include:
-#        - spec: cp36-macosx_x86_64
-#          cibw_version: cibuildwheel==2.11.1
-#        - spec: cp37-macosx_x86_64
-#          cibw_version: cibuildwheel==2.11.1
 #        - spec: cp38-macosx_x86_64
 #          cibw_version: cibuildwheel==2.11.1
 #        - spec: cp39-macosx_x86_64
@@ -296,9 +287,12 @@ jobs:
         C_INCLUDE_PATH: libyaml/include
         CIBW_BUILD: ${{matrix.spec}}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_TEST_COMMAND: cd {project}; python tests/lib/test_all.py
+        CIBW_TEST_COMMAND: cd {project}; pytest
+        CIBW_TEST_REQUIRES: pytest
         LIBRARY_PATH: libyaml/src/.libs
         MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target || '10.9' }}
+        PYYAML_FORCE_CYTHON: 1
+        PYYAML_FORCE_LIBYAML: 1
         SDKROOT: ${{ matrix.sdkroot || 'macosx' }}
       run: |
         python3 -V
@@ -360,17 +354,6 @@ jobs:
     strategy:
       matrix:
         include:
-#        - platform: windows-2019
-#          build_arch: x64
-#          python_arch: x64
-#          spec: 3.6
-#        - platform: windows-2019
-#          build_arch: x64
-#          python_arch: x64
-#          spec: 3.7
-#        - platform: windows-2019
-#          build_arch: x64
-#          python_arch: x64
 #          spec: 3.8
 #        - platform: windows-2019
 #          build_arch: x64
@@ -387,15 +370,7 @@ jobs:
         - platform: windows-2019
           build_arch: x64
           python_arch: x64
-          spec: '3.12.0-rc.1'
-#        - platform: windows-2019
-#          build_arch: win32
-#          python_arch: x86
-#          spec: 3.6
-#        - platform: windows-2019
-#          build_arch: win32
-#          python_arch: x86
-#          spec: 3.7
+          spec: '3.12'
 #        - platform: windows-2019
 #          build_arch: win32
 #          python_arch: x86
@@ -415,7 +390,7 @@ jobs:
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
-          spec: '3.12.0-rc.1'
+          spec: '3.12'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
@@ -458,8 +433,8 @@ jobs:
         build bdist_wheel
 
         # run tests on built wheel
-        python -m pip install dist/*.whl
-        python tests/lib/test_all.py
+        python -m pip install dist/*.whl pytest
+        python -I -m pytest
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

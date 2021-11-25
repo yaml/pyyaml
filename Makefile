@@ -24,21 +24,18 @@ installext:
 	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
 
 test: build
-	${PYTHON} tests/lib/test_build.py ${TEST}
+	PYYAML_FORCE_LIBYAML=0 ${PYTHON} -I -m pytest
 
 testext: buildext
-	${PYTHON} tests/lib/test_build_ext.py ${TEST}
+	PYYAML_FORCE_LIBYAML=1 ${PYTHON} -I -m pytest
 
 testall:
-	${PYTHON} setup.py test
+	${PYTHON} -m pytest
 
 dist:
 	@# No longer uploading a zip file to pypi
 	@# ${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
 	${PYTHON} setup.py --with-libyaml sdist --formats=gztar
-
-windist:
-	${PYTHON} setup.py --with-libyaml bdist_wininst
 
 clean:
 	${PYTHON} setup.py --with-libyaml clean -a
@@ -46,6 +43,6 @@ clean:
 	    dist/ \
 	    lib/PyYAML.egg-info/ \
 	    lib/yaml/__pycache__/ \
-	    tests/lib/__pycache__/ \
-	    yaml/_yaml.c \
-
+	    tests/__pycache__/ \
+	    tests/legacy_tests/__pycache__/ \
+	    yaml/_yaml.c
