@@ -328,7 +328,7 @@ class Representer(SafeRepresenter):
             listitems = list(listitems)
         if dictitems is not None:
             dictitems = dict(dictitems)
-        if function.__name__ == '__newobj__':
+        if getattr(function,'__name__',None) == '__newobj__':
             function = args[0]
             args = args[1:]
             tag = 'tag:yaml.org,2002:python/object/new:'
@@ -336,7 +336,7 @@ class Representer(SafeRepresenter):
         else:
             tag = 'tag:yaml.org,2002:python/object/apply:'
             newobj = False
-        function_name = '%s.%s' % (function.__module__, function.__name__)
+        function_name = '%s.%s' % (getattr(function,'__module__',None), getattr(function,'__name__',None))
         if not args and not listitems and not dictitems \
                 and isinstance(state, dict) and newobj:
             return self.represent_mapping(
