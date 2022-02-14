@@ -282,6 +282,12 @@ cmdclass = {
 if bdist_wheel:
     cmdclass['bdist_wheel'] = bdist_wheel
 
+def get_libyaml_includes():
+    import subprocess
+    return subprocess.check_output(
+        ['pkg-config', '--cflags', 'yaml-0.1'], encoding='utf-8'
+    ).strip().split()
+
 
 if __name__ == '__main__':
 
@@ -304,6 +310,7 @@ if __name__ == '__main__':
         ext_modules=[
             Extension('yaml._yaml', ['yaml/_yaml.pyx'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,
+                extra_compile_args=get_libyaml_includes(),
                 libraries=['yaml']),
         ],
 
