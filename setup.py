@@ -282,13 +282,12 @@ cmdclass = {
 if bdist_wheel:
     cmdclass['bdist_wheel'] = bdist_wheel
 
-_ext = Extension('yaml._yaml', ['yaml/_yaml.pyx'],
-    'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-    libraries=['yaml'])
-pkgconfig.configure_extension(_ext, 'yaml-0.1')
-    
-
 if __name__ == '__main__':
+
+    _include_dirs = pkgconfig.parse('yaml-0.1')['include_dirs']
+    _ext = Extension('yaml._yaml', ['yaml/_yaml.pyx'],
+        'libyaml', "LibYAML bindings", LIBYAML_CHECK,
+        libraries=['yaml'], include_dirs=_include_dirs)
 
     setup(
         name=NAME,
