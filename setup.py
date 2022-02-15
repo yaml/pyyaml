@@ -64,7 +64,7 @@ int main(void) {
 """
 
 
-import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings
+import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings, pkgconfig
 
 # for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
 os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
@@ -282,12 +282,11 @@ cmdclass = {
 if bdist_wheel:
     cmdclass['bdist_wheel'] = bdist_wheel
 
-def get_libyaml_includes():
-    import subprocess
-    return subprocess.check_output(
-        ['pkg-config', '--cflags', 'yaml-0.1'], encoding='utf-8'
-    ).strip().split()
-
+_ext = Extension('yaml._yaml', ['yaml/_yaml.pyx'],
+    'libyaml', "LibYAML bindings", LIBYAML_CHECK,
+    libraries=['yaml'])
+pkgconfig.configure_extension(_ext, 'yaml-0.1')
+    
 
 if __name__ == '__main__':
 
@@ -307,12 +306,7 @@ if __name__ == '__main__':
 
         package_dir={'': 'lib'},
         packages=['yaml', '_yaml'],
-        ext_modules=[
-            Extension('yaml._yaml', ['yaml/_yaml.pyx'],
-                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-                extra_compile_args=get_libyaml_includes(),
-                libraries=['yaml']),
-        ],
+        ext_modules=[_ext],
 
         distclass=Distribution,
         cmdclass=cmdclass,
