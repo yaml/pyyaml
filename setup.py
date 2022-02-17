@@ -64,7 +64,9 @@ int main(void) {
 """
 
 
-import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings, pkgconfig
+import \
+    sys, os, os.path, pathlib, platform, shutil, tempfile, warnings, \
+    pkgconfig, sysconfig
 
 # for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
 os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
@@ -282,13 +284,24 @@ cmdclass = {
 if bdist_wheel:
     cmdclass['bdist_wheel'] = bdist_wheel
 
+
+def _get_configured_ext() -> Extension:
+    'Return a platform-configured `Extension`.'
+    ext = Extension(
+        'yaml._yaml', ['yaml/_yaml.pyx'], 'libyaml', "LibYAML bindings",
+        LIBYAML_CHECK, libraries=['yaml'])
+    if os.environ.get('PYYAML_IGNORE_PKGCONFIG'):
+        return ext
+    try:
+        ext.include_dirs = pkgconfig.parse('yaml-0.1')['include_dirs']
+    except EnvironmentError:
+        # pkg-config (system binary) not installed, fallback to sysconfig
+        sysconfig_dirs = sysconfig.get_config_var('INCLUDEDIR') or ''
+        ext.include_dirs = sysconfig_dirs.split()
+    return ext
+
+
 if __name__ == '__main__':
-
-    _include_dirs = pkgconfig.parse('yaml-0.1')['include_dirs']
-    _ext = Extension('yaml._yaml', ['yaml/_yaml.pyx'],
-        'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-        libraries=['yaml'], include_dirs=_include_dirs)
-
     setup(
         name=NAME,
         version=VERSION,
@@ -305,7 +318,7 @@ if __name__ == '__main__':
 
         package_dir={'': 'lib'},
         packages=['yaml', '_yaml'],
-        ext_modules=[_ext],
+        ext_modules=[_get_configured_ext()],
 
         distclass=Distribution,
         cmdclass=cmdclass,
