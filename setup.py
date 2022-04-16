@@ -63,8 +63,14 @@ int main(void) {
 }
 """
 
-
-import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings
+import sys, os, os.path, platform, shutil, tempfile, warnings
+try:
+    import pathlib
+except ImportError:
+    try:
+        import pathlib2 as pathlib
+    except ImportError:
+        raise ImportError("Missing pathlib and pathlib2, please install one to use this library.")
 
 # for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
 os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
