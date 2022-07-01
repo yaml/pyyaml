@@ -2,8 +2,14 @@
 __all__ = ['Serializer', 'SerializerError']
 
 from .error import YAMLError
-from .events import *
-from .nodes import *
+from .events import (AliasEvent, CollectionEndEvent, CollectionStartEvent,
+                     DocumentEndEvent, DocumentStartEvent, Event,
+                     MappingEndEvent, MappingStartEvent, NodeEvent,
+                     ScalarEvent, SequenceEndEvent, SequenceStartEvent,
+                     StreamEndEvent, StreamStartEvent,)
+from .nodes import (CollectionNode, MappingNode, Node, ScalarNode,
+                    SequenceNode,)
+
 
 class SerializerError(YAMLError):
     pass

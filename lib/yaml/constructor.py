@@ -8,8 +8,8 @@ __all__ = [
     'ConstructorError'
 ]
 
-from .error import *
-from .nodes import *
+from .error import (Mark, MarkedYAMLError, YAMLError,)
+from .nodes import (Node, ScalarNode, CollectionNode, SequenceNode, MappingNode)
 
 import collections.abc, datetime, base64, binascii, re, sys, types
 

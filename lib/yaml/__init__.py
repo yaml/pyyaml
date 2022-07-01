@@ -1,16 +1,73 @@
-
-from .error import *
-
-from .tokens import *
-from .events import *
-from .nodes import *
-
-from .loader import *
-from .dumper import *
+"""
+PyYAML
+------
+"""
 
 __version__ = '6.0'
+
+__dev__ = """
+# Run to autogenerate static imports that mimic `import *`
+mkinit --nomods --relative ./lib/yaml/ --diff
+mkinit --nomods --relative ./lib/yaml/ --write
+"""
+
+__submodules__ = {
+    'error': None,
+    'tokens': None,
+    'events': None,
+    'nodes': None,
+    'loader': None,
+    'dumper': None,
+}
+
+# <AUTOGEN_INIT>
+from .error import (Mark, MarkedYAMLError, YAMLError,)
+from .tokens import (AliasToken, AnchorToken, BlockEndToken, BlockEntryToken,
+                     BlockMappingStartToken, BlockSequenceStartToken,
+                     DirectiveToken, DocumentEndToken, DocumentStartToken,
+                     FlowEntryToken, FlowMappingEndToken,
+                     FlowMappingStartToken, FlowSequenceEndToken,
+                     FlowSequenceStartToken, KeyToken, ScalarToken,
+                     StreamEndToken, StreamStartToken, TagToken, Token,
+                     ValueToken,)
+from .events import (AliasEvent, CollectionEndEvent, CollectionStartEvent,
+                     DocumentEndEvent, DocumentStartEvent, Event,
+                     MappingEndEvent, MappingStartEvent, NodeEvent,
+                     ScalarEvent, SequenceEndEvent, SequenceStartEvent,
+                     StreamEndEvent, StreamStartEvent,)
+from .nodes import (CollectionNode, MappingNode, Node, ScalarNode,
+                    SequenceNode,)
+from .loader import (BaseLoader, FullLoader, Loader, SafeLoader, UnsafeLoader,)
+from .dumper import (BaseDumper, Dumper, SafeDumper,)
+
+__all__ = ['AliasEvent', 'AliasToken', 'AnchorToken', 'BaseDumper',
+           'BaseLoader', 'BlockEndToken', 'BlockEntryToken',
+           'BlockMappingStartToken', 'BlockSequenceStartToken',
+           'CollectionEndEvent', 'CollectionNode', 'CollectionStartEvent',
+           'DirectiveToken', 'DocumentEndEvent', 'DocumentEndToken',
+           'DocumentStartEvent', 'DocumentStartToken', 'Dumper', 'Event',
+           'FlowEntryToken', 'FlowMappingEndToken', 'FlowMappingStartToken',
+           'FlowSequenceEndToken', 'FlowSequenceStartToken', 'FullLoader',
+           'KeyToken', 'Loader', 'MappingEndEvent', 'MappingNode',
+           'MappingStartEvent', 'Mark', 'MarkedYAMLError', 'Node', 'NodeEvent',
+           'SafeDumper', 'SafeLoader', 'ScalarEvent', 'ScalarNode',
+           'ScalarToken', 'SequenceEndEvent', 'SequenceNode',
+           'SequenceStartEvent', 'StreamEndEvent', 'StreamEndToken',
+           'StreamStartEvent', 'StreamStartToken', 'TagToken', 'Token',
+           'UnsafeLoader', 'ValueToken', 'YAMLError', 'YAMLObject',
+           'YAMLObjectMetaclass', 'add_constructor', 'add_implicit_resolver',
+           'add_multi_constructor', 'add_multi_representer',
+           'add_path_resolver', 'add_representer', 'compose', 'compose_all',
+           'dump', 'dump_all', 'emit', 'full_load', 'full_load_all', 'load',
+           'load_all', 'parse', 'safe_dump', 'safe_dump_all', 'safe_load',
+           'safe_load_all', 'scan', 'serialize', 'serialize_all',
+           'unsafe_load', 'unsafe_load_all', 'warnings']
+# </AUTOGEN_INIT>
+
+
 try:
-    from .cyaml import *
+    from yaml.cyaml import (CBaseDumper, CBaseLoader, CDumper, CFullLoader,
+                            CLoader, CSafeDumper, CSafeLoader, CUnsafeLoader,)
     __with_libyaml__ = True
 except ImportError:
     __with_libyaml__ = False
@@ -387,4 +444,3 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
         """
         return dumper.represent_yaml_object(cls.yaml_tag, data, cls,
                 flow_style=cls.yaml_flow_style)
-
