@@ -1,10 +1,3 @@
-"""
-PyYAML
-------
-"""
-
-__version__ = '6.0'
-
 from .error import (Mark, MarkedYAMLError, YAMLError,)
 from .tokens import (AliasToken, AnchorToken, BlockEndToken, BlockEntryToken,
                      BlockMappingStartToken, BlockSequenceStartToken,
@@ -47,6 +40,8 @@ __all__ = ['AliasEvent', 'AliasToken', 'AnchorToken', 'BaseDumper',
            'load_all', 'parse', 'safe_dump', 'safe_dump_all', 'safe_load',
            'safe_load_all', 'scan', 'serialize', 'serialize_all',
            'unsafe_load', 'unsafe_load_all', 'warnings']
+
+__version__ = '6.0'
 
 try:
     from yaml.cyaml import (CBaseDumper, CBaseLoader, CDumper, CFullLoader,
