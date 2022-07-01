@@ -5,22 +5,6 @@ PyYAML
 
 __version__ = '6.0'
 
-__dev__ = """
-# Run to autogenerate static imports that mimic `import *`
-mkinit --nomods --relative ./lib/yaml/ --diff
-mkinit --nomods --relative ./lib/yaml/ --write
-"""
-
-__submodules__ = {
-    'error': None,
-    'tokens': None,
-    'events': None,
-    'nodes': None,
-    'loader': None,
-    'dumper': None,
-}
-
-# <AUTOGEN_INIT>
 from .error import (Mark, MarkedYAMLError, YAMLError,)
 from .tokens import (AliasToken, AnchorToken, BlockEndToken, BlockEntryToken,
                      BlockMappingStartToken, BlockSequenceStartToken,
@@ -39,6 +23,7 @@ from .nodes import (CollectionNode, MappingNode, Node, ScalarNode,
                     SequenceNode,)
 from .loader import (BaseLoader, FullLoader, Loader, SafeLoader, UnsafeLoader,)
 from .dumper import (BaseDumper, Dumper, SafeDumper,)
+
 
 __all__ = ['AliasEvent', 'AliasToken', 'AnchorToken', 'BaseDumper',
            'BaseLoader', 'BlockEndToken', 'BlockEntryToken',
@@ -62,8 +47,6 @@ __all__ = ['AliasEvent', 'AliasToken', 'AnchorToken', 'BaseDumper',
            'load_all', 'parse', 'safe_dump', 'safe_dump_all', 'safe_load',
            'safe_load_all', 'scan', 'serialize', 'serialize_all',
            'unsafe_load', 'unsafe_load_all', 'warnings']
-# </AUTOGEN_INIT>
-
 
 try:
     from yaml.cyaml import (CBaseDumper, CBaseLoader, CDumper, CFullLoader,
