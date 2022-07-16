@@ -396,7 +396,7 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_set(self, node):
         data = set()
         yield data
-        value = self.construct_mapping(node)
+        value = self.construct_mapping(node, deep=True)
         data.update(value)
 
     def construct_yaml_str(self, node):
@@ -410,7 +410,7 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_map(self, node):
         data = {}
         yield data
-        value = self.construct_mapping(node)
+        value = self.construct_mapping(node, deep=True)
         data.update(value)
 
     def construct_yaml_object(self, node, cls):
