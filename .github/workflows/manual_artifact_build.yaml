@@ -122,16 +122,19 @@ jobs:
         - { platform: manylinux1, arch: x86_64, spec: cp38 }
         - { platform: manylinux1, arch: x86_64, spec: cp39 }
         - { platform: manylinux2014, arch: x86_64, spec: cp310 }
+        - { platform: manylinux2014, arch: x86_64, spec: cp311 }
         - { platform: manylinux2014, arch: aarch64, spec: cp36 }
         - { platform: manylinux2014, arch: aarch64, spec: cp37 }
         - { platform: manylinux2014, arch: aarch64, spec: cp38 }
         - { platform: manylinux2014, arch: aarch64, spec: cp39 }
         - { platform: manylinux2014, arch: aarch64, spec: cp310 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp311 }
         - { platform: manylinux2014, arch: s390x, spec: cp36 }
         - { platform: manylinux2014, arch: s390x, spec: cp37 }
         - { platform: manylinux2014, arch: s390x, spec: cp38 }
         - { platform: manylinux2014, arch: s390x, spec: cp39 }
         - { platform: manylinux2014, arch: s390x, spec: cp310 }
+        - { platform: manylinux2014, arch: s390x, spec: cp311 }
 
     steps:
     - name: Checkout PyYAML
@@ -232,6 +235,7 @@ jobs:
         - spec: cp38-macosx_x86_64
         - spec: cp39-macosx_x86_64
         - spec: cp310-macosx_x86_64
+        - spec: cp311-macosx_x86_64
 
         # build for arm64 under a hacked macOS 12 self-hosted x86_64-on-arm64 runner until arm64 is fully supported
         # FIXME: ? cp38-macosx_arm64 requires special handling and fails some test_zdist tests under cibw 2.1.2, skip it (so Apple's XCode python3 won't have a wheel)
@@ -243,6 +247,13 @@ jobs:
           sdkroot: macosx11.3
 
         - spec: cp310-macosx_arm64
+          deployment_target: '11.0'
+          runs_on: [self-hosted, macOS, arm64]
+          arch: arm64
+          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+          sdkroot: macosx11.3
+
+        - spec: cp311-macosx_arm64
           deployment_target: '11.0'
           runs_on: [self-hosted, macOS, arm64]
           arch: arm64
@@ -291,9 +302,9 @@ jobs:
     strategy:
       matrix:
         include:
-        - platform: windows-2016
+        - platform: windows-2019
           arch: x64
-        - platform: windows-2016
+        - platform: windows-2019
           arch: win32
     steps:
     - name: Get cached libyaml state
@@ -321,7 +332,7 @@ jobs:
         mkdir libyaml/build
 
         pushd libyaml/build
-        cmake.exe -G "Visual Studio 15 2017" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml ..
+        cmake.exe -G "Visual Studio 16 2019" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml ..
         cmake.exe --build . --config Release
         popd
 
@@ -333,46 +344,54 @@ jobs:
     strategy:
       matrix:
         include:
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: x64
           python_arch: x64
           spec: 3.6
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: x64
           python_arch: x64
           spec: 3.7
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: x64
           python_arch: x64
           spec: 3.8
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: x64
           python_arch: x64
           spec: 3.9
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: x64
           python_arch: x64
           spec: '3.10'
-        - platform: windows-2016
+        - platform: windows-2019
+          build_arch: x64
+          python_arch: x64
+          spec: '3.11.0-rc.2'
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: 3.6
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: 3.7
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: 3.8
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: 3.9
-        - platform: windows-2016
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: '3.10'
+        - platform: windows-2019
+          build_arch: win32
+          python_arch: x86
+          spec: '3.11.0-rc.2'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
