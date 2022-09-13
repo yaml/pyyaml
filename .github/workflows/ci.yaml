@@ -369,7 +369,7 @@ jobs:
         - platform: windows-2019
           build_arch: x64
           python_arch: x64
-          spec: '3.11.0-rc.1'
+          spec: '3.11.0-rc.2'
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
@@ -393,7 +393,7 @@ jobs:
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
-          spec: '3.11.0-rc.1'
+          spec: '3.11.0-rc.2'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
