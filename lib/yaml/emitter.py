@@ -9,7 +9,12 @@
 __all__ = ['Emitter', 'EmitterError']
 
 from .error import YAMLError
-from .events import *
+from .events import (AliasEvent, CollectionEndEvent, CollectionStartEvent,
+                     DocumentEndEvent, DocumentStartEvent, Event,
+                     MappingEndEvent, MappingStartEvent, NodeEvent,
+                     ScalarEvent, SequenceEndEvent, SequenceStartEvent,
+                     StreamEndEvent, StreamStartEvent,)
+
 
 class EmitterError(YAMLError):
     pass

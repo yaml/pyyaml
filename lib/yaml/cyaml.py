@@ -6,12 +6,15 @@ __all__ = [
 
 from yaml._yaml import CParser, CEmitter
 
-from .constructor import *
+from yaml.constructor import (BaseConstructor, Constructor, ConstructorError,
+                              FullConstructor, SafeConstructor,
+                              UnsafeConstructor,)
 
-from .serializer import *
-from .representer import *
+from .serializer import (Serializer, SerializerError,)
+from .representer import (BaseRepresenter, Representer, RepresenterError,
+                          SafeRepresenter,)
 
-from .resolver import *
+from .resolver import (BaseResolver, Resolver,)
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
 

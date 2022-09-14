@@ -1,12 +1,13 @@
 
 __all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader']
 
-from .reader import *
-from .scanner import *
-from .parser import *
-from .composer import *
-from .constructor import *
-from .resolver import *
+from .reader import (Reader, ReaderError,)
+from .scanner import (Scanner, ScannerError,)
+from .parser import (Parser, ParserError,)
+from .composer import (Composer, ComposerError,)
+from .constructor import (BaseConstructor, Constructor, ConstructorError,
+                          FullConstructor, SafeConstructor, UnsafeConstructor,)
+from .resolver import (BaseResolver, Resolver,)
 
 class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
 

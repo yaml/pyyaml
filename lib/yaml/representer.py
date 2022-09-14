@@ -2,8 +2,9 @@
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
     'RepresenterError']
 
-from .error import *
-from .nodes import *
+from .error import (Mark, MarkedYAMLError, YAMLError,)
+from .nodes import (CollectionNode, MappingNode, Node, ScalarNode,
+                    SequenceNode,)
 
 import datetime, copyreg, types, base64, collections
 
