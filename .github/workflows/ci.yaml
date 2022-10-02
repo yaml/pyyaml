@@ -77,6 +77,8 @@ jobs:
         - { platform: manylinux2014, arch: x86_64 }
 #        - { platform: manylinux2014, arch: aarch64 }
 #        - { platform: manylinux2014, arch: s390x }
+#        - { platform: musllinux_1_1, arch: x86_64 }
+#        - { platform: musllinux_1_1, arch: aarch64 }
     env:
       DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
     steps:
@@ -103,7 +105,7 @@ jobs:
         --env LIBYAML_REPO
         --workdir /io
         "$DOCKER_IMAGE"
-        /io/packaging/build/libyaml.sh
+        sh -c "${{startsWith(matrix.cfg.platform, 'musllinux') && 'apk add perl-utils && ' || ''}}/io/packaging/build/libyaml.sh"
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: ensure output is world readable (or cache fill fails with Permission Denied)
@@ -137,6 +139,18 @@ jobs:
 #        - { platform: manylinux2014, arch: s390x, spec: cp39 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp310 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp311 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp36 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp37 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp38 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp39 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp310 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp311 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp36 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp37 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp38 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp39 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp310 }
+#        - { platform: musllinux_1_1, arch: aarch64, spec: cp311 }
 
     steps:
     - name: Checkout PyYAML
@@ -160,7 +174,7 @@ jobs:
     - name: Build/Test/Package
       env:
         CIBW_ARCHS: all
-        CIBW_BUILD: ${{matrix.spec}}-manylinux_${{matrix.arch}}
+        CIBW_BUILD: ${{matrix.spec}}-${{startsWith(matrix.platform, 'musllinux') && 'musllinux' || 'manylinux'}}_${{matrix.arch}}
         CIBW_BUILD_VERBOSITY: 1
         # containerized Linux builds require explicit CIBW_ENVIRONMENT
         CIBW_ENVIRONMENT: >
