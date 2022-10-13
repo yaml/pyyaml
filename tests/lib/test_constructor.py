@@ -296,6 +296,78 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
+def test_constructor_inheritance(verbose=False):
+    class Widget:
+        pass
+
+    class Gizmo:
+        pass
+
+    def construct_widget(loader, node):
+        return Widget()
+
+    def construct_gizmo1(loader, node):
+        return Gizmo()
+
+    def construct_gizmo2(loader, node):
+        return Gizmo()
+
+    def construct_gizmo3(loader, node):
+        return Gizmo()
+
+    class LoaderParent(yaml.Loader):
+        pass
+
+    class LoaderChild(LoaderParent):
+        pass
+
+    # Add a constructor to the child.  Note that no constructor has been added
+    # to the parent yet.
+    LoaderChild.add_constructor("!widget", construct_widget)
+    if verbose:
+        print("After adding a constructor to the child Loader:")
+        print(f"  {LoaderParent.yaml_constructors=}")
+        print(f"  {LoaderChild.yaml_constructors=}")
+    assert LoaderChild.yaml_constructors["!widget"] is construct_widget
+    assert "!widget" not in LoaderParent.yaml_constructors
+
+    # A constructor is now added to the parent.  The child should be able to see
+    # this new constructor even though it was added after a constructor was
+    # added to the child above.
+    LoaderParent.add_constructor("!gizmo", construct_gizmo1)
+    if verbose:
+        print("After adding a constructor to the parent Loader:")
+        print(f"  {LoaderParent.yaml_constructors=}")
+        print(f"  {LoaderChild.yaml_constructors=}")
+    assert LoaderChild.yaml_constructors["!widget"] is construct_widget
+    assert "!widget" not in LoaderParent.yaml_constructors
+    assert LoaderParent.yaml_constructors["!gizmo"] is construct_gizmo1
+    assert LoaderChild.yaml_constructors["!gizmo"] is construct_gizmo1
+
+    # Override a parent constructor in the child.
+    LoaderChild.add_constructor("!gizmo", construct_gizmo2)
+    if verbose:
+        print("After overriding a parent's constructor:")
+        print(f"  {LoaderParent.yaml_constructors=}")
+        print(f"  {LoaderChild.yaml_constructors=}")
+    assert LoaderChild.yaml_constructors["!widget"] is construct_widget
+    assert "!widget" not in LoaderParent.yaml_constructors
+    assert LoaderParent.yaml_constructors["!gizmo"] is construct_gizmo1
+    assert LoaderChild.yaml_constructors["!gizmo"] is construct_gizmo2
+
+    # Changing the parent's overridden constructor should not affect the child.
+    LoaderParent.add_constructor("!gizmo", construct_gizmo3)
+    if verbose:
+        print("After changing the parent's overridden constructor:")
+        print(f"  {LoaderParent.yaml_constructors=}")
+        print(f"  {LoaderChild.yaml_constructors=}")
+    assert LoaderChild.yaml_constructors["!widget"] is construct_widget
+    assert "!widget" not in LoaderParent.yaml_constructors
+    assert LoaderParent.yaml_constructors["!gizmo"] is construct_gizmo3
+    assert LoaderChild.yaml_constructors["!gizmo"] is construct_gizmo2
+
+test_constructor_inheritance.unittest = True
+
 if __name__ == '__main__':
     import sys, test_constructor
     sys.modules['test_constructor'] = sys.modules['__main__']

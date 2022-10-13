@@ -7,14 +7,15 @@ from .nodes import *
 
 import datetime, copyreg, types, base64, collections
 
+from . import _utils
+
+
 class RepresenterError(YAMLError):
     pass
 
-class BaseRepresenter:
-
-    yaml_representers = {}
-    yaml_multi_representers = {}
-
+class BaseRepresenter(
+        _utils.InheritMapMixin,
+        inherit_map_attrs={"yaml_representers", "yaml_multi_representers"}):
     def __init__(self, default_style=None, default_flow_style=False, sort_keys=True):
         self.default_style = default_style
         self.sort_keys = sort_keys
@@ -64,14 +65,10 @@ class BaseRepresenter:
 
     @classmethod
     def add_representer(cls, data_type, representer):
-        if not 'yaml_representers' in cls.__dict__:
-            cls.yaml_representers = cls.yaml_representers.copy()
         cls.yaml_representers[data_type] = representer
 
     @classmethod
     def add_multi_representer(cls, data_type, representer):
-        if not 'yaml_multi_representers' in cls.__dict__:
-            cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
         cls.yaml_multi_representers[data_type] = representer
 
     def represent_scalar(self, tag, value, style=None):
