@@ -47,7 +47,7 @@ def _make_objects():
         tz = None
         try:
             tz = dt.tzinfo.tzname(dt)
-        except:
+        except Exception:
             pass
         return [dt, tz]
 
