@@ -164,13 +164,13 @@ class BaseConstructor:
 
     @classmethod
     def add_constructor(cls, tag, constructor):
-        if not 'yaml_constructors' in cls.__dict__:
+        if 'yaml_constructors' not in cls.__dict__:
             cls.yaml_constructors = cls.yaml_constructors.copy()
         cls.yaml_constructors[tag] = constructor
 
     @classmethod
     def add_multi_constructor(cls, tag_prefix, multi_constructor):
-        if not 'yaml_multi_constructors' in cls.__dict__:
+        if 'yaml_multi_constructors' not in cls.__dict__:
             cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
         cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
