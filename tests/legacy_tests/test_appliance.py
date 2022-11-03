@@ -1,5 +1,10 @@
 
-import sys, os, os.path, types, traceback, pprint
+import sys
+import os
+import os.path
+import types
+import traceback
+import pprint
 
 DATA = 'tests/legacy_tests/data'
 

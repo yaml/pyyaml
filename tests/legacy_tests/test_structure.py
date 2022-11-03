@@ -1,5 +1,6 @@
 
-import yaml, canonical
+import yaml
+import canonical
 import pprint
 
 def _convert_structure(loader):

@@ -11,7 +11,13 @@ __all__ = [
 from .error import *
 from .nodes import *
 
-import collections.abc, datetime, base64, binascii, re, sys, types
+import collections.abc
+import datetime
+import base64
+import binascii
+import re
+import sys
+import types
 
 class ConstructorError(MarkedYAMLError):
     pass

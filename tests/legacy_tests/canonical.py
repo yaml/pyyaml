@@ -1,5 +1,8 @@
 
-import yaml, yaml.composer, yaml.constructor, yaml.resolver
+import yaml
+import yaml.composer
+import yaml.constructor
+import yaml.resolver
 
 class CanonicalError(yaml.YAMLError):
     pass
