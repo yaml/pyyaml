@@ -24,7 +24,7 @@ class BaseResolver:
 
     @classmethod
     def add_implicit_resolver(cls, tag, regexp, first):
-        if not 'yaml_implicit_resolvers' in cls.__dict__:
+        if 'yaml_implicit_resolvers' not in cls.__dict__:
             implicit_resolvers = {}
             for key in cls.yaml_implicit_resolvers:
                 implicit_resolvers[key] = cls.yaml_implicit_resolvers[key][:]
@@ -48,7 +48,7 @@ class BaseResolver:
         # a mapping value that corresponds to a scalar key which content is
         # equal to the `index_check` value.  An integer `index_check` matches
         # against a sequence value with the index equal to `index_check`.
-        if not 'yaml_path_resolvers' in cls.__dict__:
+        if 'yaml_path_resolvers' not in cls.__dict__:
             cls.yaml_path_resolvers = cls.yaml_path_resolvers.copy()
         new_path = []
         for element in path:
