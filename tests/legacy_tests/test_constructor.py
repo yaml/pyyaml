@@ -297,7 +297,8 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
 if __name__ == '__main__':
-    import sys, test_constructor
+    import sys
+    import test_constructor
     sys.modules['test_constructor'] = sys.modules['__main__']
     import test_appliance
     test_appliance.run(globals())

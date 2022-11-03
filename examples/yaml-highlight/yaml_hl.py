@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
-import yaml, codecs, sys, os.path, optparse
+import yaml
+import codecs
+import sys
+import os.path
+import optparse
 
 class Style:
 

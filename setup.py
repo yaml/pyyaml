@@ -65,7 +65,14 @@ int main(void) {
 """
 
 
-import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings
+import sys
+import os
+import os.path
+import pathlib
+import platform
+import shutil
+import tempfile
+import warnings
 
 # for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
 os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
