@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install a python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.x
 
@@ -59,7 +59,7 @@ jobs:
         python packaging/build/smoketest.py
 
     - name: Upload sdist artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.tar.gz
@@ -80,7 +80,7 @@ jobs:
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.cfg.platform}}_${{matrix.cfg.arch}}_${{env.LIBYAML_REF}}
@@ -90,7 +90,7 @@ jobs:
       if: matrix.cfg.arch != 'x86_64' && steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Checkout pyyaml
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Build libyaml
@@ -138,11 +138,11 @@ jobs:
 
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Fetch cached libyaml
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
@@ -175,7 +175,7 @@ jobs:
         python3 -m cibuildwheel --platform auto --output-dir dist .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
@@ -199,13 +199,13 @@ jobs:
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_macos_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Build libyaml
@@ -262,11 +262,11 @@ jobs:
 
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_macos_${{ matrix.arch || 'x86_64' }}_${{env.LIBYAML_REF}}
@@ -290,7 +290,7 @@ jobs:
         python3 -m cibuildwheel --platform auto --output-dir dist .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
@@ -309,7 +309,7 @@ jobs:
     steps:
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
@@ -367,7 +367,7 @@ jobs:
         - platform: windows-2019
           build_arch: x64
           python_arch: x64
-          spec: '3.11.0-rc.2'
+          spec: '3.11'
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
@@ -391,7 +391,7 @@ jobs:
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
-          spec: '3.11.0-rc.2'
+          spec: '3.11'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
@@ -400,11 +400,11 @@ jobs:
         git config --global core.eol lf
 
     - name: Checkout pyyaml
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.build_arch}}_${{env.LIBYAML_REF}}
@@ -414,7 +414,7 @@ jobs:
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Install python ${{ matrix.spec }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         architecture: ${{ matrix.python_arch }}
         python-version: ${{ matrix.spec }}
@@ -441,7 +441,7 @@ jobs:
         python tests/lib/test_all.py
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
