@@ -1,3 +1,6 @@
+# disable Cython py2 relative import behavior to avoid ImportWarning on pypy until there's a better way to handle it
+# see https://github.com/cython/cython/issues/1720
+from __future__ import absolute_import
 
 import yaml
 
