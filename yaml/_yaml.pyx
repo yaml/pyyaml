@@ -1,6 +1,14 @@
 
 import yaml
 
+# FIXME: change all the below stuff to from X import Y to avoid this
+# import submodules explicitly since we're getting loaded earlier
+import yaml.emitter
+import yaml.parser
+import yaml.reader
+import yaml.scanner
+import yaml.serializer
+
 def get_version_string():
     cdef char *value
     value = yaml_get_version_string()

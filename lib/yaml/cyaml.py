@@ -6,6 +6,7 @@ __all__ = [
 
 from yaml._yaml import CParser, CEmitter
 
+from .config import LoaderConfigMixin, DumperConfigMixin
 from .constructor import *
 
 from .serializer import *
@@ -13,7 +14,7 @@ from .representer import *
 
 from .resolver import *
 
-class CBaseLoader(CParser, BaseConstructor, BaseResolver):
+class CBaseLoader(CParser, BaseConstructor, BaseResolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         CParser.__init__(self, stream)
@@ -41,7 +42,7 @@ class CUnsafeLoader(CParser, UnsafeConstructor, Resolver):
         UnsafeConstructor.__init__(self)
         Resolver.__init__(self)
 
-class CLoader(CParser, Constructor, Resolver):
+class CLoader(CParser, Constructor, Resolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         CParser.__init__(self, stream)
@@ -82,7 +83,7 @@ class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class CDumper(CEmitter, Serializer, Representer, Resolver):
+class CDumper(CEmitter, Serializer, Representer, Resolver, DumperConfigMixin):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,

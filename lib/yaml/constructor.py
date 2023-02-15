@@ -12,6 +12,7 @@ from .error import *
 from .nodes import *
 
 import collections.abc, datetime, base64, binascii, re, sys, types
+import typing as t
 
 class ConstructorError(MarkedYAMLError):
     pass
@@ -267,15 +268,11 @@ class BaseConstructor:
 
 
     @classmethod
-    def init_constructors(cls, tagset):
-        if tagset not in _constructors:
-            return
-        for key in _constructors[tagset]:
-            callback = _constructors[tagset][key]
-            if (key is None):
-                cls.add_constructor(key, callback)
-            else:
-                cls.add_constructor('tag:yaml.org,2002:' + key, callback)
+    def init_constructors(cls, tagset: dict[str, t.Callable]):
+        for type_name, constructor in tagset.items():
+            # FIXME: encode full tag names in TagSets to avoid this logic and make user-definable types easier
+            tag_name = f'tag:yaml.org,2002:{type_name}' if type_name else None
+            cls.add_constructor(tag_name, constructor)
 
 
 # SafeConstructor implements YAML 1.1
@@ -499,45 +496,45 @@ class SafeConstructor(BaseConstructor):
             data.__dict__.update(state)
 
 
-_constructors = {
-    'yaml11':  {
-        'str': BaseConstructor.construct_yaml_str,
-        'seq': BaseConstructor.construct_yaml_seq,
-        'map': BaseConstructor.construct_yaml_map,
-        None: BaseConstructor.construct_undefined,
-        'int': SafeConstructor.construct_yaml_int,
-        'float': SafeConstructor.construct_yaml_float,
-        'null': BaseConstructor.construct_yaml_null,
-        'bool': BaseConstructor.construct_yaml_bool,
-        'binary': SafeConstructor.construct_yaml_binary,
-        'timestamp': SafeConstructor.construct_yaml_timestamp,
-        'omap': SafeConstructor.construct_yaml_omap,
-        'pairs': SafeConstructor.construct_yaml_pairs,
-        'set': SafeConstructor.construct_yaml_set,
-    },
-    'core':  {
-        'str': BaseConstructor.construct_yaml_str,
-        'seq': BaseConstructor.construct_yaml_seq,
-        'map': BaseConstructor.construct_yaml_map,
-        None: BaseConstructor.construct_undefined,
-        'int': BaseConstructor.construct_yaml_int_core,
-        'float': BaseConstructor.construct_yaml_float_core,
-        'null': BaseConstructor.construct_yaml_null,
-        'bool': BaseConstructor.construct_yaml_bool,
-    },
-    'json':  {
-        'str': BaseConstructor.construct_yaml_str,
-        'seq': BaseConstructor.construct_yaml_seq,
-        'map': BaseConstructor.construct_yaml_map,
-        None: BaseConstructor.construct_undefined,
-        'int': BaseConstructor.construct_yaml_int_json,
-        'float': BaseConstructor.construct_yaml_float_json,
-        'null': BaseConstructor.construct_yaml_null,
-        'bool': BaseConstructor.construct_yaml_bool,
-    },
-}
+_yaml11_constructors = {
+                    'str': BaseConstructor.construct_yaml_str,
+                    'seq': BaseConstructor.construct_yaml_seq,
+                    'map': BaseConstructor.construct_yaml_map,
+                    None: BaseConstructor.construct_undefined,
+                    'int': SafeConstructor.construct_yaml_int,
+                    'float': SafeConstructor.construct_yaml_float,
+                    'null': BaseConstructor.construct_yaml_null,
+                    'bool': BaseConstructor.construct_yaml_bool,
+                    'binary': SafeConstructor.construct_yaml_binary,
+                    'timestamp': SafeConstructor.construct_yaml_timestamp,
+                    'omap': SafeConstructor.construct_yaml_omap,
+                    'pairs': SafeConstructor.construct_yaml_pairs,
+                    'set': SafeConstructor.construct_yaml_set,
+                }
 
-SafeConstructor.init_constructors('yaml11')
+_core_constructors = {
+                  'str': BaseConstructor.construct_yaml_str,
+                  'seq': BaseConstructor.construct_yaml_seq,
+                  'map': BaseConstructor.construct_yaml_map,
+                  None: BaseConstructor.construct_undefined,
+                  'int': BaseConstructor.construct_yaml_int_core,
+                  'float': BaseConstructor.construct_yaml_float_core,
+                  'null': BaseConstructor.construct_yaml_null,
+                  'bool': BaseConstructor.construct_yaml_bool,
+              }
+
+_json_constructors = {
+                  'str': BaseConstructor.construct_yaml_str,
+                  'seq': BaseConstructor.construct_yaml_seq,
+                  'map': BaseConstructor.construct_yaml_map,
+                  None: BaseConstructor.construct_undefined,
+                  'int': BaseConstructor.construct_yaml_int_json,
+                  'float': BaseConstructor.construct_yaml_float_json,
+                  'null': BaseConstructor.construct_yaml_null,
+                  'bool': BaseConstructor.construct_yaml_bool,
+              }
+
+SafeConstructor.init_constructors(_yaml11_constructors)
 
 class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by

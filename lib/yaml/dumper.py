@@ -1,12 +1,21 @@
 
-__all__ = ['BaseDumper', 'SafeDumper', 'Dumper', 'CommonDumper']
+__all__ = ['BaseDumper', 'SafeDumper', 'Dumper', 'CommonDumper', 'FastestBaseDumper']
 
+from . import tagset
+
+from .config import DumperConfigMixin
 from .emitter import *
 from .serializer import *
 from .representer import *
 from .resolver import *
 
-class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
+try:
+    from .cyaml import CDumper as FastestBaseDumper
+except ImportError as ie:
+    FastestBaseDumper = None
+
+
+class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver, DumperConfigMixin):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -24,7 +33,17 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
+
+if not FastestBaseDumper:
+    # fall back to pure-Python if CBaseDumper is unavailable
+    FastestBaseDumper = BaseDumper
+
+# FIXME: reimplement all these as config calls, eg:
+# SafeDumper = FastestBaseDumper.config(type_name='SafeDumper', tagset=tagset.yaml11)
+
+
+
+class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver, DumperConfigMixin):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -42,7 +61,7 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class CommonDumper(Emitter, Serializer, CommonRepresenter, BaseResolver):
+class CommonDumper(Emitter, Serializer, CommonRepresenter, BaseResolver, DumperConfigMixin):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -61,11 +80,12 @@ class CommonDumper(Emitter, Serializer, CommonRepresenter, BaseResolver):
         BaseResolver.__init__(self)
 
     @classmethod
-    def init_tags(cls, tagset):
-        cls.init_representers(tagset)
-        cls.init_resolvers(tagset)
+    def init_tags(cls, tagset: tagset.TagSet):
+        cls.init_representers(tagset.representers)
+        cls.init_resolvers(tagset.resolvers)
 
-class Dumper(Emitter, Serializer, Representer, Resolver):
+
+class Dumper(Emitter, Serializer, Representer, Resolver, DumperConfigMixin):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -83,8 +103,8 @@ class Dumper(Emitter, Serializer, Representer, Resolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class _12_CoreDumper(CommonDumper): pass
-_12_CoreDumper.init_tags('core')
-class _12_JSONDumper(CommonDumper): pass
-_12_JSONDumper.init_tags('json')
+
+_12_CoreDumper = CommonDumper.config(type_name='_12_CoreDumper', tagset=tagset.core)
+_12_JSONDumper = CommonDumper.config(type_name='_12_JSONDumper', tagset=tagset.json)
+
 

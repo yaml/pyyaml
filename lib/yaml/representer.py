@@ -6,6 +6,7 @@ from .error import *
 from .nodes import *
 
 import datetime, copyreg, types, base64, collections
+import typing as t
 
 class RepresenterError(YAMLError):
     pass
@@ -215,10 +216,9 @@ class BaseRepresenter:
         raise RepresenterError("cannot represent an object", data)
 
     @classmethod
-    def init_representers(cls, name):
-        for key in _representers[name]:
-            callback = _representers[name][key]
-            cls.add_representer(key, callback)
+    def init_representers(cls, tagset_representers: dict[str, t.Callable]):
+        for type_name, representer in tagset_representers.items():
+            cls.add_representer(type_name, representer)
 
 class CommonRepresenter(BaseRepresenter):
 
@@ -295,7 +295,7 @@ _representers = {
 }
 
 
-SafeRepresenter.init_representers('yaml11')
+SafeRepresenter.init_representers(_representers['yaml11'])
 
 class Representer(SafeRepresenter):
 

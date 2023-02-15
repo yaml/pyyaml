@@ -1,16 +1,24 @@
+from __future__ import annotations
 
-__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader',
-  ]
+__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader', 'FastestBaseLoader']
 
+from .config import LoaderConfigMixin
 from .reader import *
 from .scanner import *
 from .parser import *
 from .composer import *
 from .constructor import *
 from .resolver import *
+from . import tagset
 
-class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
+# FIXME: defer setup to fix circular import
+try:
+    from .cyaml import CBaseLoader as FastestBaseLoader
+except ImportError as ie:
+    FastestBaseLoader = None
 
+
+class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver, LoaderConfigMixin):
     def __init__(self, stream):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
@@ -20,11 +28,23 @@ class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolve
         BaseResolver.__init__(self)
 
     @classmethod
-    def init_tags(cls, tagset):
-        cls.init_constructors(tagset)
-        cls.init_resolvers(tagset)
+    def init_tags(cls, tagset: tagset.TagSet):
+        cls.init_constructors(tagset.constructors)
+        cls.init_resolvers(tagset.resolvers)
 
-class FullLoader(Reader, Scanner, Parser, Composer, FullConstructor, Resolver):
+
+if not FastestBaseLoader:
+    # fall back to pure Python if CBaseLoader is unavailable
+    FastestBaseLoader = BaseLoader
+
+
+# FIXME: once we fully implement the config stuff, these can all be collapsed to a config call, eg:
+# FullLoader = FastestBaseLoader.config(type_name='FullLoader', tagset=tagset.yaml11 | tagset.python_full)
+# SafeLoader = FastestBaseLoader.config(type_name='SafeLoader', tagset=tagset.yaml11)
+# UnsafeLoader = FastestBaseLoader.config(type_name='UnsafeLoader', tagset=tagset.yaml11 | tagset.python_unsafe)
+# this pattern will also allow a much easier path for users to bolt on default behavior to any old loader
+
+class FullLoader(Reader, Scanner, Parser, Composer, FullConstructor, Resolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -34,7 +54,7 @@ class FullLoader(Reader, Scanner, Parser, Composer, FullConstructor, Resolver):
         FullConstructor.__init__(self)
         Resolver.__init__(self)
 
-class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
+class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -44,7 +64,7 @@ class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
-class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
+class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -58,7 +78,7 @@ class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 # untrusted input). Use of either Loader or UnsafeLoader should be rare, since
 # FullLoad should be able to load almost all YAML safely. Loader is left intact
 # to ensure backwards compatibility.
-class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
+class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver, LoaderConfigMixin):
 
     def __init__(self, stream):
         Reader.__init__(self, stream)
@@ -68,8 +88,7 @@ class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
         Constructor.__init__(self)
         Resolver.__init__(self)
 
-class _12_CoreLoader(BaseLoader): pass
-_12_CoreLoader.init_tags('core')
-class _12_JSONLoader(BaseLoader): pass
-_12_JSONLoader.init_tags('json')
+
+_12_CoreLoader = BaseLoader.config(type_name='_12_CoreLoader', tagset=tagset.core)
+_12_JSONLoader = BaseLoader.config(type_name='_12_JSONLoader', tagset=tagset.json)
 

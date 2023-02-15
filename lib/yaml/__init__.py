@@ -202,6 +202,7 @@ def emit(events, stream=None, Dumper=Dumper,
     if stream is None:
         stream = io.StringIO()
         getvalue = stream.getvalue
+    # FIXME: redefine these defaults with sentinels to allow preservation of wrapped config defaults
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break)
     try:
@@ -228,6 +229,7 @@ def serialize_all(nodes, stream=None, Dumper=Dumper,
         else:
             stream = io.BytesIO()
         getvalue = stream.getvalue
+    # FIXME: redefine these defaults with sentinels to allow preservation of wrapped config defaults
     dumper = Dumper(stream, canonical=canonical, indent=indent, width=width,
             allow_unicode=allow_unicode, line_break=line_break,
             encoding=encoding, version=version, tags=tags,
@@ -250,28 +252,35 @@ def serialize(node, stream=None, Dumper=Dumper, **kwds):
     return serialize_all([node], stream, Dumper=Dumper, **kwds)
 
 def dump_all(documents, stream=None, Dumper=Dumper,
-        default_style=None, default_flow_style=False,
-        canonical=None, indent=None, width=None,
-        allow_unicode=None, line_break=None,
-        encoding=None, explicit_start=None, explicit_end=None,
-        version=None, tags=None, sort_keys=True):
+        default_style=..., default_flow_style=...,
+        canonical=..., indent=..., width=...,
+        allow_unicode=..., line_break=...,
+        encoding=..., explicit_start=..., explicit_end=...,
+        version=..., tags=..., sort_keys=..., **kwargs):
     """
     Serialize a sequence of Python objects into a YAML stream.
     If stream is None, return the produced string instead.
     """
     getvalue = None
     if stream is None:
-        if encoding is None:
+        if encoding is None or encoding is ...:
             stream = io.StringIO()
         else:
             stream = io.BytesIO()
         getvalue = stream.getvalue
-    dumper = Dumper(stream, default_style=default_style,
-            default_flow_style=default_flow_style,
-            canonical=canonical, indent=indent, width=width,
-            allow_unicode=allow_unicode, line_break=line_break,
-            encoding=encoding, version=version, tags=tags,
-            explicit_start=explicit_start, explicit_end=explicit_end, sort_keys=sort_keys)
+
+    # preserve wrapped config defaults for values where we didn't get a default
+    # FIXME: share this code with the one in config mixin
+    dumper_init_kwargs = dict(
+        default_style=default_style,
+        default_flow_style=default_flow_style,
+        canonical=canonical, indent=indent, width=width,
+        allow_unicode=allow_unicode, line_break=line_break,
+        encoding=encoding, version=version, tags=tags,
+        explicit_start=explicit_start, explicit_end=explicit_end, sort_keys=sort_keys, **kwargs)
+
+    dumper_init_kwargs = {k: v for k, v in dumper_init_kwargs.items() if v is not ...}
+    dumper = Dumper(stream, **dumper_init_kwargs)
     try:
         dumper.open()
         for data in documents:

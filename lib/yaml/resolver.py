@@ -1,10 +1,11 @@
 
-__all__ = ['BaseResolver', 'Resolver' ]
+__all__ = ['BaseResolver', 'Resolver']
+
+import re
 
 from .error import *
 from .nodes import *
 
-import re
 
 class ResolverError(YAMLError):
     pass
@@ -165,95 +166,101 @@ class BaseResolver:
             return self.DEFAULT_MAPPING_TAG
 
     @classmethod
-    def init_resolvers(cls, key):
-        for args in _resolvers[key]:
+    def init_resolvers(cls, implicit_resolvers: list[list]):
+        # FIXME: factor this out as a config mixin with dataclasses
+        for args in implicit_resolvers:
             cls.add_implicit_resolver(
                 'tag:yaml.org,2002:' + args[0],
                 args[1], args[2]
             )
 
-_resolvers = {
-    'yaml11': [
-        ['bool',
-            re.compile(r'''^(?:yes|Yes|YES|no|No|NO
-                    |true|True|TRUE|false|False|FALSE
-                    |on|On|ON|off|Off|OFF)$''', re.X),
-            list('yYnNtTfFoO')],
-        ['float',
-            re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
-                    |\.[0-9_]+(?:[eE][-+][0-9]+)?
-                    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
-                    |[-+]?\.(?:inf|Inf|INF)
-                    |\.(?:nan|NaN|NAN))$''', re.X),
-            list('-+0123456789.')],
-        ['int',
-            re.compile(r'''^(?:[-+]?0b[0-1_]+
-                    |[-+]?0[0-7_]+
-                    |[-+]?(?:0|[1-9][0-9_]*)
-                    |[-+]?0x[0-9a-fA-F_]+
-                    |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
-            list('-+0123456789')],
-        ['merge',
-            re.compile(r'^(?:<<)$'),
-            ['<']],
-        ['null',
-            re.compile(r'''^(?: ~
-                    |null|Null|NULL
-                    | )$''', re.X),
-            ['~', 'n', 'N', '']],
-        ['timestamp',
-            re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
-                    |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
-                     (?:[Tt]|[ \t]+)[0-9][0-9]?
-                     :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
-                     (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
-            list('0123456789')],
-        ['value',
-            re.compile(r'^(?:=)$'),
-            ['=']],
-# The following resolver is only for documentation purposes. It cannot work
-# because plain scalars cannot start with '!', '&', or '*'.
-        ['yaml',
-            re.compile(r'^(?:!|&|\*)$'),
-            list('!&*')],
-    ],
-    'core': [
-        ['bool',
-            re.compile(r'''^(?:|true|True|TRUE|false|False|FALSE)$''', re.X),
-            list('tTfF')],
-        ['int',
-            re.compile(r'''^(?:
-                    |0o[0-7]+
-                    |[-+]?(?:[0-9]+)
-                    |0x[0-9a-fA-F]+
-                    )$''', re.X),
-            list('-+0123456789')],
-        ['float',
-            re.compile(r'''^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?
-                    |[-+]?\.(?:inf|Inf|INF)
-                    |\.(?:nan|NaN|NAN))$''', re.X),
-            list('-+0123456789.')],
-        ['null',
-            re.compile(r'''^(?:~||null|Null|NULL)$''', re.X),
-            ['~', 'n', 'N', '']],
-    ],
-    'json': [
-        ['bool',
-            re.compile(r'''^(?:true|false)$''', re.X),
-            list('tf')],
-        ['int',
-            re.compile(r'''^-?(?:0|[1-9][0-9]*)$''', re.X),
-            list('-0123456789')],
-        ['float',
-            re.compile(r'''^-?(?:0|[1-9][0-9]*)(\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$''', re.X),
-            list('-0123456789.')],
-        ['null',
-            re.compile(r'''^null$''', re.X),
-            ['n']],
-    ],
-}
+
+
+# FIXME: come up with a better way to lazy init these so we can define all the well-known stuff in one place
+# avoid circular import by defining here for now
+_yaml11_resolvers = [
+    ['bool',
+     re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+                |true|True|TRUE|false|False|FALSE
+                |on|On|ON|off|Off|OFF)$''', re.X),
+     list('yYnNtTfFoO')],
+    ['float',
+     re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
+                |\.[0-9_]+(?:[eE][-+][0-9]+)?
+                |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+                |[-+]?\.(?:inf|Inf|INF)
+                |\.(?:nan|NaN|NAN))$''', re.X),
+     list('-+0123456789.')],
+    ['int',
+     re.compile(r'''^(?:[-+]?0b[0-1_]+
+                |[-+]?0[0-7_]+
+                |[-+]?(?:0|[1-9][0-9_]*)
+                |[-+]?0x[0-9a-fA-F_]+
+                |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
+     list('-+0123456789')],
+    ['merge',
+     re.compile(r'^(?:<<)$'),
+     ['<']],
+    ['null',
+     re.compile(r'''^(?: ~
+                |null|Null|NULL
+                | )$''', re.X),
+     ['~', 'n', 'N', '']],
+    ['timestamp',
+     re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+                |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
+                 (?:[Tt]|[ \t]+)[0-9][0-9]?
+                 :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
+                 (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
+     list('0123456789')],
+    ['value',
+     re.compile(r'^(?:=)$'),
+     ['=']],
+    # The following resolver is only for documentation purposes. It cannot work
+    # because plain scalars cannot start with '!', '&', or '*'.
+    ['yaml',
+     re.compile(r'^(?:!|&|\*)$'),
+     list('!&*')],
+]
+
+_core_resolvers = [
+                  ['bool',
+                   re.compile(r'''^(?:|true|True|TRUE|false|False|FALSE)$''', re.X),
+                   list('tTfF')],
+                  ['int',
+                   re.compile(r'''^(?:
+                              |0o[0-7]+
+                              |[-+]?(?:[0-9]+)
+                              |0x[0-9a-fA-F]+
+                              )$''', re.X),
+                   list('-+0123456789')],
+                  ['float',
+                   re.compile(r'''^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?
+                              |[-+]?\.(?:inf|Inf|INF)
+                              |\.(?:nan|NaN|NAN))$''', re.X),
+                   list('-+0123456789.')],
+                  ['null',
+                   re.compile(r'''^(?:~||null|Null|NULL)$''', re.X),
+                   ['~', 'n', 'N', '']],
+              ]
+
+_json_resolvers = [
+                  ['bool',
+                   re.compile(r'''^(?:true|false)$''', re.X),
+                   list('tf')],
+                  ['int',
+                   re.compile(r'''^-?(?:0|[1-9][0-9]*)$''', re.X),
+                   list('-0123456789')],
+                  ['float',
+                   re.compile(r'''^-?(?:0|[1-9][0-9]*)(\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$''', re.X),
+                   list('-0123456789.')],
+                  ['null',
+                   re.compile(r'''^null$''', re.X),
+                   ['n']],
+              ]
 
 class Resolver(BaseResolver): pass
 
-Resolver.init_resolvers('yaml11')
+# FIXME: config mixin or defer this to loader setup via config?
+Resolver.init_resolvers(_yaml11_resolvers)
 
