@@ -749,6 +749,14 @@ class Scanner:
 
     # Scanners.
 
+    def scan_past_tabs_to_newline(self):
+        i = 0
+        while self.peek(i) in ' \t':
+            i += 1
+        if self.peek(i) in '\0\r\n\x86\u2028\u2029':
+            self.forward(i)
+
+
     def scan_to_next_token(self):
         # We ignore spaces, line breaks and comments.
         # If we find a line break in the block context, we set the flag
@@ -775,6 +783,8 @@ class Scanner:
         while not found:
             while self.peek() == ' ':
                 self.forward()
+            if self.peek() == '\t':
+                self.scan_past_tabs_to_newline()
             if self.peek() == '#':
                 while self.peek() not in '\0\r\n\x85\u2028\u2029':
                     self.forward()
