@@ -4,6 +4,10 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+5.4.2 (2023-07-18)
+
+* https://github.com/yaml/pyyaml/pull/726 -- pin Cython build dep to < 3.0
+
 5.4.1 (2021-01-20)
 
 * https://github.com/yaml/pyyaml/pull/480 -- Fix stub compat with older pyyaml versions that may unwittingly load it

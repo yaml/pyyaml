@@ -1,25 +1,22 @@
 From: Ingy döt Net <ingy@ingy.net>
 To: python-list@python.org, python-announce@python.org, yaml-core@lists.sourceforge.net
-Subject: [ANN] PyYAML-5.4.1 Released
+Subject: [ANN] PyYAML-5.4.2 Released
 
 =======================
-Announcing PyYAML-5.4.1
+Announcing PyYAML-5.4.2
 =======================
 
 A new release of PyYAML is now available:
-https://github.com/yaml/pyyaml/releases/tag/5.4.1
+https://github.com/yaml/pyyaml/releases/tag/5.4.2
 
-This release contains a fix for AttributeError during module import in some
-mixed version installations.
-
-PyYAML 5.4.1 will be the last release to support Python 2.7 (except for possible
-critical bug fix releases).
+No code changes; update PEP518 build metadata to require Cython < 3.0 until
+packaging code is rewritten for Cython 3.0 compatibility.
 
 
 Changes
 =======
 
-* https://github.com/yaml/pyyaml/pull/480 -- Fix stub compat with older pyyaml versions that may unwittingly load it
+* https://github.com/yaml/pyyaml/pull/726 -- pin Cython build dep to < 3.0
 
 
 Resources
