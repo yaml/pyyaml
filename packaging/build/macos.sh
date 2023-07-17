@@ -22,7 +22,7 @@ export PYYAML_FORCE_LIBYAML=1
 
 if [[ ${PYYAML_RUN_TESTS:-1} -eq 1 ]]; then
   # tweak CIBW behavior to run our tests for us
-  export CIBW_BEFORE_BUILD='pip install Cython && make testall PYTHON=python'
+  export CIBW_BEFORE_BUILD='pip install "Cython<3.0" && make testall PYTHON=python'
 else
   echo "skipping test suite..."
 fi
