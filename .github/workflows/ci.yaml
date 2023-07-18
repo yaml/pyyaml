@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install a python
-      uses: actions/setup-python@v3  # V3, NOT v4
+      uses: actions/setup-python@v2  # V2, NOT v4
       with:
         python-version: 3.x
 
@@ -34,6 +34,7 @@ jobs:
         PYYAML_FORCE_LIBYAML: 0
       run: |
         python -V
+        python -m pip install --upgrade pip
         python -m pip install build
 
         python -m build .
