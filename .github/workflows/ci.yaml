@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2  # V2, NOT v3
 
     - name: Install a python
-      uses: actions/setup-python@v2  # V2, NOT v4
+      uses: actions/setup-python@v4
       with:
         python-version: 3.x
 
