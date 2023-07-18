@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install a python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v3  # V3, NOT v4
       with:
         python-version: 3.x
 
