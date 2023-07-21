@@ -68,6 +68,7 @@ int main(void) {
 import sys, os, os.path, platform, warnings
 
 from distutils import log
+from Cython.Build import cythonize
 from setuptools import setup, Command, Distribution as _Distribution, Extension as _Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 from distutils.errors import DistutilsError, CompileError, LinkError, DistutilsPlatformError
@@ -197,8 +198,6 @@ class build_ext(_build_ext):
         self.check_extensions_list(self.extensions)
         filenames = []
         for ext in self.extensions:
-            if with_cython:
-                self.cython_sources(ext.sources, ext)
             for filename in ext.sources:
                 filenames.append(filename)
                 base = os.path.splitext(filename)[0]
@@ -225,8 +224,6 @@ class build_ext(_build_ext):
             with_ext = self.distribution.ext_status(ext)
             if with_ext is not None and not with_ext:
                 continue
-            if with_cython:
-                ext.sources = self.cython_sources(ext.sources, ext)
             try:
                 self.build_extension(ext)
             except (CompileError, LinkError):
@@ -267,7 +264,8 @@ if bdist_wheel:
 
 
 if __name__ == '__main__':
-
+    # Cythonize directly to stay compatible with Cython3 (also compatible with Cython 0.29)
+    cythonize('yaml/_yaml.pyx')
     setup(
         name=NAME,
         version=VERSION,
@@ -285,7 +283,7 @@ if __name__ == '__main__':
         package_dir={'': {2: 'lib', 3: 'lib3'}[sys.version_info[0]]},
         packages=['yaml', '_yaml'],
         ext_modules=[
-            Extension('yaml._yaml', ['yaml/_yaml.pyx'],
+            Extension('yaml._yaml', ['yaml/_yaml.c'],
                 'libyaml', "LibYAML bindings", LIBYAML_CHECK,
                 libraries=['yaml']),
         ],
