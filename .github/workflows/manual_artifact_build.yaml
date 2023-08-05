@@ -129,12 +129,14 @@ jobs:
         - { platform: manylinux2014, arch: aarch64, spec: cp39 }
         - { platform: manylinux2014, arch: aarch64, spec: cp310 }
         - { platform: manylinux2014, arch: aarch64, spec: cp311 }
+        - { platform: manylinux2014, arch: aarch64, spec: cp312 }
         - { platform: manylinux2014, arch: s390x, spec: cp36 }
         - { platform: manylinux2014, arch: s390x, spec: cp37 }
         - { platform: manylinux2014, arch: s390x, spec: cp38 }
         - { platform: manylinux2014, arch: s390x, spec: cp39 }
         - { platform: manylinux2014, arch: s390x, spec: cp310 }
         - { platform: manylinux2014, arch: s390x, spec: cp311 }
+        - { platform: manylinux2014, arch: s390x, spec: cp312 }
 
     steps:
     - name: Checkout PyYAML
@@ -236,6 +238,7 @@ jobs:
         - spec: cp39-macosx_x86_64
         - spec: cp310-macosx_x86_64
         - spec: cp311-macosx_x86_64
+        - spec: cp312-macosx_x86_64
 
         # build for arm64 under a hacked macOS 12 self-hosted x86_64-on-arm64 runner until arm64 is fully supported
         # FIXME: ? cp38-macosx_arm64 requires special handling and fails some test_zdist tests under cibw 2.1.2, skip it (so Apple's XCode python3 won't have a wheel)
@@ -260,6 +263,12 @@ jobs:
           run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
           sdkroot: macosx11.3
 
+        - spec: cp312-macosx_arm64
+          deployment_target: '11.0'
+          runs_on: [self-hosted, macOS, arm64]
+          arch: arm64
+          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+          sdkroot: macosx11.3
     steps:
     - name: Checkout PyYAML
       uses: actions/checkout@v2
@@ -369,6 +378,10 @@ jobs:
           python_arch: x64
           spec: '3.11.0-rc.2'
         - platform: windows-2019
+          build_arch: x64
+          python_arch: x64
+          spec: '3.12'
+        - platform: windows-2019
           build_arch: win32
           python_arch: x86
           spec: 3.6
@@ -392,6 +405,10 @@ jobs:
           build_arch: win32
           python_arch: x86
           spec: '3.11.0-rc.2'
+        - platform: windows-2019
+          build_arch: win32
+          python_arch: x86
+          spec: '3.12'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
