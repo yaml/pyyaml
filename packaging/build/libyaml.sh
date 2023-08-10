@@ -2,6 +2,18 @@
 
 set -eux
 
+# ensure the prove testing tool is available
+echo "::group::ensure build/test prerequisites"
+if ! command -v prove; then
+  if grep -m 1 alpine /etc/os-release; then
+    apk add perl-utils
+  else
+    echo "prove (perl) testing tool unavailable"
+    exit 1
+  fi
+fi
+echo "::endgroup::"
+
 # build the requested version of libyaml locally
 echo "::group::fetch libyaml ${LIBYAML_REF}"
 git config --global advice.detachedHead false
