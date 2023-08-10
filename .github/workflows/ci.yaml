@@ -1,7 +1,7 @@
 ---
 # This is the CI workflow (not the artifact build/release workflow). The workflows
 # are split because GHA doesn't support a dynamic/conditional matrix. This workflow
-# has slow jobs and jobs that require private GHA runners (eg, M1 Mac) commented out.defaults:
+# has slow jobs and jobs that require private GHA runners (eg, M1 Mac) commented out.
 # Ensure changes are synced with manual_artifact_build.yaml.
 name: PyYAML CI
 
@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install a python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.x
 
@@ -61,7 +61,7 @@ jobs:
         python packaging/build/smoketest.py
 
     - name: Upload sdist artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.tar.gz
@@ -77,22 +77,23 @@ jobs:
         - { platform: manylinux2014, arch: x86_64 }
 #        - { platform: manylinux2014, arch: aarch64 }
 #        - { platform: manylinux2014, arch: s390x }
+        - { platform: musllinux_1_1, arch: x86_64 }
     env:
       DOCKER_IMAGE: quay.io/pypa/${{matrix.cfg.platform}}_${{matrix.cfg.arch}}
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.cfg.platform}}_${{matrix.cfg.arch}}_${{env.LIBYAML_REF}}
 
     - name: configure docker foreign arch support
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
       if: matrix.cfg.arch != 'x86_64' && steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Checkout pyyaml
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Build libyaml
@@ -124,43 +125,49 @@ jobs:
 #        - { platform: manylinux1, arch: x86_64, spec: cp38 }
 #        - { platform: manylinux1, arch: x86_64, spec: cp39 }
 #        - { platform: manylinux2014, arch: x86_64, spec: cp310 }
-        - { platform: manylinux2014, arch: x86_64, spec: cp311 }
+#        - { platform: manylinux2014, arch: x86_64, spec: cp311 }
+        - { platform: manylinux2014, arch: x86_64, spec: cp312 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp36 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp37 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp38 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp39 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp310 }
 #        - { platform: manylinux2014, arch: aarch64, spec: cp311 }
+#        - { platform: manylinux2014, arch: aarch64, spec: cp312 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp36 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp37 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp38 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp39 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp310 }
 #        - { platform: manylinux2014, arch: s390x, spec: cp311 }
+#        - { platform: manylinux2014, arch: s390x, spec: cp312 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp38 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp39 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp310 }
+#        - { platform: musllinux_1_1, arch: x86_64, spec: cp311 }
+        - { platform: musllinux_1_1, arch: x86_64, spec: cp312 }
 
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Fetch cached libyaml
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache/restore@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
-
-    - name: Ensure libyaml fetched
-      run: exit 1
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+        fail-on-cache-miss: true
 
     - name: configure docker foreign arch support
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
       if: matrix.arch != 'x86_64'
 
     - name: Build/Test/Package
       env:
         CIBW_ARCHS: all
-        CIBW_BUILD: ${{matrix.spec}}-manylinux_${{matrix.arch}}
+        # HACK: ick, maybe deconstruct the matrix a bit or query cibuildwheel for its default target *linux spec first?
+        CIBW_BUILD: ${{matrix.spec}}-${{ contains(matrix.platform, 'musllinux') && 'musllinux' || 'manylinux' }}_${{matrix.arch}}
         CIBW_BUILD_VERBOSITY: 1
         # containerized Linux builds require explicit CIBW_ENVIRONMENT
         CIBW_ENVIRONMENT: >
@@ -177,7 +184,7 @@ jobs:
         python3 -m cibuildwheel --platform auto --output-dir dist .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
@@ -201,13 +208,13 @@ jobs:
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_macos_${{matrix.arch}}_${{env.LIBYAML_REF}}
 
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       if: steps.cached_libyaml.outputs.cache-hit != 'true'
 
     - name: Build libyaml
@@ -232,16 +239,18 @@ jobs:
     strategy:
       matrix:
         include:
-        - spec: cp36-macosx_x86_64
-          cibw_version: cibuildwheel==2.11.1
+#        - spec: cp36-macosx_x86_64
+#          cibw_version: cibuildwheel==2.11.1
 #        - spec: cp37-macosx_x86_64
+#          cibw_version: cibuildwheel==2.11.1
 #        - spec: cp38-macosx_x86_64
+#          cibw_version: cibuildwheel==2.11.1
 #        - spec: cp39-macosx_x86_64
 #        - spec: cp310-macosx_x86_64
-        - spec: cp311-macosx_x86_64
+#        - spec: cp311-macosx_x86_64
+        - spec: cp312-macosx_x86_64
 
 #        # build for arm64 under a hacked macOS 12 self-hosted x86_64-on-arm64 runner until arm64 is fully supported
-#        # FIXME: ? cp38-macosx_arm64 requires special handling and fails some test_zdist tests under cibw 2.1.2, skip it (so Apple's XCode python3 won't have a wheel)
 #        - spec: cp39-macosx_arm64
 #          deployment_target: '11.0'
 #          runs_on: [self-hosted, macOS, arm64]
@@ -262,21 +271,25 @@ jobs:
 #          arch: arm64
 #          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
 #          sdkroot: macosx11.3
+#
+#        - spec: cp312-macosx_arm64
+#          deployment_target: '11.0'
+#          runs_on: [self-hosted, macOS, arm64]
+#          arch: arm64
+#          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
+#          sdkroot: macosx11.3
 
     steps:
     - name: Checkout PyYAML
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache/restore@v3
       with:
         path: libyaml
         key: libyaml_macos_${{ matrix.arch || 'x86_64' }}_${{env.LIBYAML_REF}}
-
-    - name: Ensure libyaml fetched
-      run: exit 1
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+        fail-on-cache-miss: true
 
     - name: Build/Test/Package
       env:
@@ -293,7 +306,7 @@ jobs:
         python3 -m cibuildwheel --platform auto --output-dir dist .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
@@ -312,7 +325,7 @@ jobs:
     steps:
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
@@ -347,10 +360,10 @@ jobs:
     strategy:
       matrix:
         include:
-        - platform: windows-2019
-          build_arch: x64
-          python_arch: x64
-          spec: 3.6
+#        - platform: windows-2019
+#          build_arch: x64
+#          python_arch: x64
+#          spec: 3.6
 #        - platform: windows-2019
 #          build_arch: x64
 #          python_arch: x64
@@ -367,14 +380,18 @@ jobs:
 #          build_arch: x64
 #          python_arch: x64
 #          spec: '3.10'
+#        - platform: windows-2019
+#          build_arch: x64
+#          python_arch: x64
+#          spec: '3.11'
         - platform: windows-2019
           build_arch: x64
           python_arch: x64
-          spec: '3.11'
-        - platform: windows-2019
-          build_arch: win32
-          python_arch: x86
-          spec: 3.6
+          spec: '3.12.0-rc.1'
+#        - platform: windows-2019
+#          build_arch: win32
+#          python_arch: x86
+#          spec: 3.6
 #        - platform: windows-2019
 #          build_arch: win32
 #          python_arch: x86
@@ -391,10 +408,14 @@ jobs:
 #          build_arch: win32
 #          python_arch: x86
 #          spec: '3.10'
+#        - platform: windows-2019
+#          build_arch: win32
+#          python_arch: x86
+#          spec: '3.11'
         - platform: windows-2019
           build_arch: win32
           python_arch: x86
-          spec: '3.11'
+          spec: '3.12.0-rc.1'
     steps:
     # autocrlf screws up tests under Windows
     - name: Set git to use LF
@@ -403,21 +424,18 @@ jobs:
         git config --global core.eol lf
 
     - name: Checkout pyyaml
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Get cached libyaml state
       id: cached_libyaml
-      uses: actions/cache@v2
+      uses: actions/cache/restore@v3
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.build_arch}}_${{env.LIBYAML_REF}}
-
-    - name: Ensure libyaml fetched
-      run: exit 1
-      if: steps.cached_libyaml.outputs.cache-hit != 'true'
+        fail-on-cache-miss: true
 
     - name: Install python ${{ matrix.spec }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         architecture: ${{ matrix.python_arch }}
         python-version: ${{ matrix.spec }}
@@ -430,7 +448,7 @@ jobs:
       run: |
         set -eux
         python -V
-        python -m pip install "Cython<3.0" wheel
+        python -m pip install "Cython<3.0" setuptools wheel
 
         python setup.py \
         --with-libyaml build_ext \
@@ -444,7 +462,7 @@ jobs:
         python tests/lib/test_all.py
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/*.whl
