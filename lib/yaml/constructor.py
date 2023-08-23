@@ -416,6 +416,7 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_object(self, node, cls):
         data = cls.__new__(cls)
         yield data
+        # FIXME: __getstate__/__setstate__ support non-mapping state
         if hasattr(data, '__setstate__'):
             state = self.construct_mapping(node, deep=True)
             data.__setstate__(state)

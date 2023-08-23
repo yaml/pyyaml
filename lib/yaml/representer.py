@@ -224,7 +224,19 @@ class SafeRepresenter(BaseRepresenter):
         if hasattr(data, '__getstate__'):
             state = data.__getstate__()
         else:
+            # FIXME: this isn't always possible (eg, __slots__)
             state = data.__dict__.copy()
+
+        # fix for https://github.com/yaml/pyyaml/issues/692
+        # __getstate__() has always supported non-mapping state blobs, and as of Python 3.11 returns None by default for
+        # objects with no instance attrs. Ideally, we'd attempt to serialize and round-trip a null scalar for full
+        # fidelity with the types supported by __getstate__/__setstate__, but we can't be guaranteed that it'll be
+        # interpreted as such. For compatibility with existing behavior on older Pythons, we'll continue to represent
+        # this case as an empty mapping.
+        # (see https://github.com/python/cpython/issues/70766 for a specific case)
+        if state is None:
+            state = {}
+
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
