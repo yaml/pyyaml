@@ -15,7 +15,7 @@ def execute(code):
 
 def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
-            AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
+            EmptyObject, AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, Slots, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute, MyFullLoader
 
@@ -127,6 +127,20 @@ def _make_objects():
         def __eq__(self, other):
             return type(self) is type(other) and    \
                     (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
+
+    # Python 3.11+ implements __getstate__() returning `None` on objects with no attrs https://github.com/python/cpython/issues/70766
+    class EmptyObject(yaml.YAMLObject):
+        yaml_tag = '!emptyobj'
+        yaml_loader = MyLoader
+        yaml_dumper = MyDumper
+
+        def __eq__(self, other):
+            return type(other) is EmptyObject
+
+        # simulate Python 3.11 behavior with a generated __getstate__ returning None on objects with no attrs
+        def __getstate__(self):
+            return None
+
 
     class AnInstance:
         def __init__(self, foo=None, bar=None, baz=None):
