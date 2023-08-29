@@ -8,11 +8,15 @@
 
 __all__ = ['Emitter', 'EmitterError']
 
+import warnings
+
 from .error import YAMLError
 from .events import *
 
+
 class EmitterError(YAMLError):
     pass
+
 
 class ScalarAnalysis:
     def __init__(self, scalar, empty, multiline,
@@ -27,6 +31,7 @@ class ScalarAnalysis:
         self.allow_single_quoted = allow_single_quoted
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
+
 
 class Emitter:
 
@@ -102,6 +107,17 @@ class Emitter:
         # Scalar analysis and style.
         self.analysis = None
         self.style = None
+
+    # backward-compatibility
+    @property
+    def indention(self):
+        warnings.warn("Emitter.indention attribute is deprecated and will be removed in a future release; use Emitter.indentation instead", DeprecationWarning)
+        return self.indentation
+
+    @indention.setter
+    def indention(self, value):
+        warnings.warn("Emitter.indention attribute is deprecated and will be removed in a future release; use Emitter.indentation instead", DeprecationWarning)
+        self.indentation = value
 
     def dispose(self):
         # Reset the state attributes (to clear self-references)
