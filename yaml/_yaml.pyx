@@ -256,7 +256,8 @@ cdef class CParser:
     cdef int stream_cache_pos
     cdef int unicode_source
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
+        self.reuse_anchors=reuse_anchors
         cdef is_readable
         if yaml_parser_initialize(&self.parser) == 0:
             raise MemoryError
@@ -714,7 +715,7 @@ cdef class CParser:
                 and self.parsed_event.data.mapping_start.anchor != NULL:
             anchor = PyUnicode_FromYamlString(self.parsed_event.data.mapping_start.anchor)
         if anchor is not None:
-            if anchor in self.anchors:
+            if anchor in self.anchors and not self.reuse_anchors:
                 mark = Mark(self.stream_name,
                         self.parsed_event.start_mark.index,
                         self.parsed_event.start_mark.line,

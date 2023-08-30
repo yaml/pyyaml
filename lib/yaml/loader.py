@@ -10,41 +10,41 @@ from .resolver import *
 
 class BaseLoader(Reader, Scanner, Parser, Composer, BaseConstructor, BaseResolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
-        Composer.__init__(self)
+        Composer.__init__(self, reuse_anchors=reuse_anchors)
         BaseConstructor.__init__(self)
         BaseResolver.__init__(self)
 
 class FullLoader(Reader, Scanner, Parser, Composer, FullConstructor, Resolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
-        Composer.__init__(self)
+        Composer.__init__(self, reuse_anchors=reuse_anchors)
         FullConstructor.__init__(self)
         Resolver.__init__(self)
 
 class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
-        Composer.__init__(self)
+        Composer.__init__(self, reuse_anchors=reuse_anchors)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
 class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
-        Composer.__init__(self)
+        Composer.__init__(self, reuse_anchors=reuse_anchors)
         Constructor.__init__(self)
         Resolver.__init__(self)
 
@@ -54,10 +54,10 @@ class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 # to ensure backwards compatibility.
 class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
-        Composer.__init__(self)
+        Composer.__init__(self, reuse_anchors=reuse_anchors)
         Constructor.__init__(self)
         Resolver.__init__(self)

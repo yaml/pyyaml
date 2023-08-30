@@ -318,12 +318,12 @@ class CanonicalParser:
 class CanonicalLoader(CanonicalScanner, CanonicalParser,
         yaml.composer.Composer, yaml.constructor.Constructor, yaml.resolver.Resolver):
 
-    def __init__(self, stream):
+    def __init__(self, stream, reuse_anchors=False):
         if hasattr(stream, 'read'):
             stream = stream.read()
         CanonicalScanner.__init__(self, stream)
         CanonicalParser.__init__(self)
-        yaml.composer.Composer.__init__(self)
+        yaml.composer.Composer.__init__(self, reuse_anchors=reuse_anchors)
         yaml.constructor.Constructor.__init__(self)
         yaml.resolver.Resolver.__init__(self)
 
