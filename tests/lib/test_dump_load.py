@@ -9,7 +9,7 @@ def test_load_no_loader(verbose=False):
         yaml.load("- foo\n")
     except TypeError:
         return True
-    assert(False, "load() require Loader=...")
+    assert False, "load() require Loader=..."
 test_load_no_loader.unittest = True
 
 def test_load_safeloader(verbose=False):
