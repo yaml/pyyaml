@@ -476,8 +476,13 @@ SafeConstructor.add_constructor(
         'tag:yaml.org,2002:map',
         SafeConstructor.construct_yaml_map)
 
+SafeConstructor.add_constructor(
+        'tag:yaml.org,2002:value',
+        SafeConstructor.construct_yaml_str)
+
 SafeConstructor.add_constructor(None,
         SafeConstructor.construct_undefined)
+
 
 class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by
