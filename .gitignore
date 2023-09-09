@@ -17,3 +17,4 @@ _pycache_/*
 # local IDE state
 /.idea/*
 
+.vscode
