@@ -110,7 +110,10 @@ class BaseRepresenter:
             mapping = list(mapping.items())
             if self.sort_keys:
                 try:
-                    mapping = sorted(mapping)
+                    if callable(self.sort_keys):
+                        mapping = sorted(mapping, key=self.sort_keys)
+                    else:
+                        mapping = sorted(mapping)
                 except TypeError:
                     pass
         for item_key, item_value in mapping:
