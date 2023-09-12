@@ -29,7 +29,7 @@ test: build
 testext: buildext
 	${PYTHON} tests/lib/test_build_ext.py ${TEST}
 
-testall:
+testall: install
 	${PYTHON} setup.py test
 
 dist:
