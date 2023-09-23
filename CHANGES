@@ -4,6 +4,10 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+6.0.1 (2023-07-18)
+
+* https://github.com/yaml/pyyaml/pull/702 -- pin Cython build dep to < 3.0
+
 6.0 (2021-10-13)
 
 * https://github.com/yaml/pyyaml/pull/327 -- Change README format to Markdown
