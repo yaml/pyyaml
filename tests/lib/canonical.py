@@ -354,7 +354,7 @@ def canonical_load(stream):
 
 yaml.canonical_load = canonical_load
 
-def canonical_load_all(stream):
+def canonical_load_all(stream=None):
     return yaml.load_all(stream, Loader=CanonicalLoader)
 
 yaml.canonical_load_all = canonical_load_all

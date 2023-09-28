@@ -56,7 +56,7 @@ class Reader(object):
 
     # Yeah, it's ugly and slow.
 
-    def __init__(self, stream):
+    def __init__(self, stream=None):
         self.name = None
         self.stream = None
         self.stream_pointer = 0
@@ -69,7 +69,9 @@ class Reader(object):
         self.index = 0
         self.line = 0
         self.column = 0
-        if isinstance(stream, str):
+        if stream is None:
+            pass
+        elif isinstance(stream, str):
             self.name = "<unicode string>"
             self.check_printable(stream)
             self.buffer = stream+'\0'
