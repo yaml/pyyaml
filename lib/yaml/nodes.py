@@ -1,49 +1,50 @@
 
-class Node(object):
-    def __init__(self, tag, value, start_mark, end_mark):
-        self.tag = tag
-        self.value = value
-        self.start_mark = start_mark
-        self.end_mark = end_mark
+from dataclasses import dataclass, InitVar
+from typing import Any
+
+
+@dataclass(repr=False)
+class Node:
+    value: Any
+    tag: Any
+    start_mark: Any | None = None
+    end_mark: Any | None = None
+
     def __repr__(self):
-        value = self.value
-        #if isinstance(value, list):
-        #    if len(value) == 0:
-        #        value = '<empty>'
-        #    elif len(value) == 1:
-        #        value = '<1 item>'
-        #    else:
-        #        value = '<%d items>' % len(value)
-        #else:
-        #    if len(value) > 75:
-        #        value = repr(value[:70]+u' ... ')
-        #    else:
-        #        value = repr(value)
-        value = repr(value)
-        return '%s(tag=%r, value=%s)' % (self.__class__.__name__, self.tag, value)
+        return 'Node(tag=%r, value=%r)' % (self.tag, self.value)
 
+@dataclass(repr=False)
 class ScalarNode(Node):
+    style: Any | None = None
+
     id = 'scalar'
-    def __init__(self, tag, value,
-            start_mark=None, end_mark=None, style=None):
-        self.tag = tag
-        self.value = value
-        self.start_mark = start_mark
-        self.end_mark = end_mark
-        self.style = style
 
+    def __repr__(self):
+        return 'ScalarNode(tag=%r, value=%r)' % (self.tag, self.value)
+
+@dataclass(repr=False)
 class CollectionNode(Node):
-    def __init__(self, tag, value,
-            start_mark=None, end_mark=None, flow_style=None):
-        self.tag = tag
-        self.value = value
-        self.start_mark = start_mark
-        self.end_mark = end_mark
-        self.flow_style = flow_style
+    flow_style: Any | None = None
 
+@dataclass(repr=False)
 class SequenceNode(CollectionNode):
+    tag: InitVar[str] = 'tag:yaml.org,2002:seq'
+
     id = 'sequence'
 
+    def __repr__(self):
+        return 'SequenceNode(tag=%r, value=%r)' % (self.tag, self.value)
+
+@dataclass(repr=False)
 class MappingNode(CollectionNode):
+    tag: InitVar[str] = 'tag:yaml.org,2002:map'
+
     id = 'mapping'
 
+    def __repr__(self):
+        return 'MappingNode(tag=%r, value=%r)' % (self.tag, self.value)
+
+@dataclass(repr=False)
+class NullNode(ScalarNode):
+    value: InitVar[str] = 'null'
+    tag: InitVar[str] = 'tag:yaml.org,2002:null'
