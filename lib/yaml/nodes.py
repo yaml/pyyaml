@@ -1,7 +1,17 @@
 
 from dataclasses import dataclass, InitVar
+from enum import Enum
 from typing import Any
 
+
+class Tag(Enum):
+    """The default tags"""
+    # failsafe
+    MAPPING = 'tag:yaml.org,2002:map'
+    SEQUENCE = 'tag:yaml.org,2002:seq'
+    SCALAR = 'tag:yaml.org,2002:str'
+    # jsonschema
+    NULL = 'tag:yaml.org,2002:null'
 
 @dataclass(repr=False)
 class Node:
@@ -15,6 +25,7 @@ class Node:
 
 @dataclass(repr=False)
 class ScalarNode(Node):
+    tag: str = Tag.SCALAR
     style: Any | None = None
 
     id = 'scalar'
@@ -28,7 +39,7 @@ class CollectionNode(Node):
 
 @dataclass(repr=False)
 class SequenceNode(CollectionNode):
-    tag: InitVar[str] = 'tag:yaml.org,2002:seq'
+    tag: InitVar[str] = Tag.SEQUENCE.value
 
     id = 'sequence'
 
@@ -37,7 +48,7 @@ class SequenceNode(CollectionNode):
 
 @dataclass(repr=False)
 class MappingNode(CollectionNode):
-    tag: InitVar[str] = 'tag:yaml.org,2002:map'
+    tag: InitVar[str] = Tag.MAPPING.value
 
     id = 'mapping'
 
@@ -47,4 +58,4 @@ class MappingNode(CollectionNode):
 @dataclass(repr=False)
 class NullNode(ScalarNode):
     value: InitVar[str] = 'null'
-    tag: InitVar[str] = 'tag:yaml.org,2002:null'
+    tag: InitVar[str] = Tag.NULL.value
