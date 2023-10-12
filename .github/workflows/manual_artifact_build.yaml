@@ -13,6 +13,9 @@ env:
   LIBYAML_REPO: https://github.com/yaml/libyaml
   LIBYAML_REF: 0.2.5
 
+permissions:
+  contents: read
+
 jobs:
   python_sdist:
     name: pyyaml sdist
