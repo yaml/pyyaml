@@ -57,5 +57,6 @@ venv: $(VENV)
 
 $(VENV):
 	$(PYTHON) -m venv $@
+	pip install --upgrade pip
 	pip install pytest
 	pip install -e .
