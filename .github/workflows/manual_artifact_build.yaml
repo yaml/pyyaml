@@ -352,7 +352,6 @@ jobs:
     strategy:
       matrix:
         include:
-          spec: 3.8
         - platform: windows-2019
           build_arch: x64
           python_arch: x64
