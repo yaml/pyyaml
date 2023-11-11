@@ -1,7 +1,7 @@
 # build outputs
-/dist/*
 /build/*
 /lib/PyYAML.egg-info/*
+/.venv/
 /wheelhouse/*
 /yaml/_yaml.c
 MANIFEST
