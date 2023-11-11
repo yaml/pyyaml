@@ -1,5 +1,5 @@
 # build outputs
-/build/*
+/build/
 /lib/PyYAML.egg-info/*
 /.venv/
 /wheelhouse/*

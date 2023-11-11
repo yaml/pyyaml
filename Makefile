@@ -22,27 +22,27 @@ o ?=
 default:
 
 test: venv
-	PYYAML_FORCE_LIBYAML=0 pytest
+	PYYAML_FORCE_LIBYAML=0 pytest $o
 
 test-ext: venv
-	PYYAML_FORCE_LIBYAML=1 pytest
+	PYYAML_FORCE_LIBYAML=1 pytest $o
 
 build: venv
-	${PYTHON} setup.py build ${o}
+	python setup.py build $o
 
 build-ext: venv
-	${PYTHON} setup.py --with-libyaml build ${o}
+	python setup.py --with-libyaml build $o
 
 install: venv
-	${PYTHON} setup.py install ${o}
+	python setup.py install $o
 
 installext: venv
-	${PYTHON} setup.py --with-libyaml install ${o}
+	python setup.py --with-libyaml install $o
 
 clean:
-	${PYTHON} setup.py --with-libyaml clean -a
 	$(RM) -r \
 	    .pytest_cache/ \
+	    build/ \
 	    lib/PyYAML.egg-info/ \
 	    lib/yaml/__pycache__/ \
 	    tests/__pycache__/ \
@@ -57,6 +57,5 @@ venv: $(VENV)
 
 $(VENV):
 	$(PYTHON) -m venv $@
-	@echo $(PATH)
 	pip install pytest
 	pip install -e .
