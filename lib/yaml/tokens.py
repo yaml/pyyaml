@@ -11,9 +11,6 @@ class Token(object):
                 for key in attributes])
         return '%s(%s)' % (self.__class__.__name__, arguments)
 
-#class BOMToken(Token):
-#    id = '<byte order mark>'
-
 class DirectiveToken(Token):
     id = '<directive>'
     def __init__(self, name, value, start_mark, end_mark):
