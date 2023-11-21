@@ -32,7 +32,7 @@ To run the tests, type `python setup.py test`.
 ## Further Information
 
 * For more information, check the
-  [PyYAML homepage](https://github.com/yaml/pyyaml).
+  [PyYAML homepage](https://pyyaml.org/).
 
 * [PyYAML tutorial and reference](http://pyyaml.org/wiki/PyYAMLDocumentation).
 
