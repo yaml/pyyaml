@@ -15,7 +15,7 @@ def execute(code):
 
 def _make_objects():
     global MyLoader, MyDumper, MyTestClass1, MyTestClass2, MyTestClass3, YAMLObject1, YAMLObject2,  \
-            AnObject, AnInstance, AState, ACustomState, InitArgs, InitArgsWithState,    \
+            AnObject, AnInstance, NestedOuterObject, AState, ACustomState, InitArgs, InitArgsWithState,    \
             NewArgs, NewArgsWithState, Reduce, ReduceWithState, Slots, MyInt, MyList, MyDict,  \
             FixedOffset, today, execute, MyFullLoader
 
@@ -127,6 +127,16 @@ def _make_objects():
         def __eq__(self, other):
             return type(self) is type(other) and    \
                     (self.foo, self.bar, self.baz) == (other.foo, other.bar, other.baz)
+
+    class NestedOuterObject:
+        class NestedInnerObject1:
+            class NestedInnerObject2:
+                class NestedInnerObject3:
+                    def __init__(self, data):
+                        self.data = data
+                    def __eq__(self, other):
+                        return type(self) is type(other) and self.data == other.data
+
 
     class AnInstance:
         def __init__(self, foo=None, bar=None, baz=None):
