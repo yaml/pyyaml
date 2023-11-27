@@ -541,7 +541,9 @@ class FullConstructor(SafeConstructor):
         if not name:
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
-        if '.' in name:
+        if '@' in name:  # handles nested objects via __qualname__
+            module_name, object_name = name.rsplit('@', 1)
+        elif '.' in name:  # handle old-style references
             module_name, object_name = name.rsplit('.', 1)
         else:
             module_name = 'builtins'
@@ -556,11 +558,16 @@ class FullConstructor(SafeConstructor):
             raise ConstructorError("while constructing a Python object", mark,
                     "module %r is not imported" % module_name, mark)
         module = sys.modules[module_name]
-        if not hasattr(module, object_name):
+
+        # descend multi-part object_name to support nested classes
+        cur_obj = module
+        for attr in object_name.split('.'):
+            cur_obj = getattr(cur_obj, attr, None)
+        if not cur_obj:
             raise ConstructorError("while constructing a Python object", mark,
                     "cannot find %r in the module %r"
-                    % (object_name, module.__name__), mark)
-        return getattr(module, object_name)
+                    % (object_name, module_name), mark)
+        return cur_obj
 
     def construct_python_name(self, suffix, node):
         value = self.construct_scalar(node)
