@@ -1,5 +1,5 @@
 
-__all__ = ['BaseResolver', 'Resolver']
+__all__ = ['BaseResolver', 'Resolver' ]
 
 from .error import *
 from .nodes import *
@@ -164,64 +164,96 @@ class BaseResolver:
         elif kind is MappingNode:
             return self.DEFAULT_MAPPING_TAG
 
-class Resolver(BaseResolver):
-    pass
+    @classmethod
+    def init_resolvers(cls, key):
+        for args in _resolvers[key]:
+            cls.add_implicit_resolver(
+                'tag:yaml.org,2002:' + args[0],
+                args[1], args[2]
+            )
 
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:bool',
-        re.compile(r'''^(?:yes|Yes|YES|no|No|NO
+_resolvers = {
+    'yaml11': [
+        ['bool',
+            re.compile(r'''^(?:yes|Yes|YES|no|No|NO
                     |true|True|TRUE|false|False|FALSE
                     |on|On|ON|off|Off|OFF)$''', re.X),
-        list('yYnNtTfFoO'))
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:float',
-        re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
+            list('yYnNtTfFoO')],
+        ['float',
+            re.compile(r'''^(?:[-+]?(?:[0-9][0-9_]*)\.[0-9_]*(?:[eE][-+][0-9]+)?
                     |\.[0-9][0-9_]*(?:[eE][-+][0-9]+)?
                     |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
                     |[-+]?\.(?:inf|Inf|INF)
                     |\.(?:nan|NaN|NAN))$''', re.X),
-        list('-+0123456789.'))
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:int',
-        re.compile(r'''^(?:[-+]?0b[0-1_]+
+            list('-+0123456789.')],
+        ['int',
+            re.compile(r'''^(?:[-+]?0b[0-1_]+
                     |[-+]?0[0-7_]+
                     |[-+]?(?:0|[1-9][0-9_]*)
                     |[-+]?0x[0-9a-fA-F_]+
                     |[-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+)$''', re.X),
-        list('-+0123456789'))
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:merge',
-        re.compile(r'^(?:<<)$'),
-        ['<'])
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:null',
-        re.compile(r'''^(?: ~
+            list('-+0123456789')],
+        ['merge',
+            re.compile(r'^(?:<<)$'),
+            ['<']],
+        ['null',
+            re.compile(r'''^(?: ~
                     |null|Null|NULL
                     | )$''', re.X),
-        ['~', 'n', 'N', ''])
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:timestamp',
-        re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
+            ['~', 'n', 'N', '']],
+        ['timestamp',
+            re.compile(r'''^(?:[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]
                     |[0-9][0-9][0-9][0-9] -[0-9][0-9]? -[0-9][0-9]?
                      (?:[Tt]|[ \t]+)[0-9][0-9]?
                      :[0-9][0-9] :[0-9][0-9] (?:\.[0-9]*)?
                      (?:[ \t]*(?:Z|[-+][0-9][0-9]?(?::[0-9][0-9])?))?)$''', re.X),
-        list('0123456789'))
-
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:value',
-        re.compile(r'^(?:=)$'),
-        ['='])
-
+            list('0123456789')],
+        ['value',
+            re.compile(r'^(?:=)$'),
+            ['=']],
 # The following resolver is only for documentation purposes. It cannot work
 # because plain scalars cannot start with '!', '&', or '*'.
-Resolver.add_implicit_resolver(
-        'tag:yaml.org,2002:yaml',
-        re.compile(r'^(?:!|&|\*)$'),
-        list('!&*'))
+        ['yaml',
+            re.compile(r'^(?:!|&|\*)$'),
+            list('!&*')],
+    ],
+    'core': [
+        ['bool',
+            re.compile(r'''^(?:|true|True|TRUE|false|False|FALSE)$''', re.X),
+            list('tTfF')],
+        ['int',
+            re.compile(r'''^(?:
+                    |0o[0-7]+
+                    |[-+]?(?:[0-9]+)
+                    |0x[0-9a-fA-F]+
+                    )$''', re.X),
+            list('-+0123456789')],
+        ['float',
+            re.compile(r'''^(?:[-+]?(?:\.[0-9]+|[0-9]+(\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?
+                    |[-+]?\.(?:inf|Inf|INF)
+                    |\.(?:nan|NaN|NAN))$''', re.X),
+            list('-+0123456789.')],
+        ['null',
+            re.compile(r'''^(?:~||null|Null|NULL)$''', re.X),
+            ['~', 'n', 'N', '']],
+    ],
+    'json': [
+        ['bool',
+            re.compile(r'''^(?:true|false)$''', re.X),
+            list('tf')],
+        ['int',
+            re.compile(r'''^-?(?:0|[1-9][0-9]*)$''', re.X),
+            list('-0123456789')],
+        ['float',
+            re.compile(r'''^-?(?:0|[1-9][0-9]*)(\.[0-9]*)?(?:[eE][-+]?[0-9]+)?$''', re.X),
+            list('-0123456789.')],
+        ['null',
+            re.compile(r'''^null$''', re.X),
+            ['n']],
+    ],
+}
+
+class Resolver(BaseResolver): pass
+
+Resolver.init_resolvers('yaml11')
 

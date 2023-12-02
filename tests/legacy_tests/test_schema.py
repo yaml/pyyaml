@@ -1,4 +1,5 @@
 import yaml
+import os
 import sys
 import pprint
 import math
@@ -48,6 +49,17 @@ def _fail(input, test):
     print("Input: >>" + input + "<<")
     print(test)
 
+class MyCoreLoader(yaml.BaseLoader): pass
+class MyJSONLoader(yaml.BaseLoader): pass
+class MyCoreDumper(yaml.CommonDumper): pass
+class MyJSONDumper(yaml.CommonDumper): pass
+
+MyCoreLoader.init_tags('core')
+MyJSONLoader.init_tags('json')
+
+MyCoreDumper.init_tags('core')
+MyJSONDumper.init_tags('json')
+
 # The tests/data/yaml11.schema file is copied from
 # https://github.com/perlpunk/yaml-test-schema/blob/master/data/schema-yaml11.yaml
 def test_implicit_resolver(data_filename, skip_filename, verbose=False):
@@ -59,6 +71,19 @@ def test_implicit_resolver(data_filename, skip_filename, verbose=False):
         'nan':   [float, check_float],
         'bool':  [bool,  check_bool],
     }
+    loaders = {
+        'yaml11': yaml.SafeLoader,
+        'core': MyCoreLoader,
+        'json': MyJSONLoader,
+    }
+    dumpers = {
+        'yaml11': yaml.SafeDumper,
+        'core': MyCoreDumper,
+        'json': MyJSONDumper,
+    }
+    loadername = os.path.splitext(os.path.basename(data_filename))[0]
+    print('==================')
+    print(loadername)
     with open(skip_filename, 'rb') as file:
         skipdata = yaml.load(file, Loader=yaml.SafeLoader)
     skip_load = skipdata['load']
@@ -84,7 +109,8 @@ def test_implicit_resolver(data_filename, skip_filename, verbose=False):
 
         # Test loading
         try:
-            loaded = yaml.safe_load(input)
+            doc_input = """---\n""" + input
+            loaded = yaml.load(doc_input, Loader=loaders[loadername])
         except:
             print("Error:", sys.exc_info()[0], '(', sys.exc_info()[1], ')')
             fail+=1
@@ -106,22 +132,27 @@ def test_implicit_resolver(data_filename, skip_filename, verbose=False):
         else:
             t = types[exp_type][0]
             code = types[exp_type][1]
+
             if isinstance(loaded, t):
                 if code(loaded, data):
                     pass
                 else:
                     fail+=1
+                    print("Expected data: >>" + str(data) + "<< Got: >>" + str(loaded) + "<<")
                     _fail(input, test)
             else:
                 fail+=1
+                print("Expected type: >>" + exp_type + "<< Got: >>" + str(loaded) + "<<")
                 _fail(input, test)
 
         # Skip known dumper bugs
         if input in skip_dump:
             continue
 
-        dump = yaml.safe_dump(loaded, explicit_end=False)
+        dump = yaml.dump(loaded, explicit_end=False, Dumper=dumpers[loadername])
         # strip trailing newlines and footers
+        if (dump == '...\n'):
+            dump = ''
         if dump.endswith('\n...\n'):
             dump = dump[:-5]
         if dump.endswith('\n'):
@@ -130,6 +161,11 @@ def test_implicit_resolver(data_filename, skip_filename, verbose=False):
             pass
         else:
             print("Compare: >>" + dump + "<< >>" + exp_dump + "<<")
+            print(skip_dump)
+            print(input)
+            print(test)
+            print(loaded)
+            print(type(loaded))
             fail+=1
             _fail(input, test)
 

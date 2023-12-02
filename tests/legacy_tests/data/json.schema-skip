@@ -1,0 +1,6 @@
+load: {
+  }
+dump: {
+    '#empty': 1,
+    '!!str #empty': 1,
+  }
