@@ -681,10 +681,6 @@ FullConstructor.add_constructor(
     FullConstructor.construct_python_str)
 
 FullConstructor.add_constructor(
-    'tag:yaml.org,2002:python/value',
-    FullConstructor.construct_python_str)
-
-FullConstructor.add_constructor(
     'tag:yaml.org,2002:python/unicode',
     FullConstructor.construct_python_unicode)
 
