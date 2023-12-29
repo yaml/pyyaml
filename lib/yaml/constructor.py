@@ -8,6 +8,7 @@ __all__ = [
     'ConstructorError'
 ]
 
+from collections import defaultdict
 from .error import *
 from .nodes import *
 
@@ -134,13 +135,16 @@ class BaseConstructor:
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
                     node.start_mark)
-        mapping = {}
+        mapping = defaultdict()
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             if not isinstance(key, collections.abc.Hashable):
                 raise ConstructorError("while constructing a mapping", node.start_mark,
                         "found unhashable key", key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
+
+            if key_node.tag == "tag:yaml.org,2002:value":
+                mapping.default_factory = self.mapping_values_default_factory(value)
             mapping[key] = value
         return mapping
 
@@ -168,13 +172,13 @@ class BaseConstructor:
             cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
         cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
+    @staticmethod
+    def mapping_values_default_factory(value):
+        return lambda: value
+
 class SafeConstructor(BaseConstructor):
 
     def construct_scalar(self, node):
-        if isinstance(node, MappingNode):
-            for key_node, value_node in node.value:
-                if key_node.tag == 'tag:yaml.org,2002:value':
-                    return self.construct_scalar(value_node)
         return super().construct_scalar(node)
 
     def flatten_mapping(self, node):
@@ -204,9 +208,6 @@ class SafeConstructor(BaseConstructor):
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
                             % value_node.id, value_node.start_mark)
-            elif key_node.tag == 'tag:yaml.org,2002:value':
-                key_node.tag = 'tag:yaml.org,2002:str'
-                index += 1
             else:
                 index += 1
         if merge:
@@ -408,10 +409,11 @@ class SafeConstructor(BaseConstructor):
         data.extend(self.construct_sequence(node))
 
     def construct_yaml_map(self, node):
-        data = {}
+        data = defaultdict()
         yield data
         value = self.construct_mapping(node)
         data.update(value)
+        data.default_factory = value.default_factory
 
     def construct_yaml_object(self, node, cls):
         data = cls.__new__(cls)
@@ -466,6 +468,10 @@ SafeConstructor.add_constructor(
 
 SafeConstructor.add_constructor(
         'tag:yaml.org,2002:str',
+        SafeConstructor.construct_yaml_str)
+
+SafeConstructor.add_constructor(
+        'tag:yaml.org,2002:value',
         SafeConstructor.construct_yaml_str)
 
 SafeConstructor.add_constructor(
@@ -668,6 +674,14 @@ FullConstructor.add_constructor(
 
 FullConstructor.add_constructor(
     'tag:yaml.org,2002:python/str',
+    FullConstructor.construct_python_str)
+
+FullConstructor.add_constructor(
+    'tag:yaml.org,2002:python/value',
+    FullConstructor.construct_python_str)
+
+FullConstructor.add_constructor(
+    'tag:yaml.org,2002:python/value',
     FullConstructor.construct_python_str)
 
 FullConstructor.add_constructor(
