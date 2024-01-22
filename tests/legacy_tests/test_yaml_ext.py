@@ -1,5 +1,10 @@
-import yaml._yaml, yaml
-import types, pprint, tempfile, sys, os
+import yaml
+import yaml._yaml
+import types
+import pprint
+import tempfile
+import sys
+import os
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
@@ -282,8 +287,15 @@ def wrap_ext(collections):
         assert function.__name__ not in globals()
         globals()[function.__name__] = function
 
-import test_tokens, test_structure, test_errors, test_resolver, test_constructor,   \
-        test_emitter, test_representer, test_recursive, test_input_output
+import test_tokens
+import test_structure
+import test_errors
+import test_resolver
+import test_constructor
+import test_emitter
+import test_representer
+import test_recursive
+import test_input_output
 wrap_ext([test_tokens, test_structure, test_errors, test_resolver, test_constructor,
         test_emitter, test_representer, test_recursive, test_input_output])
 
