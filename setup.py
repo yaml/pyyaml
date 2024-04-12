@@ -66,23 +66,29 @@ int main(void) {
 
 
 import sys, os, os.path, pathlib, platform, shutil, tempfile, warnings
-
+import os.path as op
 # for newer setuptools, enable the embedded distutils before importing setuptools/distutils to avoid warnings
-os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
+os.environ["SETUPTOOLS_USE_DISTUTILS"] = "local"
 
-from setuptools import setup, Command, Distribution as _Distribution, Extension as _Extension
+from setuptools import setup, Command, Distribution, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
+
 # NB: distutils imports must remain below setuptools to ensure we use the embedded version
 from distutils import log
-from distutils.errors import DistutilsError, CompileError, LinkError, DistutilsPlatformError
+from distutils.errors import (
+    DistutilsError,
+    CompileError,
+    LinkError,
+    DistutilsPlatformError,
+)
 
 with_cython = False
-if 'sdist' in sys.argv or os.environ.get('PYYAML_FORCE_CYTHON') == '1':
+if "sdist" in sys.argv or os.environ.get("PYYAML_FORCE_CYTHON") == "1":
     # we need cython here
     with_cython = True
 try:
-    from Cython.Distutils.extension import Extension as _Extension
-    from Cython.Distutils import build_ext as _build_ext
+    import Cython  # noqa
+
     with_cython = True
 except ImportError:
     if with_cython:
@@ -96,147 +102,82 @@ except ImportError:
 
 # on Windows, disable wheel generation warning noise
 windows_ignore_warnings = [
-"Unknown distribution option: 'python_requires'",
-"Config variable 'Py_DEBUG' is unset",
-"Config variable 'WITH_PYMALLOC' is unset",
-"Config variable 'Py_UNICODE_SIZE' is unset",
-"Cython directive 'language_level' not set"
+    "Unknown distribution option: 'python_requires'",
+    "Config variable 'Py_DEBUG' is unset",
+    "Config variable 'WITH_PYMALLOC' is unset",
+    "Config variable 'Py_UNICODE_SIZE' is unset",
+    "Cython directive 'language_level' not set",
 ]
 
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     for w in windows_ignore_warnings:
-        warnings.filterwarnings('ignore', w)
+        warnings.filterwarnings("ignore", w)
 
 
-class Distribution(_Distribution):
-    def __init__(self, attrs=None):
-        _Distribution.__init__(self, attrs)
-        if not self.ext_modules:
-            return
-        for idx in range(len(self.ext_modules)-1, -1, -1):
-            ext = self.ext_modules[idx]
-            if not isinstance(ext, Extension):
-                continue
-            setattr(self, ext.attr_name, None)
-            self.global_options = [
-                    (ext.option_name, None,
-                        "include %s (default if %s is available)"
-                        % (ext.feature_description, ext.feature_name)),
-                    (ext.neg_option_name, None,
-                        "exclude %s" % ext.feature_description),
-            ] + self.global_options
-            self.negative_opt = self.negative_opt.copy()
-            self.negative_opt[ext.neg_option_name] = ext.option_name
+COMPILER_SETTINGS = {
+    "libraries": ["yaml"],
+    "include_dirs": ["yaml"],
+    "library_dirs": [],
+    "define_macros": [],
+}
 
-    def has_ext_modules(self):
-        if not self.ext_modules:
-            return False
-        for ext in self.ext_modules:
-            with_ext = self.ext_status(ext)
-            if with_ext is None or with_ext:
-                return True
-        return False
-
-    def ext_status(self, ext):
-        implementation = platform.python_implementation()
-        if implementation not in ['CPython', 'PyPy']:
-            return False
-        if isinstance(ext, Extension):
-            # the "build by default" behavior is implemented by this returning None
-            with_ext = getattr(self, ext.attr_name) or os.environ.get('PYYAML_FORCE_{0}'.format(ext.feature_name.upper()))
-            try:
-                with_ext = int(with_ext)  # attempt coerce envvar to int
-            except TypeError:
-                pass
-            return with_ext
-        else:
-            return True
+MODULES = ["_yaml"]
+EXTRA_LIBRARIES = {}
+EXTRA_SRC = {}
 
 
-class Extension(_Extension):
-
-    def __init__(self, name, sources, feature_name, feature_description,
-            feature_check, **kwds):
-        if not with_cython:
-            for filename in sources[:]:
-                base, ext = os.path.splitext(filename)
-                if ext == '.pyx':
-                    sources.remove(filename)
-                    sources.append('%s.c' % base)
-        _Extension.__init__(self, name, sources, **kwds)
-        self.feature_name = feature_name
-        self.feature_description = feature_description
-        self.feature_check = feature_check
-        self.attr_name = 'with_' + feature_name.replace('-', '_')
-        self.option_name = 'with-' + feature_name
-        self.neg_option_name = 'without-' + feature_name
+def localpath(*args):
+    return op.abspath(op.join(op.dirname(__file__), *args))
 
 
 class build_ext(_build_ext):
+    @staticmethod
+    def _make_extensions():
+        """Produce a list of Extension instances which can be passed to
+        cythonize().
+
+        This is the point at which custom directories, MPI options, etc.
+        enter the build process.
+        """
+        settings = COMPILER_SETTINGS.copy()
+
+        # TODO: should this only be done on UNIX?
+        if os.name != "nt":
+            settings["runtime_library_dirs"] = settings["library_dirs"]
+
+        def make_extension(module):
+            sources = [localpath("yaml", module + ".pyx")] + EXTRA_SRC.get(module, [])
+            settings["libraries"] += EXTRA_LIBRARIES.get(module, [])
+            print(("yaml." + module, sources, settings))
+            ext = Extension("yaml." + module, sources, **settings)
+            ext._needs_stub = False
+            return ext
+
+        return [make_extension(m) for m in MODULES]
 
     def run(self):
-        optional = True
-        disabled = True
-        for ext in self.extensions:
-            with_ext = self.distribution.ext_status(ext)
-            if with_ext is None:
-                disabled = False
-            elif with_ext:
-                optional = False
-                disabled = False
-                break
-        if disabled:
-            return
-        try:
-            _build_ext.run(self)
-        except DistutilsPlatformError:
-            exc = sys.exc_info()[1]
-            if optional:
-                log.warn(str(exc))
-                log.warn("skipping build_ext")
-            else:
-                raise
+        """Distutils calls this method to run the command"""
 
-    def get_source_files(self):
-        self.check_extensions_list(self.extensions)
-        filenames = []
-        for ext in self.extensions:
-            if with_cython:
-                self.cython_sources(ext.sources, ext)
-            for filename in ext.sources:
-                filenames.append(filename)
-                base = os.path.splitext(filename)[0]
-                for ext in ['c', 'h', 'pyx', 'pxd']:
-                    filename = '%s.%s' % (base, ext)
-                    if filename not in filenames and os.path.isfile(filename):
-                        filenames.append(filename)
-        return filenames
+        from Cython.Build import cythonize
 
-    def get_outputs(self):
-        self.check_extensions_list(self.extensions)
-        outputs = []
-        for ext in self.extensions:
-            fullname = self.get_ext_fullname(ext.name)
-            filename = os.path.join(self.build_lib,
-                                    self.get_ext_filename(fullname))
-            if os.path.isfile(filename):
-                outputs.append(filename)
-        return outputs
+        # This allows ccache to recognise the files when pip builds in a temp
+        # directory. It speeds up repeatedly running tests through tox with
+        # ccache configured (CC="ccache gcc"). It should have no effect if
+        # ccache is not in use.
+        os.environ["CCACHE_BASEDIR"] = op.dirname(op.abspath(__file__))
+        os.environ["CCACHE_NOHASHDIR"] = "1"
 
-    def build_extensions(self):
-        self.check_extensions_list(self.extensions)
-        for ext in self.extensions:
-            with_ext = self.distribution.ext_status(ext)
-            if with_ext is not None and not with_ext:
-                continue
-            if with_cython:
-                ext.sources = self.cython_sources(ext.sources, ext)
-            try:
-                self.build_extension(ext)
-            except (CompileError, LinkError):
-                if with_ext is not None:
-                    raise
-                log.warn("Error compiling module, falling back to pure Python")
+        # Run Cython
+        print("Executing cythonize()")
+        self.extensions = cythonize(
+            self._make_extensions(), force=self.force, language_level=3
+        )
+
+        print(self.extensions)
+        for ex in self.extensions:
+            ex._needs_stub = False
+        # Perform the build
+        super().run()
 
 
 class test(Command):
@@ -300,16 +241,11 @@ if __name__ == '__main__':
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
         project_urls=PROJECT_URLS,
-
-        package_dir={'': 'lib'},
-        packages=['yaml', '_yaml'],
-        ext_modules=[
-            Extension('yaml._yaml', ['yaml/_yaml.pyx'],
-                'libyaml', "LibYAML bindings", LIBYAML_CHECK,
-                libraries=['yaml']),
-        ],
-
+        package_dir={"": "lib"},
+        packages=["yaml", "_yaml"],
+        # To trick build into running build_ext
+        ext_modules=[Extension("yaml.x", ["x.c"])],
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=3.6',
+        python_requires=">=3.6",
     )
