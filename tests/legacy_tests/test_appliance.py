@@ -1,7 +1,8 @@
 
-import sys, os, os.path, types, traceback, pprint
+import sys, os, os.path, types, traceback, pprint, pathlib
 
-DATA = 'tests/legacy_tests/data'
+DATA = str(pathlib.Path(__file__).parent / 'data')
+
 
 def find_test_functions(collections):
     if not isinstance(collections, list):

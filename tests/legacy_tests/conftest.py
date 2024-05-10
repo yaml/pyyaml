@@ -2,6 +2,7 @@
 # legacy test case as a pyyaml item
 
 import os
+import pathlib
 import pytest
 import warnings
 
@@ -111,8 +112,9 @@ def pytest_pycollect_makeitem(collector, name: str, obj: object):
 def pytest_collection_modifyitems(session, config, items):
     pass
 
-def pytest_ignore_collect(path, config):
-    basename = path.basename
+
+def pytest_ignore_collect(collection_path: pathlib.Path):
+    basename = collection_path.name
     # ignore all Python files in this subtree for normal pytest collection
     if basename not in ['test_yaml.py', 'test_yaml_ext.py']:
         return True
