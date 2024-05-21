@@ -4,7 +4,7 @@ This fork adds tabs indentation support to PyYAML.
 
 Use at your own risk.
 
-Please note I'm not checking if the content is mixing tabs and spaces (which should throw a warning or error).
+Please note I'm not checking if the content is mixing tabs and spaces (which should raise an exception).
 
 Why to use tabs for indentation? Sorry, but that's a very silly question 😡
 
