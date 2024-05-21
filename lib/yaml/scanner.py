@@ -773,7 +773,8 @@ class Scanner:
             self.forward()
         found = False
         while not found:
-            while self.peek() == ' ':
+            # TODO: Throw exception when mixing spaces and tabs
+            while self.peek() in [' ', "\t"]:
                 self.forward()
             if self.peek() == '#':
                 while self.peek() not in '\0\r\n\x85\u2028\u2029':
