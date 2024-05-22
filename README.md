@@ -1,5 +1,6 @@
 PyYAML
 ======
+[![pyyaml Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/pyyaml.svg 'pyyaml Downloads Last Month by pip Trends')](https://piptrends.com/package/pyyaml)
 
 A full-featured YAML processing framework for Python
 
