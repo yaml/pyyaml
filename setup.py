@@ -1,7 +1,7 @@
 
-NAME = 'PyYAML'
+NAME = 'PyYAML-tabs'
 VERSION = '6.0.1'
-DESCRIPTION = "YAML parser and emitter for Python"
+DESCRIPTION = "YAML parser and emitter for Python with tabs indentation support"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
 and interaction with scripting languages.  PyYAML is a YAML parser
@@ -44,7 +44,7 @@ PROJECT_URLS = {
    'CI': 'https://github.com/yaml/pyyaml/actions',
    'Documentation': 'https://pyyaml.org/wiki/PyYAMLDocumentation',
    'Mailing lists': 'http://lists.sourceforge.net/lists/listinfo/yaml-core',
-   'Source Code': 'https://github.com/yaml/pyyaml',
+   'Source Code': 'https://github.com/kripper/pyyaml',
 }
 
 LIBYAML_CHECK = """
