@@ -8,6 +8,8 @@ Please note I'm not checking if the content is mixing tabs and spaces (which sho
 
 Why to use tabs for indentation? Sorry, but that's a very silly question 😡
 
+Install with `pip install PyYAML_tabs`
+
 ---
 
 PyYAML
