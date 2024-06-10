@@ -4,6 +4,10 @@ For a complete changelog, see:
 * https://github.com/yaml/pyyaml/commits/
 * https://bitbucket.org/xi/pyyaml/commits/
 
+6.0.2rc1 (2024-06-10)
+
+* https://github.com/yaml/pyyaml/pull/808 -- Support for Cython 3.x and Python 3.13
+
 6.0.1 (2023-07-18)
 
 * https://github.com/yaml/pyyaml/pull/702 -- pin Cython build dep to < 3.0
