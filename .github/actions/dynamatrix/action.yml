@@ -1,0 +1,22 @@
+name: Create matrix
+description: Create matrix
+inputs:
+  matrix_yaml:
+    description: input yaml matrix as multiline string; any entry with a bool true `omit` key will be filtered from the output matrix
+    required: true
+outputs:
+  matrix_json:
+    description: filtered matrix as JSON
+    value: ${{ steps.matrix_gen.outputs.matrix_json }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - id: matrix_gen
+      run: |
+        # FIXME: input sanity check to prevent shell injection
+        python3 $GITHUB_ACTION_PATH/matrix_yaml_to_json.py --from-stdin << EOF
+        ${{ inputs.matrix_yaml }}
+        EOF
+      shell: bash
