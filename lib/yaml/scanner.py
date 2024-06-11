@@ -773,7 +773,8 @@ class Scanner:
             self.forward()
         found = False
         while not found:
-            while self.peek() == ' ':
+            # TODO: Throw exception when mixing spaces and tabs
+            while self.peek() in [' ', "\t"]:
                 self.forward()
             if self.peek() == '#':
                 while self.peek() not in '\0\r\n\x85\u2028\u2029':
@@ -1091,7 +1092,7 @@ class Scanner:
 
     def scan_block_scalar_ignored_line(self, start_mark):
         # See the specification for details.
-        while self.peek() == ' ':
+        while self.peek() in [' ', "\t"]:
             self.forward()
         if self.peek() == '#':
             while self.peek() not in '\0\r\n\x85\u2028\u2029':
@@ -1108,8 +1109,8 @@ class Scanner:
         chunks = []
         max_indent = 0
         end_mark = self.get_mark()
-        while self.peek() in ' \r\n\x85\u2028\u2029':
-            if self.peek() != ' ':
+        while self.peek() in ' \t\r\n\x85\u2028\u2029':
+            if self.peek() not in [' ', "\t"]:
                 chunks.append(self.scan_line_break())
                 end_mark = self.get_mark()
             else:
@@ -1122,12 +1123,12 @@ class Scanner:
         # See the specification for details.
         chunks = []
         end_mark = self.get_mark()
-        while self.column < indent and self.peek() == ' ':
+        while self.column < indent and self.peek() in [' ', "\t"]:
             self.forward()
         while self.peek() in '\r\n\x85\u2028\u2029':
             chunks.append(self.scan_line_break())
             end_mark = self.get_mark()
-            while self.column < indent and self.peek() == ' ':
+            while self.column < indent and self.peek() in [' ', "\t"]:
                 self.forward()
         return chunks, end_mark
 
