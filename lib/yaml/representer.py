@@ -1,6 +1,6 @@
 
 __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
-    'RepresenterError']
+    'RepresenterError', 'CommonRepresenter']
 
 from .error import *
 from .nodes import *
@@ -131,28 +131,29 @@ class BaseRepresenter:
     def ignore_aliases(self, data):
         return False
 
-class SafeRepresenter(BaseRepresenter):
-
-    def ignore_aliases(self, data):
-        if data is None:
-            return True
-        if isinstance(data, tuple) and data == ():
-            return True
-        if isinstance(data, (str, bytes, bool, int, float)):
-            return True
-
-    def represent_none(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:null', 'null')
-
     def represent_str(self, data):
         return self.represent_scalar('tag:yaml.org,2002:str', data)
 
-    def represent_binary(self, data):
-        if hasattr(base64, 'encodebytes'):
-            data = base64.encodebytes(data).decode('ascii')
-        else:
-            data = base64.encodestring(data).decode('ascii')
-        return self.represent_scalar('tag:yaml.org,2002:binary', data, style='|')
+    def represent_list(self, data):
+        #pairs = (len(data) > 0 and isinstance(data, list))
+        #if pairs:
+        #    for item in data:
+        #        if not isinstance(item, tuple) or len(item) != 2:
+        #            pairs = False
+        #            break
+        #if not pairs:
+            return self.represent_sequence('tag:yaml.org,2002:seq', data)
+        #value = []
+        #for item_key, item_value in data:
+        #    value.append(self.represent_mapping(u'tag:yaml.org,2002:map',
+        #        [(item_key, item_value)]))
+        #return SequenceNode(u'tag:yaml.org,2002:pairs', value)
+
+    def represent_dict(self, data):
+        return self.represent_mapping('tag:yaml.org,2002:map', data)
+
+    def represent_none(self, data):
+        return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     def represent_bool(self, data):
         if data:
@@ -184,27 +185,17 @@ class SafeRepresenter(BaseRepresenter):
             # Unfortunately, this is not a valid float representation according
             # to the definition of the `!!float` tag.  We fix this by adding
             # '.0' before the 'e' symbol.
+            # TODO (In YAML 1.2 Core, 1e17 would be a valid float though)
             if '.' not in value and 'e' in value:
                 value = value.replace('e', '.0e', 1)
         return self.represent_scalar('tag:yaml.org,2002:float', value)
 
-    def represent_list(self, data):
-        #pairs = (len(data) > 0 and isinstance(data, list))
-        #if pairs:
-        #    for item in data:
-        #        if not isinstance(item, tuple) or len(item) != 2:
-        #            pairs = False
-        #            break
-        #if not pairs:
-            return self.represent_sequence('tag:yaml.org,2002:seq', data)
-        #value = []
-        #for item_key, item_value in data:
-        #    value.append(self.represent_mapping(u'tag:yaml.org,2002:map',
-        #        [(item_key, item_value)]))
-        #return SequenceNode(u'tag:yaml.org,2002:pairs', value)
-
-    def represent_dict(self, data):
-        return self.represent_mapping('tag:yaml.org,2002:map', data)
+    def represent_binary(self, data):
+        if hasattr(base64, 'encodebytes'):
+            data = base64.encodebytes(data).decode('ascii')
+        else:
+            data = base64.encodestring(data).decode('ascii')
+        return self.represent_scalar('tag:yaml.org,2002:binary', data, style='|')
 
     def represent_set(self, data):
         value = {}
@@ -220,6 +211,25 @@ class SafeRepresenter(BaseRepresenter):
         value = data.isoformat(' ')
         return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
 
+    def represent_undefined(self, data):
+        raise RepresenterError("cannot represent an object", data)
+
+    @classmethod
+    def init_representers(cls, name):
+        for key in _representers[name]:
+            callback = _representers[name][key]
+            cls.add_representer(key, callback)
+
+class CommonRepresenter(BaseRepresenter):
+
+    def ignore_aliases(self, data):
+        if data is None:
+            return True
+        if isinstance(data, tuple) and data == ():
+            return True
+        if isinstance(data, (str, bytes, bool, int, float)):
+            return True
+
     def represent_yaml_object(self, tag, data, cls, flow_style=None):
         if hasattr(data, '__getstate__'):
             state = data.__getstate__()
@@ -227,47 +237,65 @@ class SafeRepresenter(BaseRepresenter):
             state = data.__dict__.copy()
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
-    def represent_undefined(self, data):
-        raise RepresenterError("cannot represent an object", data)
+class SafeRepresenter(BaseRepresenter):
 
-SafeRepresenter.add_representer(type(None),
-        SafeRepresenter.represent_none)
+    def ignore_aliases(self, data):
+        if data is None:
+            return True
+        if isinstance(data, tuple) and data == ():
+            return True
+        if isinstance(data, (str, bytes, bool, int, float)):
+            return True
 
-SafeRepresenter.add_representer(str,
-        SafeRepresenter.represent_str)
+    def represent_yaml_object(self, tag, data, cls, flow_style=None):
+        if hasattr(data, '__getstate__'):
+            state = data.__getstate__()
+        else:
+            state = data.__dict__.copy()
+        return self.represent_mapping(tag, state, flow_style=flow_style)
 
-SafeRepresenter.add_representer(bytes,
-        SafeRepresenter.represent_binary)
+_representers = {
+    'yaml11': {
+        bool: BaseRepresenter.represent_bool,
+        dict: BaseRepresenter.represent_dict,
+        list: BaseRepresenter.represent_list,
+        tuple: BaseRepresenter.represent_list,
+        str: BaseRepresenter.represent_str,
+        float: BaseRepresenter.represent_float,
+        int: BaseRepresenter.represent_int,
+        type(None): BaseRepresenter.represent_none,
+        bytes: BaseRepresenter.represent_binary,
+        set: BaseRepresenter.represent_set,
+        datetime.date: BaseRepresenter.represent_date,
+        datetime.datetime: BaseRepresenter.represent_datetime,
+        None: BaseRepresenter.represent_undefined,
+    },
+    'core': {
+        bool: BaseRepresenter.represent_bool,
+        dict: BaseRepresenter.represent_dict,
+        list: BaseRepresenter.represent_list,
+        tuple: BaseRepresenter.represent_list,
+        str: BaseRepresenter.represent_str,
+        float: BaseRepresenter.represent_float,
+        int: BaseRepresenter.represent_int,
+        type(None): BaseRepresenter.represent_none,
+        None: BaseRepresenter.represent_undefined,
+    },
+    'json': {
+        bool: BaseRepresenter.represent_bool,
+        dict: BaseRepresenter.represent_dict,
+        list: BaseRepresenter.represent_list,
+        tuple: BaseRepresenter.represent_list,
+        str: BaseRepresenter.represent_str,
+        float: BaseRepresenter.represent_float,
+        int: BaseRepresenter.represent_int,
+        type(None): BaseRepresenter.represent_none,
+        None: BaseRepresenter.represent_undefined,
+    },
+}
 
-SafeRepresenter.add_representer(bool,
-        SafeRepresenter.represent_bool)
 
-SafeRepresenter.add_representer(int,
-        SafeRepresenter.represent_int)
-
-SafeRepresenter.add_representer(float,
-        SafeRepresenter.represent_float)
-
-SafeRepresenter.add_representer(list,
-        SafeRepresenter.represent_list)
-
-SafeRepresenter.add_representer(tuple,
-        SafeRepresenter.represent_list)
-
-SafeRepresenter.add_representer(dict,
-        SafeRepresenter.represent_dict)
-
-SafeRepresenter.add_representer(set,
-        SafeRepresenter.represent_set)
-
-SafeRepresenter.add_representer(datetime.date,
-        SafeRepresenter.represent_date)
-
-SafeRepresenter.add_representer(datetime.datetime,
-        SafeRepresenter.represent_datetime)
-
-SafeRepresenter.add_representer(None,
-        SafeRepresenter.represent_undefined)
+SafeRepresenter.init_representers('yaml11')
 
 class Representer(SafeRepresenter):
 
