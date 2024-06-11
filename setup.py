@@ -270,7 +270,7 @@ class build_ext(_build_ext):
             if with_ext is not None and not with_ext:
                 continue
             if with_cython:
-                print(f"BUILDING CYTHON EXT; {self.include_dirs=} {self.library_dirs=} {self.define=}")
+                print(f"BUILDING CYTHON EXT; include_dirs={self.include_dirs} library_dirs={self.library_dirs} define={self.define}")
                 ext.sources = self.cython_sources(ext.sources, ext)
             try:
                 self.build_extension(ext)

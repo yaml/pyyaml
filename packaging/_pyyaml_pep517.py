@@ -33,7 +33,7 @@ class ActiveConfigSettings:
 
 
 def _expose_config_settings(real_method, *args, **kwargs):
-    from contextlib import nullcontext
+    from contextlib import ExitStack
     import inspect
 
     sig = inspect.signature(real_method)
@@ -41,9 +41,9 @@ def _expose_config_settings(real_method, *args, **kwargs):
 
     config = boundargs.arguments.get('config_settings')
 
-    ctx = ActiveConfigSettings(config) if config else nullcontext()
-
-    with ctx:
+    with ExitStack() as stack:
+        if config:
+            stack.enter_context(ActiveConfigSettings(config))
         return real_method(*args, **kwargs)
 
 
