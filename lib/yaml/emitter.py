@@ -36,7 +36,7 @@ class Emitter:
     }
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
-            allow_unicode=None, line_break=None):
+            allow_unicode=None, line_break=None, strict_whitespace=True):
 
         # The stream should have the methods `write` and possibly `flush`.
         self.stream = stream
@@ -59,6 +59,12 @@ class Emitter:
 
         # Flow level.
         self.flow_level = 0
+
+        # strict_whitespace (true by default) keeps the previous implementation designed
+        # to preserve strict white-space accuracy. Setting this to false provides cleaner output for
+        # multi-line scalars, but sequences of white spaces at the beginning and end
+        # of lines will likely get squashed
+        self.strict_whitespace = bool(strict_whitespace)
 
         # Contexts.
         self.root_context = False
@@ -510,6 +516,10 @@ class Emitter:
             if (self.analysis.allow_single_quoted and
                     not (self.simple_key_context and self.analysis.multiline)):
                 return '\''
+
+        if not self.strict_whitespace and self.analysis.allow_block and self.analysis.multiline:
+            return '>'
+
         return '"'
 
     def process_scalar(self):
@@ -748,7 +758,7 @@ class Emitter:
             allow_flow_plain = allow_block_plain = False
 
         # We do not permit trailing spaces for block scalars.
-        if trailing_space:
+        if self.strict_whitespace and trailing_space:
             allow_block = False
 
         # Spaces at the beginning of a new line are only acceptable for block
@@ -758,7 +768,7 @@ class Emitter:
 
         # Spaces followed by breaks, as well as special character are only
         # allowed for double quoted scalars.
-        if space_break or special_characters:
+        if (self.strict_whitespace and space_break) or special_characters:
             allow_flow_plain = allow_block_plain =  \
             allow_single_quoted = allow_block = False
 
@@ -926,6 +936,11 @@ class Emitter:
     def write_double_quoted(self, text, split=True):
         self.write_indicator('"', True)
         start = end = 0
+        if self.strict_whitespace:
+          line_marker = '\\'
+        else:
+          line_marker = ''
+
         while end <= len(text):
             ch = None
             if end < len(text):
@@ -958,7 +973,10 @@ class Emitter:
                     start = end+1
             if 0 < end < len(text)-1 and (ch == ' ' or start >= end)    \
                     and self.column+(end-start) > self.best_width and split:
-                data = text[start:end]+'\\'
+                data = text[start:end]+line_marker
+                if not line_marker and text[end] != ' ':
+                  data += '\\'
+
                 if start < end:
                     start = end
                 self.column += len(data)
@@ -969,7 +987,7 @@ class Emitter:
                 self.whitespace = False
                 self.indention = False
                 if text[start] == ' ':
-                    data = '\\'
+                    data = line_marker
                     self.column += len(data)
                     if self.encoding:
                         data = data.encode(self.encoding)
