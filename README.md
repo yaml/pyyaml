@@ -1,7 +1,7 @@
 PyYAML
 ======
 
-A full-featured YAML processing framework for Python
+A full-featured YAML processing framework for Python, supporting [YAML 1.1](https://yaml.org/spec/1.1/).
 
 ## Installation
 
