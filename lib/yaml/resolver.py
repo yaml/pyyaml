@@ -218,6 +218,11 @@ Resolver.add_implicit_resolver(
         re.compile(r'^(?:=)$'),
         ['='])
 
+Resolver.add_implicit_resolver(
+        'tag:yaml.org,2002:object',
+        re.compile(r'\d{2,}'),
+        ['0'])
+
 # The following resolver is only for documentation purposes. It cannot work
 # because plain scalars cannot start with '!', '&', or '*'.
 Resolver.add_implicit_resolver(
