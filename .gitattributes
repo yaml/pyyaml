@@ -1,0 +1,3 @@
+# These files are opened as 'rb' (containing eol=CRLF depending on your git config)
+# and compared (exactly) against files containing eol=LF
+tests/data/* -text
