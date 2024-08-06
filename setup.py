@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '6.0.1'
+VERSION = '7.0.0.dev0'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
@@ -28,8 +28,6 @@ CLASSIFIERS = [
     "Programming Language :: Cython",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -301,6 +299,11 @@ class test(Command):
         tempdir = tempfile.TemporaryDirectory(prefix='test_pyyaml')
 
         try:
+            warnings.warn(
+                "Direct invocation of `setup.py` is deprecated by `setuptools` and will be removed in a future release. PyYAML tests should be run via `pytest`.",
+                DeprecationWarning,
+            )
+
             # have to create a subdir since we don't get dir_exists_ok on copytree until 3.8
             temp_test_path = pathlib.Path(tempdir.name) / 'pyyaml'
             shutil.copytree(build_cmd.build_lib, temp_test_path)
@@ -352,5 +355,5 @@ if __name__ == '__main__':
 
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=3.6',
+        python_requires='>=3.8',
     )
