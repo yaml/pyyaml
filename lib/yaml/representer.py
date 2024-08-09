@@ -336,24 +336,32 @@ class Representer(SafeRepresenter):
         else:
             tag = 'tag:yaml.org,2002:python/object/apply:'
             newobj = False
-        function_name = '%s.%s' % (function.__module__, function.__name__)
-        if not args and not listitems and not dictitems \
-                and isinstance(state, dict) and newobj:
-            return self.represent_mapping(
-                    'tag:yaml.org,2002:python/object:'+function_name, state)
-        if not listitems and not dictitems  \
-                and isinstance(state, dict) and not state:
-            return self.represent_sequence(tag+function_name, args)
+
         value = {}
-        if args:
-            value['args'] = args
-        if state or not isinstance(state, dict):
-            value['state'] = state
-        if listitems:
-            value['listitems'] = listitems
-        if dictitems:
-            value['dictitems'] = dictitems
-        return self.represent_mapping(tag+function_name, value)
+
+        represent_impl = self.represent_mapping
+
+        if not args and not listitems and not dictitems and isinstance(state, dict) and newobj:
+            # object supports simple object state w/ __newobj__
+            tag = 'tag:yaml.org,2002:python/object:'
+            value = state
+        elif not listitems and not dictitems and isinstance(state, dict) and not state:
+            value = args
+            represent_impl = self.represent_sequence
+        else:
+            if args:
+                value['args'] = args
+            if state or not isinstance(state, dict):
+                value['state'] = state
+            if listitems:
+                value['listitems'] = listitems
+            if dictitems:
+                value['dictitems'] = dictitems
+
+        type_qualname = getattr(function, '__qualname__', getattr(function, '__name__', None))
+        type_separator = '@' if '.' in type_qualname else '.'  # if nested class, use @ in tag to disambiguate module name and object qualname
+        tag = f'{tag}{function.__module__}{type_separator}{type_qualname}'
+        return represent_impl(tag, value)
 
     def represent_ordered_dict(self, data):
         # Provide uniform representation across different Python versions.
