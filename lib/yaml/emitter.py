@@ -18,7 +18,7 @@ class ScalarAnalysis:
     def __init__(self, scalar, empty, multiline,
             allow_flow_plain, allow_block_plain,
             allow_single_quoted, allow_double_quoted,
-            allow_block):
+            allow_block, maximum_line_length):
         self.scalar = scalar
         self.empty = empty
         self.multiline = multiline
@@ -27,6 +27,7 @@ class ScalarAnalysis:
         self.allow_single_quoted = allow_single_quoted
         self.allow_double_quoted = allow_double_quoted
         self.allow_block = allow_block
+        self.maximum_line_length = maximum_line_length
 
 class Emitter:
 
@@ -506,6 +507,11 @@ class Emitter:
             if (not self.flow_level and not self.simple_key_context
                     and self.analysis.allow_block):
                 return self.event.style
+        if (not self.event.style and not self.flow_level and
+            self.analysis.allow_block and self.analysis.multiline):
+                allowed_length = self.best_width - self.column;
+                if self.analysis.maximum_line_length < allowed_length:
+                    return '|'
         if not self.event.style or self.event.style == '\'':
             if (self.analysis.allow_single_quoted and
                     not (self.simple_key_context and self.analysis.multiline)):
@@ -630,7 +636,7 @@ class Emitter:
             return ScalarAnalysis(scalar=scalar, empty=True, multiline=False,
                     allow_flow_plain=False, allow_block_plain=True,
                     allow_single_quoted=True, allow_double_quoted=True,
-                    allow_block=False)
+                    allow_block=False, maximum_line_length=0)
 
         # Indicators and special characters.
         block_indicators = False
@@ -665,6 +671,9 @@ class Emitter:
         previous_break = False
 
         index = 0
+        line_length = 0
+        maximum_line_length = 0
+        only_linebreaks = 1
         while index < len(scalar):
             ch = scalar[index]
 
@@ -696,6 +705,11 @@ class Emitter:
             # Check for line breaks, special, and unicode characters.
             if ch in '\n\x85\u2028\u2029':
                 line_breaks = True
+                maximum_line_length = max(line_length, maximum_line_length)
+                line_length = 0
+            else:
+                only_linebreaks = 0
+                line_length += 1
             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
                 if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
                         or '\uE000' <= ch <= '\uFFFD'
@@ -748,8 +762,10 @@ class Emitter:
             allow_flow_plain = allow_block_plain = False
 
         # We do not permit trailing spaces for block scalars.
-        if trailing_space:
+        if trailing_space or only_linebreaks:
             allow_block = False
+        if only_linebreaks:
+            allow_single_quoted = False
 
         # Spaces at the beginning of a new line are only acceptable for block
         # scalars.
@@ -781,7 +797,8 @@ class Emitter:
                 allow_block_plain=allow_block_plain,
                 allow_single_quoted=allow_single_quoted,
                 allow_double_quoted=allow_double_quoted,
-                allow_block=allow_block)
+                allow_block=allow_block,
+                maximum_line_length=maximum_line_length)
 
     # Writers.
 
