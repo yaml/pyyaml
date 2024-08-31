@@ -9,6 +9,8 @@ MANIFEST
 **/*.dylib
 **/*.pyd
 
+.tox/
+
 
 # cached Python binaries
 *.py[cdo]
