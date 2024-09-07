@@ -1,5 +1,5 @@
 
-import sys, os, os.path, types, traceback, pprint, pathlib
+import sys, os, os.path, types, traceback, pprint, pathlib, functools, concurrent.futures
 
 DATA = str(pathlib.Path(__file__).parent / 'data')
 
@@ -50,7 +50,8 @@ def parse_arguments(args):
     include_filenames.extend(args)
     if 'YAML_TEST_FILENAMES' in os.environ:
         include_filenames.extend(os.environ['YAML_TEST_FILENAMES'].split())
-    return include_functions, include_filenames, verbose
+    parallel = int(os.environ.get('YAML_TEST_PARALLEL', '0'))
+    return include_functions, include_filenames, verbose, parallel
 
 def execute(function, filenames, verbose):
     name = function.__name__
@@ -118,11 +119,9 @@ def display(results, verbose):
         sys.stdout.write('ERRORS: %s\n' % errors)
     return not (failures or errors)
 
-def run(collections, args=None):
+def runners(collections, include_functions, include_filenames, verbose):
     test_functions = find_test_functions(collections)
     test_filenames = find_test_filenames(DATA)
-    include_functions, include_filenames, verbose = parse_arguments(args)
-    results = []
     for function in test_functions:
         if include_functions and function.__name__ not in include_functions:
             continue
@@ -141,10 +140,18 @@ def run(collections, args=None):
                         if skip_ext in exts:
                             break
                     else:
-                        result = execute(function, filenames, verbose)
-                        results.append(result)
+                        yield functools.partial(execute, function, filenames, verbose)
         else:
-            result = execute(function, [], verbose)
-            results.append(result)
-    return display(results, verbose=verbose)
+            yield functools.partial(execute, function, [], verbose)
 
+def run(collections, args=None):
+    include_functions, include_filenames, verbose, parallel = parse_arguments(args)
+    test_runners = runners(collections, include_functions, include_filenames, verbose)
+    if parallel == 0:
+        results = [runner() for runner in test_runners]
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+            futures = [executor.submit(runner) for runner in test_runners]
+        concurrent.futures.wait(futures)
+        results = [future.result(futures) for future in futures]
+    return display(results, verbose=verbose)
