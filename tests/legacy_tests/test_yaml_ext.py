@@ -1,5 +1,5 @@
 import yaml._yaml, yaml
-import types, pprint, tempfile, sys, os
+import types, pprint, tempfile, sys, os, threading
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
@@ -255,13 +255,16 @@ def test_large_file(verbose=False):
 
 test_large_file.unittest = None
 
+yaml_module_lock = threading.RLock()
+
 def wrap_ext_function(function):
     def wrapper(*args, **kwds):
-        _set_up()
-        try:
-            function(*args, **kwds)
-        finally:
-            _tear_down()
+        with yaml_module_lock:
+            _set_up()
+            try:
+                function(*args, **kwds)
+            finally:
+                _tear_down()
     wrapper.__name__ = '%s_ext' % function.__name__
     wrapper.unittest = function.unittest
     wrapper.skip = getattr(function, 'skip', [])+['.skip-ext']
