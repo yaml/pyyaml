@@ -4,7 +4,6 @@ import test_constructor
 import pprint
 
 def test_representer_types(code_filename, verbose=False):
-    test_constructor._make_objects()
     for allow_unicode in [False, True]:
         for encoding in ['utf-8', 'utf-16-be', 'utf-16-le']:
             with open(code_filename, 'rb') as file:
