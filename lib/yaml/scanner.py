@@ -1306,7 +1306,7 @@ class Scanner:
             if not spaces or self.peek() == '#' \
                     or (not self.flow_level and self.column < indent):
                 break
-        return ScalarToken(''.join(chunks), True, start_mark, end_mark)
+        return ScalarToken(''.join(chunks), True, start_mark, end_mark, style='')
 
     def scan_plain_spaces(self, indent, start_mark):
         # See the specification for details.
