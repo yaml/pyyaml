@@ -1,6 +1,6 @@
 
 NAME = 'PyYAML'
-VERSION = '6.0.1'
+VERSION = '7.0.0.dev0'
 DESCRIPTION = "YAML parser and emitter for Python"
 LONG_DESCRIPTION = """\
 YAML is a data serialization format designed for human readability
@@ -28,12 +28,12 @@ CLASSIFIERS = [
     "Programming Language :: Cython",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -84,7 +84,12 @@ if 'sdist' in sys.argv or os.environ.get('PYYAML_FORCE_CYTHON') == '1':
     with_cython = True
 try:
     from Cython.Distutils.extension import Extension as _Extension
-    from Cython.Distutils import build_ext as _build_ext
+    try:
+        # try old_build_ext from Cython > 3 first, until we can dump it entirely
+        from Cython.Distutils.old_build_ext import old_build_ext as _build_ext
+    except ImportError:
+        # Cython < 3
+        from Cython.Distutils import build_ext as _build_ext
     with_cython = True
 except ImportError:
     if with_cython:
@@ -95,6 +100,14 @@ try:
 except ImportError:
     bdist_wheel = None
 
+
+try:
+    from _pyyaml_pep517 import ActiveConfigSettings
+except ImportError:
+    class ActiveConfigSettings:
+        @staticmethod
+        def current():
+            return {}
 
 # on Windows, disable wheel generation warning noise
 windows_ignore_warnings = [
@@ -175,6 +188,31 @@ class Extension(_Extension):
 
 
 class build_ext(_build_ext):
+    def finalize_options(self):
+        super().finalize_options()
+        pep517_config = ActiveConfigSettings.current()
+
+        build_config = pep517_config.get('pyyaml_build_config')
+
+        if build_config:
+            import json
+            build_config = json.loads(build_config)
+            print(f"`pyyaml_build_config`: {build_config}")
+        else:
+            build_config = {}
+            print("No `pyyaml_build_config` setting found.")
+
+        for key, value in build_config.items():
+            existing_value = getattr(self, key, ...)
+            if existing_value is ...:
+                print(f"ignoring unknown config key {key!r}")
+                continue
+
+            if existing_value:
+                print(f"combining {key!r} {existing_value!r} and {value!r}")
+                value = existing_value + value  # FIXME: handle type diff
+
+            setattr(self, key, value)
 
     def run(self):
         optional = True
@@ -232,6 +270,7 @@ class build_ext(_build_ext):
             if with_ext is not None and not with_ext:
                 continue
             if with_cython:
+                print(f"BUILDING CYTHON EXT; {self.include_dirs=} {self.library_dirs=} {self.define=}")
                 ext.sources = self.cython_sources(ext.sources, ext)
             try:
                 self.build_extension(ext)
@@ -252,6 +291,7 @@ class test(Command):
         pass
 
     def run(self):
+        warnings.warn('Running tests via `setup.py test` is deprecated and will be removed in a future release. Use `pytest` instead to ensure that the complete test suite is run.', DeprecationWarning)
         build_cmd = self.get_finalized_command('build')
         build_cmd.run()
 
@@ -261,11 +301,16 @@ class test(Command):
         tempdir = tempfile.TemporaryDirectory(prefix='test_pyyaml')
 
         try:
+            warnings.warn(
+                "Direct invocation of `setup.py` is deprecated by `setuptools` and will be removed in a future release. PyYAML tests should be run via `pytest`.",
+                DeprecationWarning,
+            )
+
             # have to create a subdir since we don't get dir_exists_ok on copytree until 3.8
             temp_test_path = pathlib.Path(tempdir.name) / 'pyyaml'
             shutil.copytree(build_cmd.build_lib, temp_test_path)
             sys.path.insert(0, str(temp_test_path))
-            sys.path.insert(0, 'tests/lib')
+            sys.path.insert(0, 'tests/legacy_tests')
 
             import test_all
             if not test_all.main([]):
@@ -323,5 +368,5 @@ if __name__ == '__main__':
 
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=3.6',
+        python_requires='>=3.8',
     )

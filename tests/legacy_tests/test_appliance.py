@@ -1,7 +1,8 @@
 
-import sys, os, os.path, types, traceback, pprint
+import sys, os, os.path, types, traceback, pprint, pathlib
 
-DATA = 'tests/data'
+DATA = str(pathlib.Path(__file__).parent / 'data')
+
 
 def find_test_functions(collections):
     if not isinstance(collections, list):
@@ -15,6 +16,7 @@ def find_test_functions(collections):
             if isinstance(value, types.FunctionType) and hasattr(value, 'unittest'):
                 functions.append(value)
     return functions
+
 
 def find_test_filenames(directory):
     filenames = {}

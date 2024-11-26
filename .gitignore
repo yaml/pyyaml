@@ -16,4 +16,4 @@ _pycache_/*
 
 # local IDE state
 /.idea/*
-
+/.tox/*
