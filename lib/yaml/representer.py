@@ -5,7 +5,7 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections, sys
 
 class RepresenterError(YAMLError):
     pass
@@ -234,6 +234,12 @@ SafeRepresenter.add_representer(type(None),
         SafeRepresenter.represent_none)
 
 SafeRepresenter.add_representer(str,
+        SafeRepresenter.represent_str)
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+
+    SafeRepresenter.add_multi_representer(StrEnum,
         SafeRepresenter.represent_str)
 
 SafeRepresenter.add_representer(bytes,
