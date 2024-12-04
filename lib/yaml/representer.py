@@ -145,7 +145,7 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     def represent_str(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:str', data)
+        return self.represent_scalar('tag:yaml.org,2002:str', str(data))
 
     def represent_binary(self, data):
         if hasattr(base64, 'encodebytes'):
