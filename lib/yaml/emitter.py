@@ -379,7 +379,7 @@ class Emitter:
             self.state = self.states.pop()
         else:
             self.write_indent()
-            self.write_indicator('-', True, indention=True, is_sequence=True)
+            self.write_indicator('-', True, indention=True, indent_indicator=True)
             self.states.append(self.expect_block_sequence_item)
             self.expect_node(sequence=True)
 
@@ -798,9 +798,9 @@ class Emitter:
         self.flush_stream()
 
     def write_indicator(self, indicator, need_whitespace,
-            whitespace=False, indention=False, is_sequence=False):
+            whitespace=False, indention=False, indent_indicator=False):
         if self.whitespace or not need_whitespace:
-            if is_sequence:
+            if indent_indicator:
                 data = ' '*(self.best_indent-2)+indicator
             else:
                 data = indicator
