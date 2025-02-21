@@ -33,7 +33,7 @@ env:
   LIBYAML_REF: ${{ inputs.libyaml_ref || '0.2.5' }}  # FIXME: can we ref the input.default value?
   skip_ci_redundant_jobs: ${{ inputs.skip_ci_redundant_jobs || github.event_name == 'pull_request' || github.event_name == 'push' }}
   skip_slow_jobs: ${{ inputs.skip_slow_jobs || github.event_name == 'pull_request' || github.event_name == 'push' }}
-  skip_artifact_upload: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_artifact_upload) || github.event_name != 'workflow_dispatch' }}
+  skip_artifact_upload: false
 
 jobs:
   python_sdist:

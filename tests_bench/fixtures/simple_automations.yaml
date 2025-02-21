@@ -1,0 +1,403 @@
+- id: "1658785995596"
+  alias: eve button
+  description: ""
+  trigger:
+    - platform: device
+      device_id: 6775f9f6fd0f330d93ca5ba3522eaa6e
+      domain: homekit_controller
+      type: button1
+      subtype: single_press
+  condition: []
+  action:
+    - service: persistent_notification.create
+      data:
+        title: button
+        message: pressed
+  mode: single
+- id: "1666989217519"
+  alias: wemo
+  description: ""
+  trigger:
+    - platform: device
+      device_id: 55749932cbb252643823ab393d8596be
+      domain: homekit_controller
+      type: button1
+      subtype: single_press
+    - platform: device
+      device_id: 55749932cbb252643823ab393d8596be
+      domain: homekit_controller
+      type: button2
+      subtype: single_press
+    - platform: device
+      device_id: 55749932cbb252643823ab393d8596be
+      domain: homekit_controller
+      type: button3
+      subtype: single_press
+  condition: []
+  action:
+    - service: notify.notify
+      data:
+        message: any
+        title: any
+  mode: single
+- id: "1678868902556"
+  alias: Purge noisy power sensors
+  description: ""
+  trigger:
+    - platform: time
+      at: 04:15:00
+  condition: []
+  action:
+    - service: recorder.purge_entities
+      data:
+        domains: []
+        entity_globs: []
+        keep_days: 5
+      target:
+        entity_id: sensor.power_sensor_0
+  mode: single
+- id: shelly packet
+  alias: shelly packet ss
+  description: ""
+  trigger:
+    - type: value
+      platform: device
+      device_id: 78ade3583947b6e6304eebe05b40c988
+      entity_id: sensor.sbbt_002c_ad7b_packet_id
+      domain: sensor
+      above: 0
+  action:
+    - service: notify.notify
+      data:
+        title: shelly packet
+        message: shelly packet
+  mode: single
+- id: "1681931945001"
+  alias: shelly button press
+  description: ""
+  trigger:
+    - platform: device
+      device_id: 78ade3583947b6e6304eebe05b40c988
+      domain: bthome
+      type: button
+      subtype: press
+  condition: []
+  action:
+    - service: notify.persistent_notification
+      data:
+        message: shelly button press
+        title: shelly button press
+  mode: single
+- id: "1686257663573"
+  alias: harmony 1
+  description: ""
+  trigger: []
+  condition: []
+  action:
+    - parallel:
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+        - service: remote.send_command
+          data:
+            device: Apple TV
+            command: Stop
+          target:
+            entity_id: remote.alexander_down_guest
+  mode: single
+- id: "1687336680462"
+  alias: New Automation
+  description: ""
+  trigger:
+    - platform: persistent_notification
+      update_type:
+        - added
+        - removed
+        - current
+        - updated
+  condition: []
+  action:
+    - service: button.press
+      data: {}
+      target:
+        entity_id: button.dev_garage_restart
+    - service: notify.mobile_app_xx_mail
+      data:
+        title: new notify!
+        message:
+          "{{ trigger.notification }} {{ trigger.notification.notification_id
+          }} {{ trigger.notification.title }} {{ trigger.notification.message }}"
+  mode: single
+- id: "1712451177442"
+  alias: loop
+  description: ""
+  trigger:
+    - platform: sun
+      event: sunrise
+      offset: 0
+      enabled: false
+  condition: []
+  action:
+    - repeat:
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{1 != 1}}"
+            then:
+              - event: test
+                event_data: {}
+        until:
+          - condition: template
+            value_template: "{{1 != 1}}"
+  mode: single
+- id: "1712452897893"
+  alias: turn off plug
+  description: ""
+  trigger: []
+  condition: []
+  action:
+    - type: turn_off
+      device_id: 79437d13890e112dd07d44bb983177b2
+      entity_id: 8241653a817bd9695b79702215e0bde2
+      domain: switch
+  mode: restart
+- id: "1712595892078"
+  alias: Raise temperature error check
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - automation.raise_temperature
+      attribute: last_triggered
+      id: Automation Start
+      for:
+        hours: 0
+        minutes: 0
+        seconds: 0
+    - platform: state
+      entity_id:
+        - automation.vero_6_8
+      attribute: last_triggered
+      id: 6-8
+    - platform: state
+      entity_id:
+        - climate.climatisation
+      from: unavailable
+      to: heat
+      id: Unavailable
+    - platform: state
+      entity_id:
+        - automation.raise_temperature_end
+      attribute: last_triggered
+      id: Automation End
+      for:
+        hours: 0
+        minutes: 0
+        seconds: 0
+  condition: []
+  action:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id:
+                - Automation Start
+          sequence:
+            - if:
+                - condition: or
+                  conditions:
+                    - condition: state
+                      entity_id: climate.climatisation
+                      state: unavailable
+                    - condition: numeric_state
+                      entity_id: climate.climatisation
+                      below: 23
+                      attribute: temperature
+                    - condition: state
+                      entity_id: input_boolean.raise_temperature_on
+                      state: "off"
+              then:
+                - wait_for_trigger: []
+                  timeout:
+                    hours: 0
+                    minutes: 5
+                    seconds: 0
+                    milliseconds: 0
+                  continue_on_timeout: false
+                - service: automation.trigger
+                  metadata: {}
+                  data:
+                    skip_condition: false
+                  target:
+                    entity_id: automation.raise_temperature
+          alias: Raise Temperature Start
+        - conditions:
+            - condition: trigger
+              id:
+                - 6-8
+          sequence: []
+        - conditions:
+            - condition: trigger
+              id:
+                - Automation End
+          sequence:
+            - if:
+                - condition: or
+                  conditions:
+                    - condition: state
+                      entity_id: climate.climatisation
+                      state: unavailable
+                    - condition: numeric_state
+                      entity_id: climate.climatisation
+                      attribute: temperature
+                      above: 22
+                    - condition: state
+                      entity_id: input_boolean.raise_temperature_on
+                      state: "on"
+              then:
+                - wait_for_trigger: []
+                  timeout:
+                    hours: 0
+                    minutes: 5
+                    seconds: 0
+                    milliseconds: 0
+                  continue_on_timeout: false
+                - service: automation.trigger
+                  metadata: {}
+                  data:
+                    skip_condition: true
+                  target:
+                    entity_id: automation.raise_temperature_end
+          alias: Raise Temperature End
+  mode: single
+- id: "1712697364422"
+  alias: Test race automation1
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.autotest
+      from: "on"
+      for:
+        hours: 0
+        minutes: 0
+        seconds: 5
+  condition: []
+  action:
+    - service: persistent_notification.create
+      metadata: {}
+      data:
+        message: Test race
+  mode: single
+- id: "1712697386363"
+  alias: Test race automation 2
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.autotest
+      from: "on"
+  condition: []
+  action:
+    - service: automation.turn_off
+      target:
+        entity_id: automation.test_race_automation1
+      data:
+        stop_actions: true
+  mode: single
+- id: "1713478871367"
+  alias: zero wait
+  description: ""
+  trigger: []
+  action:
+    - wait_template: false
+      timeout:
+        minutes: 0
+    - service: notify.persistent_notification
+      data:
+        message: xyz
+  mode: single
+- id: "1714133878248"
+  alias: fire toggle on binary_sensor.test_sensor off on 2
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.test_sensor
+      from: "off"
+      to: "on"
+  condition: []
+  action:
+    - service: script.fire_toggle
+      metadata: {}
+      data: {}
+  mode: single
+- id: "1714134127583"
+  alias: fire toggle on binary_sensor.test_sensor off on 1
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.test_sensor
+      from: "off"
+      to: "on"
+  condition: []
+  action:
+    - service: script.fire_toggle
+      metadata: {}
+      data: {}
+  mode: single
+- id: "1716239098767"
+  alias: New automation
+  description: ""
+  trigger:
+    - platform: template
+      value_template:
+        "{% if is_state(\"sun.sun\", \"above_horizon\") -%}\n  {{ \"invalid\"
+        + 1 }}\n{%- else -%}\n  false\n{%- endif %}\n"
+  condition: []
+  action: []
+  mode: single
+- id: test_toggle_off
+  alias: test_toggle_off
+  description: ""
+  trigger:
+    - platform: state
+      entity_id:
+        - input_boolean.toggle_1
+      to: "on"
+  condition: []
+  action:
+    - service: input_boolean.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id:
+          - input_boolean.toggle_1
+  mode: single
