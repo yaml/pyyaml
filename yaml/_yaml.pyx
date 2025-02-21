@@ -68,6 +68,10 @@ cdef class Mark:
 
     def __init__(self, object name, size_t index, size_t line, size_t column,
             object buffer, object pointer):
+        self._fast_init(name, index, line, column, buffer, pointer)
+
+    cdef _fast_init(self, object name, size_t index, size_t line, size_t column,
+            object buffer, object pointer):
         self.name = name
         self.index = index
         self.line = line
@@ -300,6 +304,8 @@ cdef class CParser:
         pass
 
     cdef object _parser_error(self):
+        cdef Mark context_mark
+        cdef Mark problem_mark
         if self.parser.error == YAML_MEMORY_ERROR:
             return MemoryError
         elif self.parser.error == YAML_READER_ERROR:
@@ -307,15 +313,15 @@ cdef class CParser:
                     self.parser.problem_value, u'?', PyUnicode_FromString(self.parser.problem))
         elif self.parser.error == YAML_SCANNER_ERROR    \
                 or self.parser.error == YAML_PARSER_ERROR:
-            context_mark = None
-            problem_mark = None
             if self.parser.context != NULL:
-                context_mark = Mark(self.stream_name,
+                context_mark = Mark.__new__(Mark)
+                context_mark._fast_init(self.stream_name,
                         self.parser.context_mark.index,
                         self.parser.context_mark.line,
                         self.parser.context_mark.column, None, None)
             if self.parser.problem != NULL:
-                problem_mark = Mark(self.stream_name,
+                problem_mark = Mark.__new__(Mark)
+                problem_mark._fast_init(self.stream_name,
                         self.parser.problem_mark.index,
                         self.parser.problem_mark.line,
                         self.parser.problem_mark.column, None, None)
@@ -356,12 +362,14 @@ cdef class CParser:
         return token_object
 
     cdef object _token_to_object(self, yaml_token_t *token):
-        start_mark = Mark(self.stream_name,
+        cdef Mark start_mark = Mark.__new__(Mark)
+        cdef Mark end_mark = Mark.__new__(Mark)
+        start_mark._fast_init(self.stream_name,
                 token.start_mark.index,
                 token.start_mark.line,
                 token.start_mark.column,
                 None, None)
-        end_mark = Mark(self.stream_name,
+        end_mark._fast_init(self.stream_name,
                 token.end_mark.index,
                 token.end_mark.line,
                 token.end_mark.column,
@@ -503,12 +511,14 @@ cdef class CParser:
 
     cdef object _event_to_object(self, yaml_event_t *event):
         cdef yaml_tag_directive_t *tag_directive
-        start_mark = Mark(self.stream_name,
+        cdef Mark start_mark = Mark.__new__(Mark)
+        cdef Mark end_mark = Mark.__new__(Mark)
+        start_mark._fast_init(self.stream_name,
                 event.start_mark.index,
                 event.start_mark.line,
                 event.start_mark.column,
                 None, None)
-        end_mark = Mark(self.stream_name,
+        end_mark._fast_init(self.stream_name,
                 event.end_mark.index,
                 event.end_mark.line,
                 event.end_mark.column,
@@ -665,6 +675,7 @@ cdef class CParser:
             return self._compose_document()
 
     def get_single_node(self):
+        cdef Mark mark
         self._parse_next_event()
         yaml_event_delete(&self.parsed_event)
         self._parse_next_event()
@@ -673,7 +684,8 @@ cdef class CParser:
             document = self._compose_document()
         self._parse_next_event()
         if self.parsed_event.type != YAML_STREAM_END_EVENT:
-            mark = Mark(self.stream_name,
+            mark = Mark.__new__(Mark)
+            mark._fast_init(self.stream_name,
                     self.parsed_event.start_mark.index,
                     self.parsed_event.start_mark.line,
                     self.parsed_event.start_mark.column,
@@ -691,11 +703,13 @@ cdef class CParser:
         return node
 
     cdef object _compose_node(self, object parent, object index):
+        cdef Mark mark
         self._parse_next_event()
         if self.parsed_event.type == YAML_ALIAS_EVENT:
             anchor = PyUnicode_FromYamlString(self.parsed_event.data.alias.anchor)
             if anchor not in self.anchors:
-                mark = Mark(self.stream_name,
+                mark = Mark.__new__(Mark)
+                mark._fast_init(self.stream_name,
                         self.parsed_event.start_mark.index,
                         self.parsed_event.start_mark.line,
                         self.parsed_event.start_mark.column,
@@ -715,7 +729,8 @@ cdef class CParser:
             anchor = PyUnicode_FromYamlString(self.parsed_event.data.mapping_start.anchor)
         if anchor is not None:
             if anchor in self.anchors:
-                mark = Mark(self.stream_name,
+                mark = Mark.__new__(Mark)
+                mark._fast_init(self.stream_name,
                         self.parsed_event.start_mark.index,
                         self.parsed_event.start_mark.line,
                         self.parsed_event.start_mark.column,
@@ -733,12 +748,14 @@ cdef class CParser:
         return node
 
     cdef _compose_scalar_node(self, object anchor):
-        start_mark = Mark(self.stream_name,
+        cdef Mark start_mark = Mark.__new__(Mark)
+        cdef Mark end_mark = Mark.__new__(Mark)
+        start_mark._fast_init(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
                 None, None)
-        end_mark = Mark(self.stream_name,
+        end_mark._fast_init(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
@@ -776,7 +793,9 @@ cdef class CParser:
 
     cdef _compose_sequence_node(self, object anchor):
         cdef int index
-        start_mark = Mark(self.stream_name,
+        cdef Mark start_mark = Mark.__new__(Mark)
+        cdef Mark end_mark = Mark.__new__(Mark)
+        start_mark._fast_init(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
@@ -806,16 +825,20 @@ cdef class CParser:
             value.append(self._compose_node(node, index))
             index = index+1
             self._parse_next_event()
-        node.end_mark = Mark(self.stream_name,
+
+        end_mark._fast_init(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
                 None, None)
+        node.end_mark = end_mark
         yaml_event_delete(&self.parsed_event)
         return node
 
     cdef _compose_mapping_node(self, object anchor):
-        start_mark = Mark(self.stream_name,
+        cdef Mark start_mark = Mark.__new__(Mark)
+        cdef Mark end_mark = Mark.__new__(Mark)
+        start_mark._fast_init(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
@@ -845,11 +868,12 @@ cdef class CParser:
             item_value = self._compose_node(node, item_key)
             value.append((item_key, item_value))
             self._parse_next_event()
-        node.end_mark = Mark(self.stream_name,
+        end_mark._fast_init(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
                 None, None)
+        node.end_mark = end_mark
         yaml_event_delete(&self.parsed_event)
         return node
 
@@ -912,7 +936,7 @@ cdef class CEmitter:
         if hasattr(stream, u'encoding'):
             self.dump_unicode = 1
         self.use_encoding = encoding
-        yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)    
+        yaml_emitter_set_output(&self.emitter, output_handler, <void *>self)
         if canonical:
             yaml_emitter_set_canonical(&self.emitter, 1)
         if indent is not None:
