@@ -38,7 +38,10 @@ env:
 jobs:
   python_sdist:
     name: pyyaml sdist
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
     outputs:
       artifact_name: ${{ steps.build_sdist.outputs.artifact_name }}
     steps:
@@ -65,11 +68,11 @@ jobs:
 
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v4
+      if: matrix.os == 'ubuntu-22.04'
       with:
         name: ${{ steps.build_sdist.outputs.artifact_name }}
         path: dist/${{ steps.build_sdist.outputs.artifact_name }}
         if-no-files-found: error
-      # always upload the sdist artifact- all the wheel build jobs require it
 
   make_linux_libyaml_matrix:
     runs-on: ubuntu-22.04
