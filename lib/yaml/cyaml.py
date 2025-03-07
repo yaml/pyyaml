@@ -1,6 +1,6 @@
 
 __all__ = [
-    'CBaseLoader', 'CSafeLoader', 'CFullLoader', 'CUnsafeLoader', 'CLoader',
+    'CBaseLoader', 'CSafeLoader', 'CFullLoader', 'CUnsafeLoader',
     'CBaseDumper', 'CSafeDumper', 'CDumper'
 ]
 
@@ -12,6 +12,7 @@ from .serializer import *
 from .representer import *
 
 from .resolver import *
+import warnings
 
 class CBaseLoader(CParser, BaseConstructor, BaseResolver):
 
@@ -37,15 +38,13 @@ class CFullLoader(CParser, FullConstructor, Resolver):
 class CUnsafeLoader(CParser, UnsafeConstructor, Resolver):
 
     def __init__(self, stream):
+        warnings.warn(
+            "CUnsafeLoader is unsafe and can execute arbitrary code when loading untrusted YAML data. "
+            "Use CSafeLoader or CFullLoader instead.",
+            RuntimeWarning, stacklevel=2
+        )
         CParser.__init__(self, stream)
         UnsafeConstructor.__init__(self)
-        Resolver.__init__(self)
-
-class CLoader(CParser, Constructor, Resolver):
-
-    def __init__(self, stream):
-        CParser.__init__(self, stream)
-        Constructor.__init__(self)
         Resolver.__init__(self)
 
 class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
