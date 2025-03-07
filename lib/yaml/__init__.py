@@ -5,17 +5,18 @@ from .tokens import *
 from .events import *
 from .nodes import *
 
-from .loader import *
+from .loader import BaseLoader, FullLoader, SafeLoader, UnsafeLoader
 from .dumper import *
 
 __version__ = '7.0.0.dev0'
 try:
-    from .cyaml import *
+    from .cyaml import CBaseLoader, CSafeLoader, CFullLoader, CUnsafeLoader, CBaseDumper, CSafeDumper, CDumper
     __with_libyaml__ = True
 except ImportError:
     __with_libyaml__ = False
 
 import io
+import warnings
 
 #------------------------------------------------------------------------------
 # XXX "Warnings control" is now deprecated. Leaving in the API function to not
@@ -26,7 +27,7 @@ def warnings(settings=None):
         return {}
 
 #------------------------------------------------------------------------------
-def scan(stream, Loader=Loader):
+def scan(stream, Loader=SafeLoader):
     """
     Scan a YAML stream and produce scanning tokens.
     """
@@ -37,7 +38,7 @@ def scan(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def parse(stream, Loader=Loader):
+def parse(stream, Loader=SafeLoader):
     """
     Parse a YAML stream and produce parsing events.
     """
@@ -48,7 +49,7 @@ def parse(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def compose(stream, Loader=Loader):
+def compose(stream, Loader=SafeLoader):
     """
     Parse the first YAML document in a stream
     and produce the corresponding representation tree.
@@ -59,7 +60,7 @@ def compose(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def compose_all(stream, Loader=Loader):
+def compose_all(stream, Loader=SafeLoader):
     """
     Parse all YAML documents in a stream
     and produce corresponding representation trees.
@@ -141,7 +142,15 @@ def unsafe_load(stream):
 
     Resolve all tags, even those known to be
     unsafe on untrusted input.
+    
+    WARNING: This function is dangerous and can execute arbitrary code.
+    Only use on trusted input! Use safe_load() or full_load() instead.
     """
+    warnings.warn(
+        "unsafe_load() is dangerous and can execute arbitrary code when loading untrusted YAML data. "
+        "Use safe_load() or full_load() instead.",
+        RuntimeWarning, stacklevel=2
+    )
     return load(stream, UnsafeLoader)
 
 def unsafe_load_all(stream):
@@ -151,7 +160,15 @@ def unsafe_load_all(stream):
 
     Resolve all tags, even those known to be
     unsafe on untrusted input.
+    
+    WARNING: This function is dangerous and can execute arbitrary code.
+    Only use on trusted input! Use safe_load_all() or full_load_all() instead.
     """
+    warnings.warn(
+        "unsafe_load_all() is dangerous and can execute arbitrary code when loading untrusted YAML data. "
+        "Use safe_load_all() or full_load_all() instead.",
+        RuntimeWarning, stacklevel=2
+    )
     return load_all(stream, UnsafeLoader)
 
 def emit(events, stream=None, Dumper=Dumper,
@@ -277,9 +294,8 @@ def add_implicit_resolver(tag, regexp, first=None,
     first is a sequence of possible initial characters or None.
     """
     if Loader is None:
-        loader.Loader.add_implicit_resolver(tag, regexp, first)
-        loader.FullLoader.add_implicit_resolver(tag, regexp, first)
-        loader.UnsafeLoader.add_implicit_resolver(tag, regexp, first)
+        FullLoader.add_implicit_resolver(tag, regexp, first)
+        UnsafeLoader.add_implicit_resolver(tag, regexp, first)
     else:
         Loader.add_implicit_resolver(tag, regexp, first)
     Dumper.add_implicit_resolver(tag, regexp, first)
@@ -292,9 +308,8 @@ def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
     Keys can be string values, integers, or None.
     """
     if Loader is None:
-        loader.Loader.add_path_resolver(tag, path, kind)
-        loader.FullLoader.add_path_resolver(tag, path, kind)
-        loader.UnsafeLoader.add_path_resolver(tag, path, kind)
+        FullLoader.add_path_resolver(tag, path, kind)
+        UnsafeLoader.add_path_resolver(tag, path, kind)
     else:
         Loader.add_path_resolver(tag, path, kind)
     Dumper.add_path_resolver(tag, path, kind)
@@ -306,9 +321,8 @@ def add_constructor(tag, constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_constructor(tag, constructor)
-        loader.FullLoader.add_constructor(tag, constructor)
-        loader.UnsafeLoader.add_constructor(tag, constructor)
+        FullLoader.add_constructor(tag, constructor)
+        UnsafeLoader.add_constructor(tag, constructor)
     else:
         Loader.add_constructor(tag, constructor)
 
@@ -320,9 +334,8 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
+        FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
+        UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
     else:
         Loader.add_multi_constructor(tag_prefix, multi_constructor)
 
@@ -367,7 +380,7 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
 
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 
-    yaml_loader = [Loader, FullLoader, UnsafeLoader]
+    yaml_loader = [FullLoader, UnsafeLoader]
     yaml_dumper = Dumper
 
     yaml_tag = None

@@ -3,7 +3,7 @@ import types, pprint, tempfile, sys, os
 
 yaml.PyBaseLoader = yaml.BaseLoader
 yaml.PySafeLoader = yaml.SafeLoader
-yaml.PyLoader = yaml.Loader
+yaml.PyLoader = yaml.UnsafeLoader
 yaml.PyBaseDumper = yaml.BaseDumper
 yaml.PySafeDumper = yaml.SafeDumper
 yaml.PyDumper = yaml.Dumper
@@ -71,7 +71,7 @@ def new_safe_dump_all(documents, stream=None, **kwds):
 def _set_up():
     yaml.BaseLoader = yaml.CBaseLoader
     yaml.SafeLoader = yaml.CSafeLoader
-    yaml.Loader = yaml.CLoader
+    yaml.UnsafeLoader = yaml.CUnsafeLoader
     yaml.BaseDumper = yaml.CBaseDumper
     yaml.SafeDumper = yaml.CSafeDumper
     yaml.Dumper = yaml.CDumper
@@ -94,7 +94,7 @@ def _set_up():
 def _tear_down():
     yaml.BaseLoader = yaml.PyBaseLoader
     yaml.SafeLoader = yaml.PySafeLoader
-    yaml.Loader = yaml.PyLoader
+    yaml.UnsafeLoader = yaml.PyLoader
     yaml.BaseDumper = yaml.PyBaseDumper
     yaml.SafeDumper = yaml.PySafeDumper
     yaml.Dumper = yaml.PyDumper
@@ -251,7 +251,7 @@ def test_large_file(verbose=False):
         for i in range(2**(SIZE_FILE-SIZE_ITERATION-SIZE_LINE) + 1):
             temp_file.write(bytes(('-' + (' ' * (2**SIZE_LINE-4))+ '{}\n')*(2**SIZE_ITERATION), 'utf-8'))
         temp_file.seek(0)
-        yaml.load(temp_file, Loader=yaml.CLoader)
+        yaml.load(temp_file, Loader=yaml.CUnsafeLoader)
 
 test_large_file.unittest = None
 
