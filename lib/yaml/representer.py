@@ -5,15 +5,45 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
+import threading
 import datetime, copyreg, types, base64, collections
 
 class RepresenterError(YAMLError):
     pass
 
-class BaseRepresenter:
 
-    yaml_representers = {}
-    yaml_multi_representers = {}
+class RepresenterSetup(threading.local):
+    def __init__(self):
+        self.initialized = False
+
+    def ensure_initialized(self):
+        if not self.initialized:
+            self.initialized = True
+            setup_representers()
+
+
+class RepresenterRegistry(threading.local):
+    def __init__(self):
+        self.yaml_representers = {}
+        self.yaml_multi_representers = {}
+        self.yaml_representers_initialized = False
+        self.yaml_multi_representers_initialized = False
+
+
+class RepresenterMeta(type):
+    """Metaclass to handle representer registry inheritance"""
+    
+    def __new__(mcs, name, bases, attrs):
+        cls = super().__new__(mcs, name, bases, attrs)
+        if 'representer_registry' not in cls.__dict__:
+            cls.representer_registry = RepresenterRegistry()
+        return cls
+
+
+class BaseRepresenter(metaclass=RepresenterMeta):
+
+    representer_setup = RepresenterSetup()
+    representer_registry = RepresenterRegistry()
 
     def __init__(self, default_style=None, default_flow_style=False, sort_keys=True):
         self.default_style = default_style
@@ -44,18 +74,20 @@ class BaseRepresenter:
             #self.represented_objects[alias_key] = None
             self.object_keeper.append(data)
         data_types = type(data).__mro__
-        if data_types[0] in self.yaml_representers:
-            node = self.yaml_representers[data_types[0]](self, data)
+        yaml_representers = self.yaml_representers()
+        yaml_multi_representers = self.yaml_multi_representers()
+        if data_types[0] in yaml_representers:
+            node = yaml_representers[data_types[0]](self, data)
         else:
             for data_type in data_types:
-                if data_type in self.yaml_multi_representers:
-                    node = self.yaml_multi_representers[data_type](self, data)
+                if data_type in yaml_multi_representers:
+                    node = yaml_multi_representers[data_type](self, data)
                     break
             else:
-                if None in self.yaml_multi_representers:
-                    node = self.yaml_multi_representers[None](self, data)
-                elif None in self.yaml_representers:
-                    node = self.yaml_representers[None](self, data)
+                if None in yaml_multi_representers:
+                    node = yaml_multi_representers[None](self, data)
+                elif None in yaml_representers:
+                    node = yaml_representers[None](self, data)
                 else:
                     node = ScalarNode(None, str(data))
         #if alias_key is not None:
@@ -63,16 +95,54 @@ class BaseRepresenter:
         return node
 
     @classmethod
-    def add_representer(cls, data_type, representer):
-        if not 'yaml_representers' in cls.__dict__:
-            cls.yaml_representers = cls.yaml_representers.copy()
-        cls.yaml_representers[data_type] = representer
+    def yaml_representers(cls):
+        cls.representer_setup.ensure_initialized()
+
+        # In case we're calling BaseConstructor.get_registry, we should return the registry
+        # of the BaseConstructor class directly, since we don't need to go up the mro
+        if cls.representer_registry.yaml_representers_initialized or cls is BaseRepresenter:
+            return cls.representer_registry.yaml_representers
+
+        # Otherwise, we need to find to return the registry of the parent class
+        constructor_cls = next(
+            c for c in cls.mro() if hasattr(c, 'yaml_representers') and c is not cls)
+        return constructor_cls.yaml_representers()
 
     @classmethod
-    def add_multi_representer(cls, data_type, representer):
-        if not 'yaml_multi_representers' in cls.__dict__:
-            cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
-        cls.yaml_multi_representers[data_type] = representer
+    def yaml_multi_representers(cls):
+        cls.representer_setup.ensure_initialized()
+
+        # In case we're calling BaseConstructor.get_registry, we should return the registry
+        # of the BaseConstructor class directly, since we don't need to go up the mro
+        if cls.representer_registry.yaml_multi_representers_initialized or cls is BaseRepresenter:
+            return cls.representer_registry.yaml_multi_representers
+
+        # Otherwise, we need to find to return the registry of the parent class
+        constructor_cls = next(
+            c for c in cls.mro() if hasattr(c, 'yaml_multi_representers') and c is not cls)
+        return constructor_cls.yaml_multi_representers()
+
+    @classmethod
+    def _ensure_yaml_representers_initialized(cls):
+        if not cls.representer_registry.yaml_representers_initialized:
+            cls.representer_registry.yaml_representers = cls.yaml_representers().copy()
+            cls.representer_registry.yaml_representers_initialized = True
+
+    @classmethod
+    def _ensure_yaml_multi_representers_initialized(cls):
+        if not cls.representer_registry.yaml_multi_representers_initialized:
+            cls.representer_registry.yaml_multi_representers = cls.yaml_multi_representers().copy()
+            cls.representer_registry.yaml_multi_representers_initialized = True
+
+    @classmethod
+    def add_representer(cls, data_type, representer):
+        cls._ensure_yaml_representers_initialized()
+        cls.representer_registry.yaml_representers[data_type] = representer
+
+    @classmethod
+    def add_multi_representer(cls, data_type, multi_representer):
+        cls._ensure_yaml_multi_representers_initialized()
+        cls.representer_registry.yaml_multi_representers[data_type] = multi_representer
 
     def represent_scalar(self, tag, value, style=None):
         if style is None:
@@ -230,44 +300,6 @@ class SafeRepresenter(BaseRepresenter):
     def represent_undefined(self, data):
         raise RepresenterError("cannot represent an object", data)
 
-SafeRepresenter.add_representer(type(None),
-        SafeRepresenter.represent_none)
-
-SafeRepresenter.add_representer(str,
-        SafeRepresenter.represent_str)
-
-SafeRepresenter.add_representer(bytes,
-        SafeRepresenter.represent_binary)
-
-SafeRepresenter.add_representer(bool,
-        SafeRepresenter.represent_bool)
-
-SafeRepresenter.add_representer(int,
-        SafeRepresenter.represent_int)
-
-SafeRepresenter.add_representer(float,
-        SafeRepresenter.represent_float)
-
-SafeRepresenter.add_representer(list,
-        SafeRepresenter.represent_list)
-
-SafeRepresenter.add_representer(tuple,
-        SafeRepresenter.represent_list)
-
-SafeRepresenter.add_representer(dict,
-        SafeRepresenter.represent_dict)
-
-SafeRepresenter.add_representer(set,
-        SafeRepresenter.represent_set)
-
-SafeRepresenter.add_representer(datetime.date,
-        SafeRepresenter.represent_date)
-
-SafeRepresenter.add_representer(datetime.datetime,
-        SafeRepresenter.represent_datetime)
-
-SafeRepresenter.add_representer(None,
-        SafeRepresenter.represent_undefined)
 
 class Representer(SafeRepresenter):
 
@@ -363,27 +395,68 @@ class Representer(SafeRepresenter):
         items = [[key, value] for key, value in data.items()]
         return self.represent_sequence(tag, [items])
 
-Representer.add_representer(complex,
+
+def setup_representers():
+    SafeRepresenter.add_representer(type(None),
+        SafeRepresenter.represent_none)
+
+    SafeRepresenter.add_representer(str,
+        SafeRepresenter.represent_str)
+
+    SafeRepresenter.add_representer(bytes,
+        SafeRepresenter.represent_binary)
+
+    SafeRepresenter.add_representer(bool,
+        SafeRepresenter.represent_bool)
+
+    SafeRepresenter.add_representer(int,
+        SafeRepresenter.represent_int)
+
+    SafeRepresenter.add_representer(float,
+        SafeRepresenter.represent_float)
+
+    SafeRepresenter.add_representer(list,
+        SafeRepresenter.represent_list)
+
+    SafeRepresenter.add_representer(tuple,
+        SafeRepresenter.represent_list)
+
+    SafeRepresenter.add_representer(dict,
+        SafeRepresenter.represent_dict)
+
+    SafeRepresenter.add_representer(set,
+        SafeRepresenter.represent_set)
+
+    SafeRepresenter.add_representer(datetime.date,
+        SafeRepresenter.represent_date)
+
+    SafeRepresenter.add_representer(datetime.datetime,
+        SafeRepresenter.represent_datetime)
+
+    SafeRepresenter.add_representer(None,
+        SafeRepresenter.represent_undefined)
+
+    Representer.add_representer(complex,
         Representer.represent_complex)
 
-Representer.add_representer(tuple,
+    Representer.add_representer(tuple,
         Representer.represent_tuple)
 
-Representer.add_multi_representer(type,
+    Representer.add_multi_representer(type,
         Representer.represent_name)
 
-Representer.add_representer(collections.OrderedDict,
+    Representer.add_representer(collections.OrderedDict,
         Representer.represent_ordered_dict)
 
-Representer.add_representer(types.FunctionType,
+    Representer.add_representer(types.FunctionType,
         Representer.represent_name)
 
-Representer.add_representer(types.BuiltinFunctionType,
+    Representer.add_representer(types.BuiltinFunctionType,
         Representer.represent_name)
 
-Representer.add_representer(types.ModuleType,
+    Representer.add_representer(types.ModuleType,
         Representer.represent_module)
 
-Representer.add_multi_representer(object,
+    Representer.add_multi_representer(object,
         Representer.represent_object)
 

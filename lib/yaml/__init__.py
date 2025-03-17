@@ -9,6 +9,7 @@ from .loader import *
 from .dumper import *
 
 from .constructor import setup_constructors
+from .representer import setup_representers
 
 __version__ = '7.0.0.dev0'
 try:
