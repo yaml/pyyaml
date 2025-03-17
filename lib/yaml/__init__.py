@@ -8,6 +8,8 @@ from .nodes import *
 from .loader import *
 from .dumper import *
 
+from .constructor import setup_constructors
+
 __version__ = '7.0.0.dev0'
 try:
     from .cyaml import *
