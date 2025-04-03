@@ -8,10 +8,6 @@ from .nodes import *
 from .loader import *
 from .dumper import *
 
-from .constructor import setup_constructors
-from .representer import setup_representers
-from .resolver import setup_resolvers
-
 __version__ = '7.0.0.dev0'
 try:
     from .cyaml import *
