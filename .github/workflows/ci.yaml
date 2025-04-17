@@ -539,7 +539,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: libyaml
-        key: libyaml_${{'windows'}}_${{ contains(matrix.spec, 'win_amd64') && 'x64' || contains(matrix.spec, 'win_ard64') && 'arm64' || 'win32' }}_${{env.LIBYAML_REF}}
+        key: libyaml_${{'windows'}}_${{ contains(matrix.spec, 'win_amd64') && 'x64' || contains(matrix.spec, 'win_arm64') && 'arm64' || 'win32' }}_${{env.LIBYAML_REF}}
         fail-on-cache-miss: true
 
     - name: Install python
