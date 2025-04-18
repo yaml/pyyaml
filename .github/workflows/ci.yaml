@@ -426,6 +426,8 @@ jobs:
         include:
         - arch: x64
         - arch: win32
+        - arch: arm64
+          platform: windows-11-arm
     steps:
     - name: Get cached libyaml state
       id: cached_libyaml
@@ -502,6 +504,24 @@ jobs:
           - spec: cp313-win32
             omit: ${{ env.skip_ci_redundant_jobs }}
 
+          - spec: cp39-win_arm64
+            runs-on: windows-11-arm
+          
+          - spec: cp310-win_arm64
+            runs-on: windows-11-arm
+            omit: ${{ env.skip_ci_redundant_jobs }}
+          
+          - spec: cp311-win_arm64
+            runs-on: windows-11-arm
+            omit: ${{ env.skip_ci_redundant_jobs }}
+
+          - spec: cp312-win_arm64
+            runs-on: windows-11-arm
+            omit: ${{ env.skip_ci_redundant_jobs }}
+          
+          - spec: cp313-win_arm64
+            runs-on: windows-11-arm
+
   windows_pyyaml:
     needs: [python_sdist, windows_libyaml, make_windows_pyyaml_matrix]
     name: pyyaml ${{matrix.spec}}
@@ -527,7 +547,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: libyaml
-        key: libyaml_${{'windows'}}_${{ contains(matrix.spec, 'win_amd64') && 'x64' || 'win32' }}_${{env.LIBYAML_REF}}
+        key: libyaml_${{'windows'}}_${{ contains(matrix.spec, 'win_amd64') && 'x64' || contains(matrix.spec, 'win_arm64') && 'arm64' || 'win32' }}_${{env.LIBYAML_REF}}
         fail-on-cache-miss: true
 
     - name: Install python
