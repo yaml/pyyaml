@@ -320,7 +320,7 @@ cdef class CParser:
         elif self.parser.error == YAML_SCANNER_ERROR    \
                 or self.parser.error == YAML_PARSER_ERROR:
             context_mark = None
-            problem_mark = None                
+            problem_mark = None
             if self.parser.context != NULL:
                 context_mark = _create_mark(self.stream_name,
                         self.parser.context_mark.index,
