@@ -84,6 +84,8 @@ cdef class Mark:
         return where
 
 # Helper function to create a Mark object with a single call
+# This version does not have to convert size_t back to Python 
+# which makes it quite a bit faster when called from Cython
 cdef Mark _create_mark(object name, size_t index, size_t line, size_t column,
         object buffer, object pointer):
     cdef Mark mark = Mark.__new__(Mark)
