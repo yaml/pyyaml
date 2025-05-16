@@ -68,10 +68,6 @@ cdef class Mark:
 
     def __init__(self, object name, size_t index, size_t line, size_t column,
             object buffer, object pointer):
-        self._fast_init(name, index, line, column, buffer, pointer)
-
-    cdef _fast_init(self, object name, size_t index, size_t line, size_t column,
-            object buffer, object pointer):
         self.name = name
         self.index = index
         self.line = line
@@ -91,7 +87,12 @@ cdef class Mark:
 cdef Mark _create_mark(object name, size_t index, size_t line, size_t column,
         object buffer, object pointer):
     cdef Mark mark = Mark.__new__(Mark)
-    mark._fast_init(name, index, line, column, buffer, pointer)
+    mark.name = name
+    mark.index = index
+    mark.line = line
+    mark.column = column
+    mark.buffer = buffer
+    mark.pointer = pointer
     return mark
 
 #class YAMLError(Exception):
