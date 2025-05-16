@@ -312,8 +312,6 @@ cdef class CParser:
         pass
 
     cdef object _parser_error(self):
-        cdef Mark context_mark
-        cdef Mark problem_mark
         if self.parser.error == YAML_MEMORY_ERROR:
             return MemoryError
         elif self.parser.error == YAML_READER_ERROR:
@@ -321,6 +319,8 @@ cdef class CParser:
                     self.parser.problem_value, u'?', PyUnicode_FromString(self.parser.problem))
         elif self.parser.error == YAML_SCANNER_ERROR    \
                 or self.parser.error == YAML_PARSER_ERROR:
+            context_mark = None
+            problem_mark = None                
             if self.parser.context != NULL:
                 context_mark = _create_mark(self.stream_name,
                         self.parser.context_mark.index,
@@ -368,12 +368,12 @@ cdef class CParser:
         return token_object
 
     cdef object _token_to_object(self, yaml_token_t *token):
-        cdef Mark start_mark = _create_mark(self.stream_name,
+        start_mark = _create_mark(self.stream_name,
                 token.start_mark.index,
                 token.start_mark.line,
                 token.start_mark.column,
                 None, None)
-        cdef Mark end_mark = _create_mark(self.stream_name,
+        end_mark = _create_mark(self.stream_name,
                 token.end_mark.index,
                 token.end_mark.line,
                 token.end_mark.column,
@@ -515,12 +515,12 @@ cdef class CParser:
 
     cdef object _event_to_object(self, yaml_event_t *event):
         cdef yaml_tag_directive_t *tag_directive
-        cdef Mark start_mark = _create_mark(self.stream_name,
+        start_mark = _create_mark(self.stream_name,
                 event.start_mark.index,
                 event.start_mark.line,
                 event.start_mark.column,
                 None, None)
-        cdef Mark end_mark = _create_mark(self.stream_name,
+        end_mark = _create_mark(self.stream_name,
                 event.end_mark.index,
                 event.end_mark.line,
                 event.end_mark.column,
@@ -677,7 +677,6 @@ cdef class CParser:
             return self._compose_document()
 
     def get_single_node(self):
-        cdef Mark mark
         self._parse_next_event()
         yaml_event_delete(&self.parsed_event)
         self._parse_next_event()
@@ -704,7 +703,6 @@ cdef class CParser:
         return node
 
     cdef object _compose_node(self, object parent, object index):
-        cdef Mark mark
         self._parse_next_event()
         if self.parsed_event.type == YAML_ALIAS_EVENT:
             anchor = PyUnicode_FromYamlString(self.parsed_event.data.alias.anchor)
@@ -747,12 +745,12 @@ cdef class CParser:
         return node
 
     cdef _compose_scalar_node(self, object anchor):
-        cdef Mark start_mark = _create_mark(self.stream_name,
+        start_mark = _create_mark(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
                 None, None)
-        cdef Mark end_mark = _create_mark(self.stream_name,
+        end_mark = _create_mark(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
@@ -790,12 +788,11 @@ cdef class CParser:
 
     cdef _compose_sequence_node(self, object anchor):
         cdef int index
-        cdef Mark start_mark = _create_mark(self.stream_name,
+        start_mark = _create_mark(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
                 None, None)
-        cdef Mark end_mark
         implicit = False
         if self.parsed_event.data.sequence_start.implicit == 1:
             implicit = True
@@ -821,18 +818,16 @@ cdef class CParser:
             value.append(self._compose_node(node, index))
             index = index+1
             self._parse_next_event()
-
-        end_mark = _create_mark(self.stream_name,
+        node.end_mark = _create_mark(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
                 None, None)
-        node.end_mark = end_mark
         yaml_event_delete(&self.parsed_event)
         return node
 
     cdef _compose_mapping_node(self, object anchor):
-        cdef Mark start_mark = _create_mark(self.stream_name,
+        start_mark = _create_mark(self.stream_name,
                 self.parsed_event.start_mark.index,
                 self.parsed_event.start_mark.line,
                 self.parsed_event.start_mark.column,
@@ -862,12 +857,11 @@ cdef class CParser:
             item_value = self._compose_node(node, item_key)
             value.append((item_key, item_value))
             self._parse_next_event()
-        cdef Mark end_mark = _create_mark(self.stream_name,
+        node.end_mark = _create_mark(self.stream_name,
                 self.parsed_event.end_mark.index,
                 self.parsed_event.end_mark.line,
                 self.parsed_event.end_mark.column,
                 None, None)
-        node.end_mark = end_mark
         yaml_event_delete(&self.parsed_event)
         return node
 
