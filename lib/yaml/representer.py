@@ -7,6 +7,10 @@ from .nodes import *
 
 import datetime, copyreg, types, base64, collections, sys
 
+if sys.version_info >= (3, 11):
+    from enum import IntEnum StrEnum
+
+
 class RepresenterError(YAMLError):
     pass
 
@@ -33,6 +37,9 @@ class BaseRepresenter:
     def represent_data(self, data):
         if self.ignore_aliases(data):
             self.alias_key = None
+            if sys.version_info >= (3, 11):
+                if isinstance(data, (IntEnum, StrEnum)):
+                    data = data.value
         else:
             self.alias_key = id(data)
         if self.alias_key is not None:
@@ -145,7 +152,7 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     def represent_str(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:str', str(data))
+        return self.represent_scalar('tag:yaml.org,2002:str', data)
 
     def represent_binary(self, data):
         if hasattr(base64, 'encodebytes'):
@@ -234,12 +241,6 @@ SafeRepresenter.add_representer(type(None),
         SafeRepresenter.represent_none)
 
 SafeRepresenter.add_representer(str,
-        SafeRepresenter.represent_str)
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-
-    SafeRepresenter.add_multi_representer(StrEnum,
         SafeRepresenter.represent_str)
 
 SafeRepresenter.add_representer(bytes,
