@@ -17,13 +17,11 @@ def test_load_safeloader():
     assert yaml.load("- foo\n", Loader=yaml.SafeLoader)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="Requires Python 3.11 or higher")
 def test_dump_str_enum():
-    if sys.version_info < (3, 11):
-        return
-
     from enum import StrEnum
 
     class ContentType(StrEnum):
         YAML = "YAML"
 
-    assert yaml.load(yaml.dump(ContentType.YAML, Dumper=yaml.SafeDumper), Loader=yaml.SafeLoader) == ContentType.YAML
+    assert yaml.safe_load(yaml.safe_dump(ContentType.YAML)) == ContentType.YAML
