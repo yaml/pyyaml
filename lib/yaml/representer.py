@@ -8,7 +8,7 @@ from .nodes import *
 import datetime, copyreg, types, base64, collections, sys
 
 if sys.version_info >= (3, 11):
-    from enum import IntEnum StrEnum
+    from enum import IntEnum, StrEnum
 
 
 class RepresenterError(YAMLError):
