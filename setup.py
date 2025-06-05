@@ -25,7 +25,6 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Cython",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -39,6 +38,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup",
 ]
+SETUP_REQUIRES = []
 PROJECT_URLS = {
    'Bug Tracker': 'https://github.com/yaml/pyyaml/issues',
    'CI': 'https://github.com/yaml/pyyaml/actions',
@@ -88,6 +88,8 @@ try:
     except ImportError:
         # Cython < 3
         from Cython.Distutils import build_ext as _build_ext
+    CLASSIFIERS += "Programming Language :: Cython"
+    SETUP_REQUIRES += "Cython>=3.0" if sys.version_info >= (3, 13) else "Cython"
     with_cython = True
 except ImportError:
     if with_cython:
@@ -344,6 +346,7 @@ if __name__ == '__main__':
         download_url=DOWNLOAD_URL,
         classifiers=CLASSIFIERS,
         project_urls=PROJECT_URLS,
+        setup_requires=SETUP_REQUIRES,
 
         package_dir={'': 'lib'},
         packages=['yaml', '_yaml'],
