@@ -63,11 +63,11 @@ use crate::scanner::{Scanner, PyScanner, TokenType};
 #[derive(Debug, Clone)]
 pub struct Mark {
     #[pyo3(get)]
-    pub line: usize,                // Línea en el archivo (0-indexed)
+    pub line: usize,                // Line in file (0-indexed)
     #[pyo3(get)]  
-    pub column: usize,              // Columna en la línea (0-indexed)
+    pub column: usize,              // Column in line (0-indexed)
     #[pyo3(get)]
-    pub index: usize,               // Posición absoluta en caracteres
+    pub index: usize,               // Absolute position in characters
 }
 
 #[pymethods]
@@ -85,7 +85,7 @@ impl Mark {
 }
 
 // ===============================================================================
-// 🎭 EVENTOS YAML: Representación intermedia estructurada
+// 🎭 YAML EVENTS: Structured intermediate representation
 // ===============================================================================
 
 /**
@@ -127,14 +127,14 @@ pub enum Event {
     DocumentStart {
         start_mark: Mark,
         end_mark: Mark,
-        explicit: bool,                 // true si hay --- explícito
-        version: Option<(u8, u8)>,      // Versión YAML (1.1, 1.2)
+        explicit: bool,                 // true if there's explicit ---
+        version: Option<(u8, u8)>,      // YAML version (1.1, 1.2)
         tags: Option<HashMap<String, String>>, // Tags personalizados
     },
     DocumentEnd {
         start_mark: Mark,
         end_mark: Mark,
-        explicit: bool,                 // true si hay ... explícito
+        explicit: bool,                 // true if there's explicit ...
     },
     
     // 🔗 EVENTOS DE REFERENCIA: Alias a anchors definidos
@@ -147,19 +147,19 @@ pub enum Event {
     // 🔤 EVENTOS DE SCALAR: Valores individuales
     Scalar {
         anchor: Option<String>,         // Anchor opcional (&name)
-        tag: Option<String>,            // Tag explícito opcional (!!type)
+        tag: Option<String>,            // Optional explicit tag (!!type)
         implicit: (bool, bool),         // (plain, quoted) implicit resolution
         value: String,                  // Valor del scalar
         start_mark: Mark,
         end_mark: Mark,
-        style: Option<char>,            // Estilo de representación (' " | > etc.)
+        style: Option<char>,            // Representation style (' " | > etc.)
     },
     
     // 📋 EVENTOS DE SEQUENCE: Delimitan listas
     SequenceStart {
         anchor: Option<String>,         // Anchor opcional
-        tag: Option<String>,            // Tag explícito opcional
-        implicit: bool,                 // Resolución implícita del tipo
+        tag: Option<String>,            // Optional explicit tag
+        implicit: bool,                 // Implicit type resolution
         start_mark: Mark,
         end_mark: Mark,
         flow_style: bool,               // true para [a,b,c], false para block style
@@ -172,8 +172,8 @@ pub enum Event {
     // 🗂️ EVENTOS DE MAPPING: Delimitan key-value pairs
     MappingStart {
         anchor: Option<String>,         // Anchor opcional
-        tag: Option<String>,            // Tag explícito opcional
-        implicit: bool,                 // Resolución implícita del tipo
+        tag: Option<String>,            // Optional explicit tag
+        implicit: bool,                 // Implicit type resolution
         start_mark: Mark,
         end_mark: Mark,
         flow_style: bool,               // true para {a:1,b:2}, false para block style
@@ -207,7 +207,7 @@ pub enum Event {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct PyEvent {
-    pub event: Event,               // Evento Rust envuelto
+    pub event: Event,               // Wrapped Rust event
 }
 
 #[pymethods]
@@ -300,10 +300,10 @@ pub struct Parser {
     current_event: Option<Event>,       // Evento actual en iteración
     
     // ===================================================================
-    // 🚀 OPTIMIZACIONES: Caches y pre-allocation
+    // 🚀 OPTIMIZATIONS: Caches and pre-allocation
     // ===================================================================
     event_cache: Vec<Event>,            // Cache de eventos pre-computados
-    token_index: usize,                 // Índice actual en tokens
+    token_index: usize,                 // Current index in tokens
     
     // ===================================================================
     // 📦 BUFFERS: Pre-allocated para evitar allocations
@@ -370,7 +370,7 @@ impl Parser {
      * mantenemos método solo para compatibilidad API
      */
     fn set_scanner(&mut self, _scanner: Py<PyAny>) {
-        // Este método mantiene compatibilidad pero no lo usamos en la implementación optimizada
+        // This method maintains compatibility but we don't use it in the optimized implementation
     }
     
     /**
@@ -438,7 +438,7 @@ impl Parser {
 }
 
 // ===============================================================================
-// 🚀 FUNCIÓN PRINCIPAL DE PARSING: Ultra-optimizada
+// 🚀 MAIN PARSING FUNCTION: Ultra-optimized
 // ===============================================================================
 
 /**
@@ -471,24 +471,24 @@ impl Parser {
 #[pyfunction]
 pub fn parse_rust(_py: Python, stream: Bound<PyAny>) -> PyResult<Vec<PyEvent>> {
     // ===================================================================
-    // PASO 1: 📥 EXTRACCIÓN DE CONTENIDO - Multi-format support
+    // STEP 1: 📥 CONTENT EXTRACTION - Multi-format support
     // ===================================================================
-    // Soporta StringIO, BytesIO, archivos y strings directos
+    // Supports StringIO, BytesIO, files and direct strings
     let yaml_content = if let Ok(string_content) = stream.call_method0("read") {
-        // Stream con método .read() (archivos, StringIO)
+        // Stream with .read() method (files, StringIO)
         string_content.extract::<String>()?
     } else if let Ok(getvalue) = stream.call_method0("getvalue") {
-        // Stream con método .getvalue() (BytesIO, StringIO)
+        // Stream with .getvalue() method (BytesIO, StringIO)
         getvalue.extract::<String>()?
     } else {
-        // Fallback: string directo
+        // Fallback: direct string
         stream.extract::<String>()?
     };
     
     // ===================================================================
-    // PASO 2: ✅ VERIFICACIÓN CONTENIDO VACÍO
+    // STEP 2: ✅ EMPTY CONTENT VERIFICATION
     // ===================================================================
-    // Optimización: retornar eventos mínimos para contenido vacío
+    // Optimization: return minimal events for empty content
     if yaml_content.trim().is_empty() {
         return Ok(create_empty_document_events());
     }
@@ -496,16 +496,16 @@ pub fn parse_rust(_py: Python, stream: Bound<PyAny>) -> PyResult<Vec<PyEvent>> {
     // ===================================================================
     // PASO 3: 🔍 SCANNER NATIVO - Zero-copy tokenization
     // ===================================================================
-    // Usar Scanner<'a> directamente para máximo rendimiento
+    // Use Scanner<'a> directly for maximum performance
     let mut scanner = Scanner::new(&yaml_content);
     
-    // Obtener todos los tokens de una vez (más eficiente que iterativo)
+    // Get all tokens at once (more efficient than iterative)
     let tokens = scanner.scan_all();
     
     // ===================================================================
-    // PASO 4: 🎯 CONVERSIÓN TOKENS → EVENTOS
+    // STEP 4: 🎯 TOKEN → EVENT CONVERSION
     // ===================================================================
-    // Parsing inteligente con detección automática de estructuras
+    // Intelligent parsing with automatic structure detection
     parse_tokens_to_events(tokens, &yaml_content)
 }
 

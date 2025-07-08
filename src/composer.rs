@@ -58,13 +58,13 @@ use crate::parser::{Event, Mark, PyEvent};
  */
 #[derive(Debug, Clone)]
 pub enum NodeValue {
-    Scalar(String),                     // Valor individual (string, número, bool)
-    Sequence(Vec<Node>),                // Lista ordenada de nodos hijo
-    Mapping(Vec<(Node, Node)>),         // Pares (key, value) ordenados
+    Scalar(String),                     // Individual value (string, number, bool)
+    Sequence(Vec<Node>),                // Ordered list of child nodes
+    Mapping(Vec<(Node, Node)>),         // Ordered (key, value) pairs
 }
 
 // ===============================================================================
-// 🎯 NODO YAML: Estructura principal del árbol
+// 🎯 YAML NODE: Main tree structure
 // ===============================================================================
 
 /**
@@ -95,11 +95,11 @@ pub struct Node {
     pub tag: String,                    // Tag YAML (tipo)
     pub value: NodeValue,               // Contenido del nodo
     #[pyo3(get)]
-    pub start_mark: Mark,               // Posición inicio en texto
+    pub start_mark: Mark,               // Start position in text
     #[pyo3(get)]
-    pub end_mark: Mark,                 // Posición fin en texto
+    pub end_mark: Mark,                 // End position in text
     #[pyo3(get)]
-    pub style: Option<char>,            // Estilo representación
+    pub style: Option<char>,            // Representation style
     #[pyo3(get)]
     pub flow_style: Option<bool>,       // true=flow {}, false=block
     #[pyo3(get)]
@@ -130,7 +130,7 @@ impl Node {
      */
     #[getter]
     fn value(&self) -> String {
-        // Simplificado por ahora - retornar representación string
+        // Simplified for now - return string representation
         match &self.value {
             NodeValue::Scalar(s) => s.clone(),
             NodeValue::Sequence(items) => format!("Sequence({} items)", items.len()),
@@ -251,8 +251,8 @@ impl Node {
  */
 #[derive(Debug)]
 pub struct ComposerError {
-    pub message: String,                // Descripción del error
-    pub mark: Option<Mark>,             // Posición opcional del error
+    pub message: String,                // Error description
+    pub mark: Option<Mark>,             // Optional error position
 }
 
 impl std::fmt::Display for ComposerError {
@@ -264,7 +264,7 @@ impl std::fmt::Display for ComposerError {
 impl std::error::Error for ComposerError {}
 
 // ===============================================================================
-// 🎼 COMPOSER CLASS: Engine principal de composición
+// 🎼 COMPOSER CLASS: Main composition engine
 // ===============================================================================
 
 /**
@@ -295,7 +295,7 @@ impl std::error::Error for ComposerError {}
 #[pyclass]
 pub struct Composer {
     // ===================================================================
-    // 📚 ESTADO PRINCIPAL: Gestión de anchors y referencias
+    // 📚 MAIN STATE: Anchor and reference management
     // ===================================================================
     anchors: HashMap<String, Node>,     // Mapa de anchors → nodos definidos
     
@@ -432,14 +432,14 @@ impl Composer {
         }
         
         // ===================================================================
-        // PASO 2: Componer nodo raíz del documento
+        // STEP 2: Compose document root node
         // ===================================================================
         let (node, _next_index) = self.compose_node(events, event_index, None, None)?;
         
         // ===================================================================
-        // PASO 3: Cleanup automático
+        // STEP 3: Automatic cleanup
         // ===================================================================
-        // Skip DOCUMENT_END y STREAM_END se manejan automáticamente
+        // Skip DOCUMENT_END and STREAM_END are handled automatically
         
         // Limpiar anchors para siguiente documento (importante para multi-doc)
         self.anchors.clear();
@@ -483,19 +483,19 @@ impl Composer {
         
         match &events[event_index] {
             // ===================================================================
-            // 🔤 EVENTO SCALAR: Crear nodo scalar con resolución de tag
+            // 🔤 SCALAR EVENT: Create scalar node with tag resolution
             // ===================================================================
             Event::Scalar { value, start_mark, end_mark, style, anchor, tag, .. } => {
-                // Resolver tag: explícito o automático
+                // Resolve tag: explicit or automatic
                 let resolved_tag = if let Some(tag) = tag {
                     tag.clone()
                 } else {
-                    self.resolve_scalar_tag(value)  // Detección automática tipo
+                    self.resolve_scalar_tag(value)  // Automatic type detection
                 };
                 
                 let node = Node::new_scalar(resolved_tag, value.clone(), start_mark.clone(), end_mark.clone(), *style);
                 
-                // Almacenar anchor si está presente (para referencias futuras)
+                // Store anchor if present (for future references)
                 if let Some(anchor_name) = anchor {
                     self.anchors.insert(anchor_name.clone(), node.clone());
                 }
@@ -507,7 +507,7 @@ impl Composer {
             // 🔗 EVENTO ALIAS: Resolver referencia a anchor
             // ===================================================================
             Event::Alias { anchor, .. } => {
-                // Buscar nodo referenciado en tabla de anchors
+                // Search for referenced node in anchors table
                 if let Some(anchored_node) = self.anchors.get(anchor) {
                     Ok((Some(anchored_node.clone()), event_index + 1))
                 } else {
@@ -525,7 +525,7 @@ impl Composer {
             Event::SequenceStart { start_mark, flow_style, anchor, .. } => {
                 let result = self.compose_sequence_node(events, event_index, start_mark.clone(), *flow_style);
                 
-                // Almacenar anchor si composición fue exitosa
+                // Store anchor if composition was successful
                 if let Ok((Some(ref node), _)) = result {
                     if let Some(anchor_name) = anchor {
                         self.anchors.insert(anchor_name.clone(), node.clone());
@@ -541,7 +541,7 @@ impl Composer {
             Event::MappingStart { start_mark, flow_style, anchor, .. } => {
                 let result = self.compose_mapping_node(events, event_index, start_mark.clone(), *flow_style);
                 
-                // Almacenar anchor si composición fue exitosa
+                // Store anchor if composition was successful
                 if let Ok((Some(ref node), _)) = result {
                     if let Some(anchor_name) = anchor {
                         self.anchors.insert(anchor_name.clone(), node.clone());
@@ -552,7 +552,7 @@ impl Composer {
             },
             
             // ===================================================================
-            // 🔚 EVENTOS DE TERMINACIÓN: Fin de documento/stream
+            // 🔚 TERMINATION EVENTS: End of document/stream
             // ===================================================================
             Event::StreamEnd { .. } | Event::DocumentEnd { .. } => {
                 Ok((None, event_index))
@@ -592,7 +592,7 @@ impl Composer {
         // Skip SEQUENCE_START (ya procesado en dispatcher)
         event_index += 1;
         
-        let mut items = Vec::with_capacity(8); // Pre-allocate para elementos típicos
+        let mut items = Vec::with_capacity(8); // Pre-allocate for typical elements
         
         // ===================================================================
         // LOOP PRINCIPAL: Componer elementos hasta SequenceEnd
@@ -601,7 +601,7 @@ impl Composer {
             match &events[event_index] {
                 Event::SequenceEnd { end_mark, .. } => {
                     // ===================================================================
-                    // TERMINACIÓN: Crear SequenceNode y retornar
+                    // TERMINATION: Create SequenceNode and return
                     // ===================================================================
                     let tag = "tag:yaml.org,2002:seq".to_string();
                     let node = Node::new_sequence(tag, items, start_mark, end_mark.clone(), flow_style);
@@ -622,7 +622,7 @@ impl Composer {
         }
         
         // ===================================================================
-        // ERROR: No se encontró SequenceEnd
+                    // ERROR: SequenceEnd not found
         // ===================================================================
         Err(ComposerError {
             message: "Expected SequenceEnd event".to_string(),
@@ -659,7 +659,7 @@ impl Composer {
         // Skip MAPPING_START (ya procesado en dispatcher)
         event_index += 1;
         
-        let mut pairs = Vec::with_capacity(8); // Pre-allocate para pares típicos
+        let mut pairs = Vec::with_capacity(8); // Pre-allocate for typical pairs
         
         // ===================================================================
         // LOOP PRINCIPAL: Componer pares hasta MappingEnd
@@ -668,7 +668,7 @@ impl Composer {
             match &events[event_index] {
                 Event::MappingEnd { end_mark, .. } => {
                     // ===================================================================
-                    // TERMINACIÓN: Crear MappingNode y retornar
+                    // TERMINATION: Create MappingNode and return
                     // ===================================================================
                     let tag = "tag:yaml.org,2002:map".to_string();
                     let node = Node::new_mapping(tag, pairs, start_mark, end_mark.clone(), flow_style);
@@ -687,7 +687,7 @@ impl Composer {
                     let (value_node, next_index) = self.compose_node(events, event_index, None, None)?;
                     event_index = next_index;
                     
-                    // Agregar par si ambos son válidos
+                    // Add pair if both are valid
                     if let (Some(key), Some(value)) = (key_node, value_node) {
                         pairs.push((key, value));
                     }
@@ -696,7 +696,7 @@ impl Composer {
         }
         
         // ===================================================================
-        // ERROR: No se encontró MappingEnd
+                    // ERROR: MappingEnd not found
         // ===================================================================
         Err(ComposerError {
             message: "Expected MappingEnd event".to_string(),
@@ -731,17 +731,17 @@ impl Composer {
         // FAST PATH: Valores comunes con string interning
         // ===================================================================
         match value {
-            // Valores booleanos (case-insensitive)
+            // Boolean values (case-insensitive)
             "true" | "True" | "TRUE" | "false" | "False" | "FALSE" => {
                 "tag:yaml.org,2002:bool".to_string()
             },
-            // Valores null (múltiples representaciones YAML)
+            // Null values (multiple YAML representations)
             "null" | "Null" | "NULL" | "~" | "" => {
                 "tag:yaml.org,2002:null".to_string()
             },
             _ => {
                 // ===================================================================
-                // DETECCIÓN NUMÉRICA: Enteros y flotantes
+                // NUMERIC DETECTION: Integers and floats
                 // ===================================================================
                 if self.is_int(value) {
                     "tag:yaml.org,2002:int".to_string()
@@ -779,18 +779,18 @@ impl Composer {
             return false;
         }
         
-        // Fast path para dígitos únicos (casos comunes: 0-9)
+        // Fast path for single digits (common cases: 0-9)
         if value.len() == 1 {
             return value.chars().next().unwrap().is_ascii_digit();
         }
         
-        // Manejar números negativos
+        // Handle negative numbers
         let start_idx = if value.starts_with('-') { 1 } else { 0 };
         if start_idx >= value.len() {
-            return false; // Solo "-" no es válido
+            return false; // Only "-" is not valid
         }
         
-        // Verificar que todos los caracteres sean dígitos ASCII
+        // Verify that all characters are ASCII digits
         value[start_idx..].chars().all(|c| c.is_ascii_digit())
     }
     
@@ -820,7 +820,7 @@ impl Composer {
         
         // Fast check para indicadores de flotante
         if value.contains('.') || value.contains('e') || value.contains('E') {
-            // Validación definitiva con parser nativo
+            // Definitive validation with native parser
             value.parse::<f64>().is_ok()
         } else {
             false // Sin indicadores flotante
@@ -838,7 +838,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
     
     println!("🔍 DEBUG compose_rust: {} eventos PyEvent recibidos", py_events.len());
     
-    // Convertir PyEvent a eventos internos SIN conversión problemática
+            // Convert PyEvent to internal events WITHOUT problematic conversion
     let mut internal_events = Vec::with_capacity(py_events.len());
     
     for py_event in py_events {
@@ -896,7 +896,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
                 end_mark: end_mark.clone(),
             });
         } else if event_repr.contains("Scalar") {
-            // Extraer valor del debug string más agresivamente
+            // Extract value from debug string more aggressively
             let value = extract_scalar_value_from_debug_repr(&event_repr);
             println!("🔍 DEBUG: Scalar extraído: '{}'", value);
             
@@ -948,24 +948,24 @@ pub fn compose_document_rust(py: Python, py_events: Vec<PyEvent>) -> PyResult<Op
 /// Extract value from improved string representation
 #[inline(always)]
 fn extract_scalar_value_from_repr(repr_str: &str) -> String {
-    // Buscar patrón value="..." o value='...'
+    // Search for pattern value="..." or value='...'
     if let Some(start) = repr_str.find("value=") {
         let after_equal = &repr_str[start + 6..];
         
         if after_equal.starts_with('"') {
-            // Valor con comillas dobles
+            // Value with double quotes
             if let Some(end) = after_equal[1..].find('"') {
                 return after_equal[1..end + 1].to_string();
             }
         } else if after_equal.starts_with('\'') {
-            // Valor con comillas simples
+            // Value with single quotes
             if let Some(end) = after_equal[1..].find('\'') {
                 return after_equal[1..end + 1].to_string();
             }
         }
     }
     
-    // Fallback: buscar en todo el string
+    // Fallback: search in entire string
     if repr_str.contains("hello") {
         return "hello".to_string();
     }
@@ -977,7 +977,7 @@ fn extract_scalar_value_from_repr(repr_str: &str) -> String {
     "".to_string()
 }
 
-/// Compose directo con PyEvent sin conversión problemática
+/// Direct compose with PyEvent without problematic conversion
 #[pyfunction]
 pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Node>> {
     if py_events.is_empty() {
@@ -986,7 +986,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
     
     println!("🔍 DEBUG compose_events_direct: {} eventos recibidos", py_events.len());
     
-    // Convertir PyEvent a Event interno SIN la conversión problemática
+    // Convert PyEvent to internal Event WITHOUT the problematic conversion
     let mut internal_events = Vec::with_capacity(py_events.len());
     
     for py_event in py_events {
@@ -1010,7 +1010,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
                 tags: None,
             });
         } else if event_repr.contains("Scalar") {
-            // Extraer valor del debug string
+            // Extract value from debug string
             let value = extract_scalar_value_from_debug_repr(&event_repr);
             println!("🔍 DEBUG: Scalar extraído: '{}'", value);
             
@@ -1084,7 +1084,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
 /// Extract value from improved debug representation
 #[inline(always)]
 fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
-    // Buscar patrón value: "..." en la representación debug
+    // Search for pattern value: "..." in debug representation
     if let Some(start) = debug_str.find("value: \"") {
         let after_quote = &debug_str[start + 8..];
         if let Some(end) = after_quote.find('"') {
@@ -1092,7 +1092,7 @@ fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
         }
     }
     
-    // MEJORADO: Extraer valores específicos que aparecen en el test
+    // IMPROVED: Extract specific values that appear in the test
     if debug_str.contains("value: \"num\"") {
         return "num".to_string();
     }
@@ -1106,7 +1106,7 @@ fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
         return "42".to_string();
     }
     
-    // Patrón más general: extraer cualquier valor entre comillas después de "value: "
+    // More general pattern: extract any value between quotes after "value: "
     if let Some(value_start) = debug_str.find("value: ") {
         let after_value = &debug_str[value_start + 7..];
         
@@ -1117,7 +1117,7 @@ fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
             }
         }
         
-        // Si es un valor sin comillas (como números)
+        // If it's an unquoted value (like numbers)
         if let Some(comma_pos) = after_value.find(',') {
             let value_part = after_value[..comma_pos].trim();
             if !value_part.is_empty() && !value_part.starts_with('"') {

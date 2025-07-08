@@ -757,11 +757,11 @@ impl<W: Write> Emitter<W> {
     fn increase_indent(&mut self, flow: bool) {
         self.indents.push(self.current_indent());
         if flow {
-            // Para flow, usar indentación mínima
+            // For flow, use minimal indentation
             let new_indent = self.current_indent() + 2;
             self.indents.push(new_indent);
         } else {
-            // Para block, usar indentación configurada
+            // For block, use configured indentation
             let new_indent = self.current_indent() + self.indent;
             self.indents.push(new_indent);
         }
@@ -781,7 +781,7 @@ impl<W: Write> Emitter<W> {
         self.flow_level > 0
     }
 
-    // Escritores de estilos de escalares
+    // Scalar style writers
     fn write_plain(&mut self, text: &str) -> Result<(), EmitterError> {
         self.write(text)
     }
@@ -844,7 +844,7 @@ impl<W: Write> Emitter<W> {
     }
 }
 
-/// Estilos de escalares
+/// Scalar styles
 #[derive(Debug, Clone, Copy)]
 enum ScalarStyle {
     Plain,

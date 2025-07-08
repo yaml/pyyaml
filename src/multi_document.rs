@@ -5,7 +5,7 @@ use crate::parser::{parse_rust, PyEvent};
 use crate::composer::compose_rust;
 use crate::constructor::construct_rust;
 
-/// Error para multi-documento
+/// Error for multi-document
 #[derive(Debug)]
 pub struct MultiDocumentError {
     pub message: String,
@@ -24,14 +24,14 @@ impl std::fmt::Display for MultiDocumentError {
 
 impl std::error::Error for MultiDocumentError {}
 
-/// Procesador de múltiples documentos YAML
+/// YAML multiple documents processor
 #[pyclass]
 pub struct MultiDocumentProcessor {
-    // Estado interno
+    // Internal state
     current_document_index: usize,
     documents: Vec<Vec<PyEvent>>,
     
-    // Configuración
+    // Configuration
     explicit_document_start: bool,
     explicit_document_end: bool,
     
@@ -60,7 +60,7 @@ impl MultiDocumentProcessor {
         Self::default()
     }
     
-    /// Configurar separadores explícitos
+    /// Configure explicit separators
     pub fn with_explicit_start(&mut self, explicit: bool) {
         self.explicit_document_start = explicit;
     }
@@ -69,7 +69,7 @@ impl MultiDocumentProcessor {
         self.explicit_document_end = explicit;
     }
     
-    /// Limpiar estado
+    /// Clear state
     pub fn reset(&mut self) {
         self.current_document_index = 0;
         self.documents.clear();
@@ -78,7 +78,7 @@ impl MultiDocumentProcessor {
 }
 
 impl MultiDocumentProcessor {
-    /// Separar stream de eventos en múltiples documentos
+    /// Separate event stream into multiple documents
     pub fn split_events(&mut self, events: Vec<PyEvent>) -> Result<Vec<Vec<PyEvent>>, MultiDocumentError> {
         self.reset();
         
@@ -89,20 +89,20 @@ impl MultiDocumentProcessor {
         for event in &events {
             let event_repr = format!("{:?}", event);
             
-            // Detectar diferentes tipos de eventos
+            // Detect different types of events
             if event_repr.contains("StreamStart") {
                 stream_started = true;
                 continue;
             } else if event_repr.contains("StreamEnd") {
-                // Finalizar documento actual si existe
+                // Finalize current document if it exists
                 if !current_doc.is_empty() {
                     self.documents.push(current_doc.clone());
                 }
                 break;
             } else if event_repr.contains("DocumentStart") {
-                // Nuevo documento
+                // New document
                 if in_document && !current_doc.is_empty() {
-                    // Guardar documento anterior
+                    // Save previous document
                     self.documents.push(current_doc.clone());
                     current_doc.clear();
                 }
@@ -110,21 +110,21 @@ impl MultiDocumentProcessor {
                 current_doc.push(event.clone());
             } else if event_repr.contains("DocumentEnd") {
                 current_doc.push(event.clone());
-                // No finalizar aquí - puede haber más eventos en el documento
+                // Don't finalize here - there may be more events in the document
             } else {
-                // Eventos de contenido
+                // Content events
                 if stream_started {
                     current_doc.push(event.clone());
                 }
             }
         }
         
-        // Agregar último documento si existe
+        // Add last document if it exists
         if !current_doc.is_empty() {
             self.documents.push(current_doc);
         }
         
-        // Si no hay documentos explícitos, todo es un documento
+        // If there are no explicit documents, everything is one document
         if self.documents.is_empty() && !events.is_empty() {
             self.documents.push(events);
         }
@@ -134,7 +134,7 @@ impl MultiDocumentProcessor {
     
     /// Process YAML string with multiple documents
     pub fn parse_multi_document(&mut self, yaml_content: &str) -> Result<Vec<Vec<PyEvent>>, MultiDocumentError> {
-        // Split por separadores explícitos primero
+        // Split by explicit separators first
         let document_strings = self.split_yaml_string(yaml_content);
         
         let mut all_documents = Vec::new();
@@ -144,7 +144,7 @@ impl MultiDocumentProcessor {
                 continue;
             }
             
-            // Parse cada documento individualmente
+            // Parse each document individually
             Python::with_gil(|py| {
                 let io_module = py.import("io").map_err(|e| MultiDocumentError {
                     message: format!("Failed to import io module: {}", e),
@@ -172,7 +172,7 @@ impl MultiDocumentProcessor {
         Ok(all_documents)
     }
     
-    /// Split YAML string por separadores de documento
+    /// Split YAML string by document separators
     fn split_yaml_string(&self, yaml_content: &str) -> Vec<String> {
         let mut documents = Vec::new();
         let mut current_doc = String::new();

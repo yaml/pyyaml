@@ -3,174 +3,174 @@
 
 """
 ===============================================================================
-PyYAML-Rust: Punto de Entrada Principal con Sistema de Fallback
+PyYAML-Rust: Main Entry Point with Fallback System
 ===============================================================================
 
-Este archivo (__init__.py) es el CORAZÓN de PyYAML con las siguientes funciones:
+This file (__init__.py) is the HEART of PyYAML with the following functions:
 
-1. 🚀 SISTEMA DE FALLBACK: Rust → LibYAML → Python puro (triple backend)
-2. 📡 API COMPLETA: Todas las funciones públicas de PyYAML (load, dump, etc.)
-3. 🔄 COMPATIBILIDAD: 100% compatible con PyYAML original
-4. ⚡ OPTIMIZACIÓN: 4-6x mejora de rendimiento con backend Rust
+1. 🚀 FALLBACK SYSTEM: Rust → LibYAML → Pure Python (triple backend)
+2. 📡 COMPLETE API: All public PyYAML functions (load, dump, etc.)
+3. 🔄 COMPATIBILITY: 100% compatible with original PyYAML
+4. ⚡ OPTIMIZATION: 4-6x performance improvement with Rust backend
 
-ARQUITECTURA DE FALLBACK:
+FALLBACK ARCHITECTURE:
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │ 🦀 RUST     │ -> │ 🔧 LibYAML │ -> │ 🐍 Python   │
-│ (PRIMARIO)  │    │ (FALLBACK1) │    │ (FALLBACK2) │
+│ (PRIMARY)   │    │ (FALLBACK1) │    │ (FALLBACK2) │
 └─────────────┘    └─────────────┘    └─────────────┘
 
-CARACTERÍSTICAS:
-- 🚀 Backend Rust: 4-6x más rápido para dumps, 1.5-1.7x para loads
-- 🛡️ Seguridad: SafeLoader, FullLoader, UnsafeLoader según necesidades
-- 📚 Multi-documento: Soporte perfecto para múltiples documentos (---)
-- 🔗 Anchors/Aliases: Referencias circulares completamente soportadas
-- 🏷️ Tags YAML: Procesamiento automático de !!bool, !!int, !!float, etc.
+FEATURES:
+- 🚀 Rust Backend: 4-6x faster for dumps, 1.5-1.7x for loads
+- 🛡️ Security: SafeLoader, FullLoader, UnsafeLoader as needed
+- 📚 Multi-document: Perfect support for multiple documents (---)
+- 🔗 Anchors/Aliases: Circular references fully supported
+- 🏷️ YAML Tags: Automatic processing of !!bool, !!int, !!float, etc.
 
 VERSION INFORMATION:
-- PyYAML-Rust: 7.0.0.dev0 (desarrollo activo)
-- Compatibilidad: PyYAML 6.0+ API completa
-- Rust Backend: Implementación nativa ultra-optimizada
+- PyYAML-Rust: 7.0.0.dev0 (active development)
+- Compatibility: PyYAML 6.0+ complete API
+- Rust Backend: Ultra-optimized native implementation
 """
 
 # ===============================================================================
-# 📦 IMPORTACIONES BÁSICAS: Estructuras fundamentales
+# 📦 BASIC IMPORTS: Fundamental structures
 # ===============================================================================
 
-from .error import *                    # Clases de errores YAML
-from .tokens import *                   # Tokens léxicos
-from .events import *                   # Eventos de parsing
-from .nodes import *                    # Nodos de representación
+from .error import *                    # YAML error classes
+from .tokens import *                   # Lexical tokens
+from .events import *                   # Parsing events
+from .nodes import *                    # Representation nodes
 
 # ===============================================================================
-# 🆔 INFORMACIÓN DE VERSIÓN: Metadatos del paquete
+# 🆔 VERSION INFORMATION: Package metadata
 # ===============================================================================
 
-__version__ = '7.0.0.dev0'             # Versión de desarrollo PyYAML-Rust
+__version__ = '7.0.0.dev0'             # PyYAML-Rust development version
 
 # ===============================================================================
-# 🚀 SISTEMA DE FALLBACK TRIPLE: Detección y configuración de backends
+# 🚀 TRIPLE FALLBACK SYSTEM: Backend detection and configuration
 # ===============================================================================
 
 """
-ESTRATEGIA DE BACKENDS:
-1. 🦀 RUST BACKEND (PRIORIDAD 1): Máximo rendimiento
-   - 4-6x más rápido en dumps
-   - 1.5-1.7x más rápido en loads
-   - Memory safety garantizada
-   - Soporte completo YAML 1.2
+BACKEND STRATEGY:
+1. 🦀 RUST BACKEND (PRIORITY 1): Maximum performance
+   - 4-6x faster dumps
+   - 1.5-1.7x faster loads
+   - Guaranteed memory safety
+   - Complete YAML 1.2 support
 
-2. 🔧 LIBYAML BACKEND (PRIORIDAD 2): Fallback C optimizado
-   - Implementación C original
-   - Buen rendimiento
-   - Amplia compatibilidad
+2. 🔧 LIBYAML BACKEND (PRIORITY 2): Optimized C fallback
+   - Original C implementation
+   - Good performance
+   - Wide compatibility
 
-3. 🐍 PYTHON PURO (PRIORIDAD 3): Fallback universal
+3. 🐍 PURE PYTHON (PRIORITY 3): Universal fallback
    - 100% Python
-   - Máxima compatibilidad
-   - Menor rendimiento
+   - Maximum compatibility
+   - Lower performance
 """
 
-# Flags de detección de backends disponibles
-__with_rust__ = False                   # Backend Rust disponible
-__with_libyaml__ = False               # Backend LibYAML disponible
+# Available backend detection flags
+__with_rust__ = False                   # Rust backend available
+__with_libyaml__ = False               # LibYAML backend available
 
 # ===============================================================================
-# 🦀 PRIORIDAD 1: BACKEND RUST (ULTRA-OPTIMIZADO)
+# 🦀 PRIORITY 1: RUST BACKEND (ULTRA-OPTIMIZED)
 # ===============================================================================
 
 try:
-    from ._rust import *                # Importar todas las clases Rust
+    from ._rust import *                # Import all Rust classes
     __with_rust__ = True
-    print("🚀 PyYAML: Usando backend Rust (optimizado 4-6x)")
+    print("🚀 PyYAML: Using Rust backend (4-6x optimized)")
     
     # ===================================================================
-    # ⚙️ CONFIGURACIÓN RUST: Optimizaciones de rendimiento
+    # ⚙️ RUST CONFIGURATION: Performance optimizations
     # ===================================================================
     import os
-    os.environ['PYYAML_RUST_DEBUG'] = '0'  # Deshabilitar logs debug
+    os.environ['PYYAML_RUST_DEBUG'] = '0'  # Disable debug logs
     
     # ===================================================================
-    # 🔗 ALIASES DE COMPATIBILIDAD: Mantener API PyYAML original
+    # 🔗 COMPATIBILITY ALIASES: Maintain original PyYAML API
     # ===================================================================
-    Loader = UnsafeLoader             # Comportamiento PyYAML original
-    Dumper = SafeDumper               # Dumper seguro por defecto
+    Loader = UnsafeLoader             # Original PyYAML behavior
+    Dumper = SafeDumper               # Safe dumper by default
     
     # ===================================================================
-    # ✅ VERIFICACIÓN DE CLASES: Debug información disponibilidad
+    # ✅ CLASS VERIFICATION: Debug availability information
     # ===================================================================
-    print(f"🦀 BaseLoader disponible: {BaseLoader}")
-    print(f"🦀 SafeLoader disponible: {SafeLoader}")
-    print(f"🦀 FullLoader disponible: {FullLoader}")
-    print(f"🦀 UnsafeLoader disponible: {UnsafeLoader}")
-    print(f"🦀 SafeDumper disponible: {SafeDumper}")
+    print(f"🦀 BaseLoader available: {BaseLoader}")
+    print(f"🦀 SafeLoader available: {SafeLoader}")
+    print(f"🦀 FullLoader available: {FullLoader}")
+    print(f"🦀 UnsafeLoader available: {UnsafeLoader}")
+    print(f"🦀 SafeDumper available: {SafeDumper}")
     
 except ImportError:
     # ===================================================================
-    # 🔧 PRIORIDAD 2: BACKEND LIBYAML (FALLBACK C)
+    # 🔧 PRIORITY 2: LIBYAML BACKEND (C FALLBACK)
     # ===================================================================
     try:
-        from .cyaml import *            # Bindings C LibYAML
+        from .cyaml import *            # LibYAML C bindings
         __with_libyaml__ = True
-        print("🔧 PyYAML: Usando backend LibYAML (C optimizado)")
+        print("🔧 PyYAML: Using LibYAML backend (optimized C)")
         
-        # Cargar módulos Python para LibYAML
+        # Load Python modules for LibYAML
         from .loader import *
         from .dumper import *
         
     except ImportError:
         # ===================================================================
-        # 🐍 PRIORIDAD 3: PYTHON PURO (FALLBACK UNIVERSAL)
+        # 🐍 PRIORITY 3: PURE PYTHON (UNIVERSAL FALLBACK)
         # ===================================================================
         __with_libyaml__ = False
-        print("🐍 PyYAML: Usando backend Python puro (máxima compatibilidad)")
+        print("🐍 PyYAML: Using pure Python backend (maximum compatibility)")
         
-        # Cargar TODOS los módulos Python
+        # Load ALL Python modules
         from .loader import *
         from .dumper import *
 
 import io
 
 # ===============================================================================
-# ⚠️ WARNINGS CONTROL: Funcionalidad legacy deprecated
+# ⚠️ WARNINGS CONTROL: Deprecated legacy functionality
 # ===============================================================================
 
 def warnings(settings=None):
     """
     ⚠️ WARNINGS CONTROL (DEPRECATED)
     
-    PROPÓSITO:
-    - Función legacy mantenida por compatibilidad
-    - Originally controlaba warnings de PyYAML
-    - Ahora deprecated pero mantenida para no romper código existente
+    PURPOSE:
+    - Legacy function maintained for compatibility
+    - Originally controlled PyYAML warnings
+    - Now deprecated but maintained to avoid breaking existing code
     
-    PARÁMETROS:
-    - settings: Configuración de warnings (ignorado)
+    PARAMETERS:
+    - settings: Warning configuration (ignored)
     
-    RETORNA: Dict vacío (comportamiento legacy)
+    RETURNS: Empty dict (legacy behavior)
     """
     if settings is None:
         return {}
 
 # ===============================================================================
-# 🔍 FUNCIONES DE BAJO NIVEL: Scanning y Parsing
+# 🔍 LOW-LEVEL FUNCTIONS: Scanning and Parsing
 # ===============================================================================
 
 def scan(stream, Loader=Loader):
     """
-    🔍 SCANNING: Convertir stream YAML → tokens léxicos
+    🔍 SCANNING: Convert YAML stream → lexical tokens
     
-    PROPÓSITO:
-    - Análisis léxico de contenido YAML
-    - Producir tokens estructurados para parser
-    - Debugging y análisis de estructura YAML
+    PURPOSE:
+    - Lexical analysis of YAML content
+    - Produce structured tokens for parser
+    - Debugging and analysis of YAML structure
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader a usar (por defecto backend activo)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Loader class to use (active backend by default)
     
-    YIELDS: Token objects (TokenType enum + contenido)
+    YIELDS: Token objects (TokenType enum + content)
     
-    USO:
+    USAGE:
     ```python
     for token in yaml.scan("key: value"):
         print(token)
@@ -185,20 +185,20 @@ def scan(stream, Loader=Loader):
 
 def parse(stream, Loader=Loader):
     """
-    🔍 PARSING: Convertir stream YAML → eventos estructurados
+    🔍 PARSING: Convert YAML stream → structured events
     
-    PROPÓSITO:
-    - Análisis sintáctico de tokens → eventos
-    - Representación intermedia del documento
-    - Base para construcción de objetos Python
+    PURPOSE:
+    - Syntactic analysis of tokens → events
+    - Intermediate representation of document
+    - Base for Python object construction
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader a usar (por defecto backend activo)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Loader class to use (active backend by default)
     
-    YIELDS: Event objects (EventType + metadatos)
+    YIELDS: Event objects (EventType + metadata)
     
-    USO:
+    USAGE:
     ```python
     for event in yaml.parse("key: value"):
         print(event)
@@ -213,20 +213,20 @@ def parse(stream, Loader=Loader):
 
 def compose(stream, Loader=Loader):
     """
-    🔍 COMPOSICIÓN: Convertir stream YAML → árbol de nodos
+    🔍 COMPOSITION: Convert YAML stream → node tree
     
-    PROPÓSITO:
-    - Construir representación tree desde eventos
-    - Primer documento únicamente
-    - Nodos con metadatos completos (tags, marks, etc.)
+    PURPOSE:
+    - Build tree representation from events
+    - First document only
+    - Nodes with complete metadata (tags, marks, etc.)
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader a usar (por defecto backend activo)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Loader class to use (active backend by default)
     
-    RETORNA: Node object (ScalarNode, SequenceNode, MappingNode)
+    RETURNS: Node object (ScalarNode, SequenceNode, MappingNode)
     
-    USO:
+    USAGE:
     ```python
     node = yaml.compose("key: value")
     print(node.tag, node.value)
@@ -240,20 +240,20 @@ def compose(stream, Loader=Loader):
 
 def compose_all(stream, Loader=Loader):
     """
-    🔍 COMPOSICIÓN MÚLTIPLE: Convertir stream → múltiples árboles
+    🔍 MULTIPLE COMPOSITION: Convert stream → multiple trees
     
-    PROPÓSITO:
-    - Construir representación trees para todos los documentos
-    - Soporte completo para documentos separados por ---
-    - Nodos con metadatos completos
+    PURPOSE:
+    - Build tree representations for all documents
+    - Complete support for documents separated by ---
+    - Nodes with complete metadata
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader a usar (por defecto backend activo)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Loader class to use (active backend by default)
     
-    YIELDS: Node objects para cada documento
+    YIELDS: Node objects for each document
     
-    USO:
+    USAGE:
     ```python
     for node in yaml.compose_all("---\nkey1: value1\n---\nkey2: value2"):
         print(node.tag, node.value)
@@ -267,28 +267,28 @@ def compose_all(stream, Loader=Loader):
         loader.dispose()
 
 # ===============================================================================
-# 📥 FUNCIONES DE CARGA: Conversión YAML → objetos Python
+# 📥 LOADING FUNCTIONS: YAML → Python object conversion
 # ===============================================================================
 
 def load(stream, Loader):
     """
-    📥 CARGA BÁSICA: YAML → objeto Python (primer documento)
+    📥 BASIC LOADING: YAML → Python object (first document)
     
-    PROPÓSITO:
-    - Función base para todas las variantes de load
-    - Primer documento únicamente
-    - Requiere especificar Loader explícitamente por seguridad
+    PURPOSE:
+    - Base function for all load variants
+    - First document only
+    - Requires explicit Loader specification for security
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader específica (SafeLoader, FullLoader, etc.)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Specific loader class (SafeLoader, FullLoader, etc.)
     
-    RETORNA: Objeto Python (dict, list, str, int, etc.)
+    RETURNS: Python object (dict, list, str, int, etc.)
     
-    SEGURIDAD:
-    - SafeLoader: Solo tipos básicos (str, int, float, bool, list, dict)
-    - FullLoader: Tipos extendidos (datetime, set, etc.) pero seguro
-    - UnsafeLoader: Permite objetos Python arbitrarios (PELIGROSO)
+    SECURITY:
+    - SafeLoader: Only basic types (str, int, float, bool, list, dict)
+    - FullLoader: Extended types (datetime, set, etc.) but safe
+    - UnsafeLoader: Allows arbitrary Python objects (DANGEROUS)
     """
     loader = Loader(stream)
     try:
@@ -298,20 +298,20 @@ def load(stream, Loader):
 
 def load_all(stream, Loader):
     """
-    📥 CARGA MÚLTIPLE: YAML → objetos Python (todos los documentos)
+    📥 MULTIPLE LOADING: YAML → Python objects (all documents)
     
-    PROPÓSITO:
-    - Cargar todos los documentos en un stream
-    - Soporte completo para documentos separados por ---
-    - Requiere especificar Loader explícitamente por seguridad
+    PURPOSE:
+    - Load all documents in a stream
+    - Complete support for documents separated by ---
+    - Requires explicit Loader specification for security
     
-    PARÁMETROS:
-    - stream: Archivo, StringIO o string con contenido YAML
-    - Loader: Clase loader específica (SafeLoader, FullLoader, etc.)
+    PARAMETERS:
+    - stream: File, StringIO or string with YAML content
+    - Loader: Specific loader class (SafeLoader, FullLoader, etc.)
     
-    YIELDS: Objetos Python para cada documento
+    YIELDS: Python objects for each document
     
-    USO:
+    USAGE:
     ```python
     for doc in yaml.load_all(stream, yaml.SafeLoader):
         process(doc)
@@ -325,24 +325,24 @@ def load_all(stream, Loader):
         loader.dispose()
 
 # ===============================================================================
-# 🛡️ FUNCIONES SEGURAS: Variantes con seguridad implícita
+# 🛡️ SAFE FUNCTIONS: Variants with implicit security
 # ===============================================================================
 
 def full_load(stream):
     """
-    🛡️ CARGA COMPLETA SEGURA: YAML → Python con tipos extendidos
+    🛡️ SAFE COMPLETE LOADING: YAML → Python with extended types
     
-    PROPÓSITO:
-    - Carga con FullLoader implícito (no requiere especificar)
-    - Tipos básicos + datetime, set, ordered dict, etc.
-    - Seguro para input no confiable (sin objetos Python arbitrarios)
+    PURPOSE:
+    - Loading with implicit FullLoader (no need to specify)
+    - Basic types + datetime, set, ordered dict, etc.
+    - Safe for untrusted input (no arbitrary Python objects)
     
-    TIPOS SOPORTADOS:
-    - ✅ Básicos: str, int, float, bool, list, dict, None
-    - ✅ Extendidos: datetime, date, set, OrderedDict
-    - ❌ Prohibidos: clases Python arbitrarias, funciones, etc.
+    SUPPORTED TYPES:
+    - ✅ Basic: str, int, float, bool, list, dict, None
+    - ✅ Extended: datetime, date, set, OrderedDict
+    - ❌ Forbidden: arbitrary Python classes, functions, etc.
     
-    USO:
+    USAGE:
     ```python
     data = yaml.full_load("timestamp: 2023-01-01 12:00:00")
     # → {'timestamp': datetime.datetime(2023, 1, 1, 12, 0)}
@@ -352,166 +352,166 @@ def full_load(stream):
 
 def full_load_all(stream):
     """
-    🛡️ CARGA MÚLTIPLE COMPLETA: Todos los documentos con tipos extendidos
+    🛡️ COMPLETE MULTIPLE LOADING: All documents with extended types
     
-    PROPÓSITO:
-    - Múltiples documentos con FullLoader implícito
-    - Optimización especial para backend Rust
-    - Seguro para input no confiable
+    PURPOSE:
+    - Multiple documents with implicit FullLoader
+    - Special optimization for Rust backend
+    - Safe for untrusted input
     
-    OPTIMIZACIÓN RUST:
-    - Usa load_all_rust() directamente para máximo rendimiento
-    - Conversión de stream automática
-    - Filtrado de valores None para compatibilidad
+    RUST OPTIMIZATION:
+    - Uses load_all_rust() directly for maximum performance
+    - Automatic stream conversion
+    - None value filtering for compatibility
     """
     # ===================================================================
-    # 🚀 OPTIMIZACIÓN RUST: Ruta directa ultra-rápida
+    # 🚀 RUST OPTIMIZATION: Ultra-fast direct path
     # ===================================================================
     if __with_rust__:
-        # Convertir stream a string si es necesario
+        # Convert stream to string if necessary
         if hasattr(stream, 'read'):
             content = stream.read()
             if hasattr(stream, 'seek'):
-                stream.seek(0)          # Reset para compatibilidad
+                stream.seek(0)          # Reset for compatibility
         else:
             content = str(stream)
         
-        # Usar función Rust directa (bypass Python overhead)
+        # Use direct Rust function (bypass Python overhead)
         import io
         rust_stream = io.StringIO(content)
         results = load_all_rust(rust_stream)
         
-        # Filtrar None values para compatibilidad
+        # Filter None values for compatibility
         for result in results:
             if result is not None:
                 yield result
     else:
         # ===================================================================
-        # 🔄 FALLBACK: Método tradicional para otros backends
+        # 🔄 FALLBACK: Traditional method for other backends
         # ===================================================================
         return load_all(stream, FullLoader)
 
 def safe_load(stream):
     """
-    🛡️ CARGA SEGURA: YAML → Python solo tipos básicos
+    🛡️ SAFE LOADING: YAML → Python basic types only
     
-    PROPÓSITO:
-    - Máxima seguridad para input no confiable
-    - Solo tipos básicos del core de Python
-    - SafeLoader implícito (no requiere especificar)
+    PURPOSE:
+    - Maximum security for untrusted input
+    - Only basic Python core types
+    - Implicit SafeLoader (no need to specify)
     
-    TIPOS PERMITIDOS ÚNICAMENTE:
+    ALLOWED TYPES ONLY:
     - ✅ str, int, float, bool
     - ✅ list, dict, None
-    - ❌ Todo lo demás (datetime, set, clases, etc.)
+    - ❌ Everything else (datetime, set, classes, etc.)
     
-    USO RECOMENDADO:
-    - APIs públicas con input de usuarios
-    - Archivos de configuración de fuentes externas
-    - Cualquier YAML de origen no confiable
+    RECOMMENDED USAGE:
+    - Public APIs with user input
+    - Configuration files from external sources
+    - Any YAML from untrusted origin
     
     ```python
-    config = yaml.safe_load(user_input)  # Seguro siempre
+    config = yaml.safe_load(user_input)  # Always safe
     ```
     """
     return load(stream, SafeLoader)
 
 def safe_load_all(stream):
     """
-    🛡️ CARGA MÚLTIPLE SEGURA: Todos los documentos, solo tipos básicos
+    🛡️ SAFE MULTIPLE LOADING: All documents, basic types only
     
-    PROPÓSITO:
-    - Múltiples documentos con SafeLoader implícito
-    - Optimización especial para backend Rust
-    - Máxima seguridad para input no confiable
+    PURPOSE:
+    - Multiple documents with implicit SafeLoader
+    - Special optimization for Rust backend
+    - Maximum security for untrusted input
     """
     # ===================================================================
-    # 🚀 OPTIMIZACIÓN RUST: Ruta directa ultra-rápida
+    # 🚀 RUST OPTIMIZATION: Ultra-fast direct path
     # ===================================================================
     if __with_rust__:
-        # Convertir stream a string si es necesario
+        # Convert stream to string if necessary
         if hasattr(stream, 'read'):
             content = stream.read()
             if hasattr(stream, 'seek'):
-                stream.seek(0)          # Reset para compatibilidad
+                stream.seek(0)          # Reset for compatibility
         else:
             content = str(stream)
         
-        # Usar función Rust directa (bypass Python overhead)
+        # Use direct Rust function (bypass Python overhead)
         import io
         rust_stream = io.StringIO(content)
         results = load_all_rust(rust_stream)
         
-        # Filtrar None values para compatibilidad
+        # Filter None values for compatibility
         for result in results:
             if result is not None:
                 yield result
     else:
         # ===================================================================
-        # 🔄 FALLBACK: Método tradicional para otros backends
+        # 🔄 FALLBACK: Traditional method for other backends
         # ===================================================================
         return load_all(stream, SafeLoader)
 
 def unsafe_load(stream):
     """
-    ⚠️ CARGA INSEGURA: YAML → Python objetos arbitrarios
+    ⚠️ UNSAFE LOADING: YAML → arbitrary Python objects
     
-    PROPÓSITO:
-    - Compatibilidad con PyYAML original (comportamiento legacy)
-    - Permite cargar objetos Python arbitrarios
-    - UnsafeLoader implícito
+    PURPOSE:
+    - Compatibility with original PyYAML (legacy behavior)
+    - Allows loading arbitrary Python objects
+    - Implicit UnsafeLoader
     
-    ⚠️ ADVERTENCIA DE SEGURIDAD:
-    - NUNCA usar con input no confiable
-    - Puede ejecutar código arbitrario
-    - Solo para archivos de confianza total
+    ⚠️ SECURITY WARNING:
+    - NEVER use with untrusted input
+    - Can execute arbitrary code
+    - Only for fully trusted files
     
-    TIPOS PERMITIDOS:
-    - ✅ Todos los tipos básicos y extendidos
-    - ✅ Clases Python personalizadas
-    - ✅ Funciones, módulos, etc.
-    - ⚠️ PELIGROSO: Ejecución de código potencial
+    ALLOWED TYPES:
+    - ✅ All basic and extended types
+    - ✅ Custom Python classes
+    - ✅ Functions, modules, etc.
+    - ⚠️ DANGEROUS: Potential code execution
     
-    USO LIMITADO:
-    - Serialización de objetos Python complejos
-    - Archivos internos de aplicación
-    - NUNCA con input externo
+    LIMITED USAGE:
+    - Serialization of complex Python objects
+    - Internal application files
+    - NEVER with external input
     """
     return load(stream, UnsafeLoader)
 
 def unsafe_load_all(stream):
     """
-    ⚠️ CARGA MÚLTIPLE INSEGURA: Todos los documentos, objetos arbitrarios
+    ⚠️ UNSAFE MULTIPLE LOADING: All documents, arbitrary objects
     
-    PROPÓSITO:
-    - Múltiples documentos con UnsafeLoader implícito
-    - Optimización especial para backend Rust
-    - ⚠️ PELIGROSO para input no confiable
+    PURPOSE:
+    - Multiple documents with implicit UnsafeLoader
+    - Special optimization for Rust backend
+    - ⚠️ DANGEROUS for untrusted input
     """
     # ===================================================================
-    # 🚀 OPTIMIZACIÓN RUST: Ruta directa ultra-rápida
+    # 🚀 RUST OPTIMIZATION: Ultra-fast direct path
     # ===================================================================
     if __with_rust__:
-        # Convertir stream a string si es necesario
+        # Convert stream to string if necessary
         if hasattr(stream, 'read'):
             content = stream.read()
             if hasattr(stream, 'seek'):
-                stream.seek(0)          # Reset para compatibilidad
+                stream.seek(0)          # Reset for compatibility
         else:
             content = str(stream)
         
-        # Usar función Rust directa (bypass Python overhead)
+        # Use direct Rust function (bypass Python overhead)
         import io
         rust_stream = io.StringIO(content)
         results = load_all_rust(rust_stream)
         
-        # Filtrar None values para compatibilidad
+        # Filter None values for compatibility
         for result in results:
             if result is not None:
                 yield result
     else:
         # ===================================================================
-        # 🔄 FALLBACK: Método tradicional para otros backends
+        # 🔄 FALLBACK: Traditional method for other backends
         # ===================================================================
         return load_all(stream, UnsafeLoader)
 
@@ -638,10 +638,10 @@ def add_implicit_resolver(tag, regexp, first=None,
     first is a sequence of possible initial characters or None.
     """
     if Loader is None:
-        # Con backend Rust, usar clases directamente
+        # With Rust backend, use classes directly
         if __with_rust__:
-            # Las clases Rust no soportan add_implicit_resolver aún
-            pass  # Compatibilidad - no implementado
+            # Rust classes don't support add_implicit_resolver yet
+            pass  # Compatibility - not implemented
         else:
             loader.Loader.add_implicit_resolver(tag, regexp, first)
             loader.FullLoader.add_implicit_resolver(tag, regexp, first)
@@ -660,10 +660,10 @@ def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
     Keys can be string values, integers, or None.
     """
     if Loader is None:
-        # Con backend Rust, usar clases directamente
+        # With Rust backend, use classes directly
         if __with_rust__:
-            # Las clases Rust no soportan add_path_resolver aún
-            pass  # Compatibilidad - no implementado
+            # Rust classes don't support add_path_resolver yet
+            pass  # Compatibility - not implemented
         else:
             loader.Loader.add_path_resolver(tag, path, kind)
             loader.FullLoader.add_path_resolver(tag, path, kind)
@@ -681,10 +681,10 @@ def add_constructor(tag, constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        # Con backend Rust, usar clases directamente
+        # With Rust backend, use classes directly
         if __with_rust__:
-            # Las clases Rust no soportan add_constructor aún
-            pass  # Compatibilidad - no implementado
+            # Rust classes don't support add_constructor yet
+            pass  # Compatibility - not implemented
         else:
             loader.Loader.add_constructor(tag, constructor)
             loader.FullLoader.add_constructor(tag, constructor)
@@ -701,10 +701,10 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        # Con backend Rust, usar clases directamente
+        # With Rust backend, use classes directly
         if __with_rust__:
-            # Las clases Rust no soportan add_multi_constructor aún
-            pass  # Compatibilidad - no implementado
+            # Rust classes don't support add_multi_constructor yet
+            pass  # Compatibility - not implemented
         else:
             loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
             loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
@@ -722,7 +722,7 @@ def add_representer(data_type, representer, Dumper=Dumper):
     """
     if hasattr(Dumper, 'add_representer'):
         Dumper.add_representer(data_type, representer)
-    # Si es backend Rust, no hace nada (por ahora, solo compatibilidad)
+    # If Rust backend, do nothing (for now, compatibility only)
 
 def add_multi_representer(data_type, multi_representer, Dumper=Dumper):
     """
@@ -733,7 +733,7 @@ def add_multi_representer(data_type, multi_representer, Dumper=Dumper):
     """
     if hasattr(Dumper, 'add_multi_representer'):
         Dumper.add_multi_representer(data_type, multi_representer)
-    # Si es backend Rust, no hace nada (por ahora, solo compatibilidad)
+    # If Rust backend, do nothing (for now, compatibility only)
 
 class YAMLObjectMetaclass(type):
     """
