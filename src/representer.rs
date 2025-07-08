@@ -30,16 +30,16 @@ pub struct SafeRepresenter {
     /// Cache of already represented objects to avoid duplication
     represented_objects: HashSet<usize>, // Direcciones de memoria como usize (thread-safe)
     
-    /// Cache de nodos para objetos referenciados múltiples veces
+    /// Node cache for objects referenced multiple times
     node_cache: HashMap<usize, Node>, // direccion_memoria -> Node
     
-    /// Configuraciones
+    /// Configuration
     default_flow_style: bool,
     sort_keys: bool,
     
-    /// Contador de anchors para referencias múltiples
+    /// Anchor counter for multiple references
     anchor_counter: usize,
-    /// Objetos que necesitan anchors (referenciados múltiples veces)
+    /// Objects that need anchors (referenced multiple times)
     objects_needing_anchors: HashMap<usize, String>, // direccion -> anchor_name
 }
 
@@ -50,38 +50,38 @@ impl SafeRepresenter {
 
     /// Main entry point - represents a Python object as YAML node
     pub fn represent_data(&mut self, py: Python, data: &Bound<'_, PyAny>) -> PyResult<Node> {
-        // Limpiar estado para nueva representación
+        // Clear state for new representation
         self.represented_objects.clear();
         self.node_cache.clear();
         self.objects_needing_anchors.clear();
         self.anchor_counter = 0;
 
-        // PASO 1: Pre-scan para detectar objetos que necesitan anchors
+        // STEP 1: Pre-scan to detect objects that need anchors
         self.prescan_for_anchors(py, data)?;
         
-        // PASO 2: Limpiar estado de representación y representar el objeto
+        // STEP 2: Clear representation state and represent the object
         self.represented_objects.clear();
         self.represent_object(py, data)
     }
 
-    /// Pre-scan para detectar objetos referenciados múltiples veces
+    /// Pre-scan to detect objects referenced multiple times
     fn prescan_for_anchors(&mut self, py: Python, data: &Bound<'_, PyAny>) -> PyResult<()> {
-        // Obtener dirección de memoria del objeto
+        // Get memory address of the object
         let obj_addr = data.as_ptr() as usize;
         
-        // Si ya hemos visto este objeto, marcar para anchor
+        // If we've already seen this object, mark for anchor
         if self.represented_objects.contains(&obj_addr) {
             if !self.objects_needing_anchors.contains_key(&obj_addr) {
                 let anchor_name = self.generate_anchor_name();
                 self.objects_needing_anchors.insert(obj_addr, anchor_name);
             }
-            return Ok(()); // ✅ DETENER RECURSIÓN AQUÍ
+            return Ok(()); // ✅ STOP RECURSION HERE
         }
         
         // Marcar como visto
         self.represented_objects.insert(obj_addr);
         
-        // Recursivamente pre-scan para contenedores SOLO si no es circular
+        // Recursively pre-scan for containers ONLY if not circular
         if let Ok(list_val) = data.downcast::<PyList>() {
             for item in list_val.iter() {
                 self.prescan_for_anchors(py, &item)?;
@@ -118,13 +118,13 @@ impl SafeRepresenter {
     fn represent_object(&mut self, py: Python, data: &Bound<'_, PyAny>) -> PyResult<Node> {
         let obj_addr = data.as_ptr() as usize;
         
-        // Si este objeto ya fue representado, devolver alias o nodo cacheado
+        // If this object was already represented, return alias or cached node
         if self.represented_objects.contains(&obj_addr) {
             if let Some(cached_node) = self.node_cache.get(&obj_addr) {
                 return Ok(cached_node.clone());
             }
             
-            // Si necesita anchor, crear nodo alias
+            // If it needs anchor, create alias node
             if let Some(anchor_name) = self.objects_needing_anchors.get(&obj_addr) {
                 let mark = Mark::new(0, 0, 0);
                 return Ok(Node::new_alias(anchor_name.clone(), mark.clone(), mark));
@@ -136,7 +136,7 @@ impl SafeRepresenter {
         
         let mark = Mark::new(0, 0, 0);
 
-        // Detectar tipo y representar apropiadamente
+        // Detect type and represent appropriately
         let mut node = if data.is_none() {
             self.represent_none()
         } else if let Ok(bool_val) = data.downcast::<PyBool>() {
@@ -158,7 +158,7 @@ impl SafeRepresenter {
         } else if let Ok(frozenset_val) = data.downcast::<PyFrozenSet>() {
             self.represent_frozenset(py, frozenset_val)?
         } else {
-            // Fallback: convertir a string
+            // Fallback: convert to string
             let str_repr = data.str()?.extract::<String>()?;
             Node::new_scalar(
                 "tag:yaml.org,2002:str".to_string(),
@@ -169,7 +169,7 @@ impl SafeRepresenter {
             )
         };
         
-        // Si este objeto necesita anchor, asignarlo
+                    // If this object needs anchor, assign it
         if let Some(anchor_name) = self.objects_needing_anchors.get(&obj_addr) {
             node.anchor = Some(anchor_name.clone());
         }
@@ -234,7 +234,7 @@ impl SafeRepresenter {
                 "-.inf".to_string()
             }
         } else {
-            // Usar representación estándar, añadiendo .0 si es necesario
+            // Use standard representation, adding .0 if necessary
             let mut repr = format!("{}", value);
             if !repr.contains('.') && !repr.contains('e') && !repr.contains('E') {
                 repr.push_str(".0");
@@ -308,16 +308,16 @@ impl SafeRepresenter {
         let mark = Mark::new(0, 0, 0);
         let mut pairs = Vec::new();
 
-        // Convertir items a vector para poder ordenar si es necesario
+        // Convert items to vector to be able to sort if needed
         let mut items: Vec<(Bound<PyAny>, Bound<PyAny>)> = Vec::new();
         for (key, value) in data.iter() {
             items.push((key, value));
         }
 
-        // Ordenar claves si está habilitado (y es posible)
+        // Sort keys if enabled (and possible)
         if self.sort_keys {
             items.sort_by(|a, b| {
-                // Intentar ordenar por string representation de las claves
+                // Try to sort by string representation of keys
                 let key_a = a.0.str().map(|s| s.extract::<String>()).unwrap_or_else(|_| Ok("".to_string())).unwrap_or_default();
                 let key_b = b.0.str().map(|s| s.extract::<String>()).unwrap_or_else(|_| Ok("".to_string())).unwrap_or_default();
                 key_a.cmp(&key_b)
@@ -344,7 +344,7 @@ impl SafeRepresenter {
         let mark = Mark::new(0, 0, 0);
         let mut pairs = Vec::new();
 
-        // Convertir set a mapping con valores None
+        // Convert set to mapping with None values
         for item in data.iter() {
             let key_node = self.represent_object(py, &item)?;
             let value_node = self.represent_none();
@@ -365,7 +365,7 @@ impl SafeRepresenter {
         let mark = Mark::new(0, 0, 0);
         let mut pairs = Vec::new();
 
-        // Convertir frozenset a mapping con valores None
+        // Convert frozenset to mapping with None values
         for item in data.iter() {
             let key_node = self.represent_object(py, &item)?;
             let value_node = self.represent_none();
@@ -386,7 +386,7 @@ impl SafeRepresenter {
         self.default_flow_style = flow_style;
     }
 
-    /// Configurar ordenación de claves
+    /// Configure key sorting
     pub fn set_sort_keys(&mut self, sort_keys: bool) {
         self.sort_keys = sort_keys;
     }

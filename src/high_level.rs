@@ -549,7 +549,7 @@ impl Default for SafeLoader {
     fn default() -> Self {
         Self {
             loader_type: LoaderSafety::Safe,
-            resolve_implicit: true,      // 🔓 SafeLoader SÍ resuelve tipos implícitos
+            resolve_implicit: true,      // 🔓 SafeLoader DOES resolve implicit types
             allow_duplicate_keys: false,
             version: Some((1, 2)),       // YAML 1.2 por defecto
             parser: None,
@@ -651,7 +651,7 @@ impl SafeLoader {
         
         if let Some(node) = node_opt {
             // ===================================================================
-            // PASO 3: 🏭 CONSTRUCTOR - CON interpretación de tipos seguros
+            // STEP 3: 🏭 CONSTRUCTOR - WITH safe type interpretation
             // ===================================================================
             self.construct_safe_object(py, &node)
         } else {
@@ -669,12 +669,12 @@ impl SafeLoader {
         let stream = io_module.getattr("StringIO")?
             .call1((yaml_content,))?;
         
-        // Usar función multi-documento (aplicará restricciones Safe automáticamente)
+        // Use multi-document function (will apply Safe restrictions automatically)
         load_all_rust(py, stream)
     }
     
     // ===================================================================
-    // 🔧 MÉTODOS DE CONFIGURACIÓN: Iguales que BaseLoader
+            // 🔧 CONFIGURATION METHODS: Same as BaseLoader
     // ===================================================================
     
     pub fn set_version(&mut self, major: u8, minor: u8) {
@@ -690,7 +690,7 @@ impl SafeLoader {
     }
     
     // ===================================================================
-    // 🧹 MÉTODOS DE LIMPIEZA: Iguales que BaseLoader
+            // 🧹 CLEANUP METHODS: Same as BaseLoader
     // ===================================================================
     
     pub fn reset(&mut self) {
@@ -708,7 +708,7 @@ impl SafeLoader {
     }
     
     // ===================================================================
-    // 🔄 MÉTODOS DE ITERACIÓN: Compatibilidad PyYAML
+            // 🔄 ITERATION METHODS: PyYAML compatibility
     // ===================================================================
     
     /**
@@ -716,39 +716,39 @@ impl SafeLoader {
      * Permiten uso avanzado como load_all manual, compose_all, scan, parse
      */
     pub fn check_data(&self) -> bool {
-        false // Simplificado - para load_all manual
+        false // Simplified - for manual load_all
     }
     
     pub fn get_data(&mut self, py: Python) -> PyResult<Option<PyObject>> {
-        self.get_single_data(py) // Para load_all manual
+        self.get_single_data(py) // For manual load_all
     }
     
     pub fn check_node(&self) -> bool {
-        false // Simplificado - para compose_all manual
+        false // Simplified - for manual compose_all
     }
     
     pub fn get_node(&mut self, py: Python) -> PyResult<Option<PyObject>> {
-        self.get_single_data(py) // Simplificado
+        self.get_single_data(py) // Simplified
     }
     
     pub fn check_token(&self) -> bool {
-        false // Simplificado - para scan manual
+        false // Simplified - for manual scan
     }
     
     pub fn get_token(&mut self) -> Option<String> {
-        None // Simplificado
+        None // Simplified
     }
     
     pub fn check_event(&self) -> bool {
-        false // Simplificado - para parse manual
+        false // Simplified - for manual parse
     }
     
     pub fn get_event(&mut self) -> Option<String> {
-        None // Simplificado
+        None // Simplified
     }
     
     pub fn get_single_node(&mut self, py: Python) -> PyResult<Option<PyObject>> {
-        self.get_single_data(py) // Simplificado
+        self.get_single_data(py) // Simplified
     }
 }
 
@@ -777,28 +777,28 @@ impl SafeLoader {
     fn construct_safe_object(&self, py: Python, node: &Node) -> PyResult<Option<PyObject>> {
         match &node.value {
             crate::composer::NodeValue::Scalar(value) => {
-                // 🛡️ Interpretar solo tipos básicos seguros según tag
+                // 🛡️ Interpret only basic safe types according to tag
                 match node.tag.as_str() {
                     "tag:yaml.org,2002:str" => {
-                        // ✅ String: directo
+                        // ✅ String: direct
                         Ok(Some(PyString::new(py, value).into()))
                     },
                     "tag:yaml.org,2002:int" => {
-                        // ✅ Integer: convertir con fallback
+                        // ✅ Integer: convert with fallback
                         match value.parse::<i64>() {
                             Ok(num) => Ok(Some(PyInt::new(py, num).into())),
                             Err(_) => Ok(Some(PyString::new(py, value).into())), // Fallback seguro
                         }
                     },
                     "tag:yaml.org,2002:float" => {
-                        // ✅ Float: convertir con fallback
+                        // ✅ Float: convert with fallback
                         match value.parse::<f64>() {
                             Ok(num) => Ok(Some(PyFloat::new(py, num).into())),
                             Err(_) => Ok(Some(PyString::new(py, value).into())), // Fallback seguro
                         }
                     },
                     "tag:yaml.org,2002:bool" => {
-                        // ✅ Boolean: interpretar valores estándar YAML
+                        // ✅ Boolean: interpret standard YAML values
                         let is_true = matches!(value.to_lowercase().as_str(), 
                             "true" | "yes" | "on" | "1"
                         );
@@ -808,12 +808,12 @@ impl SafeLoader {
                         // ✅ Null: None de Python
                         Ok(Some(py.None()))
                     },
-                    // ❌ Cualquier otro tag: fallback seguro a string
+                    // ❌ Any other tag: safe fallback to string
                     _ => Ok(Some(PyString::new(py, value).into())),
                 }
             },
             crate::composer::NodeValue::Sequence(items) => {
-                // 📋 SECUENCIA: Lista con elementos procesados recursivamente
+                // 📋 SEQUENCE: List with recursively processed elements
                 let py_list = pyo3::types::PyList::empty(py);
                 for item in items {
                     if let Some(py_item) = self.construct_safe_object(py, item)? {
@@ -825,7 +825,7 @@ impl SafeLoader {
                 Ok(Some(py_list.into()))
             },
             crate::composer::NodeValue::Mapping(pairs) => {
-                // 🗂️ MAPPING: Diccionario con keys y values procesados recursivamente
+                // 🗂️ MAPPING: Dictionary with recursively processed keys and values
                 let py_dict = PyDict::new(py);
                 for (key_node, value_node) in pairs {
                     let py_key = if let Some(k) = self.construct_safe_object(py, key_node)? {
@@ -849,7 +849,7 @@ impl SafeLoader {
 }
 
 // ===============================================================================
-// 🔓 FULLLOADER: Loader con tipos avanzados seguros
+    // 🔓 FULLLOADER: Loader with secure advanced types
 // ===============================================================================
 
 /**
@@ -908,14 +908,14 @@ impl FullLoader {
         }
     }
     
-    /// Cargar desde el stream del constructor
+    /// Load from constructor stream
     pub fn get_single_data(&mut self, py: Python) -> PyResult<Option<PyObject>> {
         self.base_loader.get_single_data(py)
     }
     
-    /// Cargar con soporte para tipos avanzados
+    /// Load with support for advanced types
     pub fn load(&mut self, py: Python, yaml_content: &str) -> PyResult<Option<PyObject>> {
-        // Similar a SafeLoader pero con resolución avanzada de tipos
+        // Similar to SafeLoader but with advanced type resolution
         self.base_loader.reset();
         
         let io_module = py.import("io")?;
@@ -936,7 +936,7 @@ impl FullLoader {
         let node_opt = compose_rust(py, events)?;
         
         if let Some(node) = node_opt {
-            // Construct con tipos avanzados
+            // Construct with advanced types
             self.construct_full_object(py, &node)
         } else {
             Ok(None)
@@ -1020,26 +1020,26 @@ impl FullLoader {
             crate::composer::NodeValue::Scalar(value) => {
                 match node.tag.as_str() {
                     "tag:yaml.org,2002:timestamp" => {
-                        // ✅ Timestamp: usar resolver avanzado para fechas/timestamps
+                        // ✅ Timestamp: use advanced resolver for dates/timestamps
                         // TODO: Implementar resolver de timestamps
-                        // Por ahora fallback a string
+                        // For now fallback to string
                         Ok(Some(PyString::new(py, value).into()))
                     },
                     "tag:yaml.org,2002:binary" => {
-                        // ✅ Binary: usar resolver avanzado para datos binarios
+                        // ✅ Binary: use advanced resolver for binary data
                         // TODO: Implementar resolver de binary (base64 decode)
-                        // Por ahora fallback a string
+                        // For now fallback to string
                         Ok(Some(PyString::new(py, value).into()))
                     },
                     _ => {
-                        // Delegar tipos básicos a SafeLoader
+                        // Delegate basic types to SafeLoader
                         let safe_loader = SafeLoader::new_empty();
                         safe_loader.construct_safe_object(py, node)
                     }
                 }
             },
             crate::composer::NodeValue::Sequence(items) => {
-                // 📋 SECUENCIA: Lista con procesamiento recursivo avanzado
+                // 📋 SEQUENCE: List with advanced recursive processing
                 let py_list = pyo3::types::PyList::empty(py);
                 for item in items {
                     if let Some(py_item) = self.construct_full_object(py, item)? {
@@ -1051,8 +1051,8 @@ impl FullLoader {
                 Ok(Some(py_list.into()))
             },
             crate::composer::NodeValue::Mapping(pairs) => {
-                // 🗂️ MAPPING: Diccionario con soporte para tipos especiales (omap, set)
-                // TODO: Detectar tags especiales como !!omap, !!set
+                // 🗂️ MAPPING: Dictionary with support for special types (omap, set)
+                // TODO: Detect special tags like !!omap, !!set
                 let py_dict = PyDict::new(py);
                 for (key_node, value_node) in pairs {
                     let py_key = if let Some(k) = self.construct_full_object(py, key_node)? {
@@ -1076,7 +1076,7 @@ impl FullLoader {
 }
 
 // ===============================================================================
-// ⚠️ UNSAFELOADER: Loader sin restricciones de seguridad
+    // ⚠️ UNSAFELOADER: Loader without security restrictions
 // ===============================================================================
 
 /**
@@ -1168,7 +1168,7 @@ impl UnsafeLoader {
      * - ⚠️ RIESGO: Código arbitrario puede ejecutarse
      */
     pub fn load(&mut self, py: Python, yaml_content: &str) -> PyResult<Option<PyObject>> {
-        // Usar construcción completa sin restricciones de seguridad
+        // Use complete construction without security restrictions
         let io_module = py.import("io")?;
         let stream = io_module.getattr("StringIO")?
             .call1((yaml_content,))?;
@@ -1181,8 +1181,8 @@ impl UnsafeLoader {
         let node_opt = compose_rust(py, events)?;
         
         if let Some(node) = node_opt {
-            // ⚠️ USAR CONSTRUCTOR COMPLETO SIN RESTRICCIONES
-            // Permite todos los tipos incluyendo objetos Python peligrosos
+            // ⚠️ USE COMPLETE CONSTRUCTOR WITHOUT RESTRICTIONS
+            // Allows all types including dangerous Python objects
             construct_rust(py, &node).map(Some)
         } else {
             Ok(None)
@@ -1204,7 +1204,7 @@ impl UnsafeLoader {
     }
     
     // ===================================================================
-    // 🧹 MÉTODOS DE LIMPIEZA: Delegados a base_loader
+            // 🧹 CLEANUP METHODS: Delegated to base_loader
     // ===================================================================
     
     /**
@@ -1217,7 +1217,7 @@ impl UnsafeLoader {
     }
     
     // ===================================================================
-    // 🔄 MÉTODOS DE ITERACIÓN: Delegados a base_loader para compatibilidad
+            // 🔄 ITERATION METHODS: Delegated to base_loader for compatibility
     // ===================================================================
     
     /**
@@ -1262,7 +1262,7 @@ impl UnsafeLoader {
 }
 
 // ===============================================================================
-// 📝 SAFEDUMPER: Dumper seguro con opciones completas
+    // 📝 SAFEDUMPER: Safe dumper with complete options
 // ===============================================================================
 
 /**
@@ -1298,52 +1298,52 @@ pub struct SafeDumper {
     // ===================================================================
     // 🎛️ OPCIONES DE FORMATEO: Control de salida YAML
     // ===================================================================
-    indent: Option<usize>,              // Espacios de indentación por nivel
-    width: Option<usize>,               // Ancho máximo de línea
-    canonical: Option<bool>,            // Formato canónico (verbose)
+    indent: Option<usize>,              // Indentation spaces per level
+    width: Option<usize>,               // Maximum line width
+    canonical: Option<bool>,            // Canonical format (verbose)
     default_flow_style: Option<bool>,   // true=flow {}, false=block
     allow_unicode: bool,                // Permitir caracteres Unicode
     line_break: Option<String>,         // Tipo de line break (\n, \r\n)
     encoding: Option<String>,           // Encoding de salida (utf-8, etc.)
-    sort_keys: Option<bool>,            // Ordenar claves alfabéticamente
+    sort_keys: Option<bool>,            // Sort keys alphabetically
     
     // ===================================================================
-    // 📄 OPCIONES DE DOCUMENTO: Marcadores y metadatos
+    // 📄 DOCUMENT OPTIONS: Markers and metadata
     // ===================================================================
     explicit_start: bool,               // Incluir marcador --- al inicio
     explicit_end: bool,                 // Incluir marcador ... al final
-    version: Option<(u8, u8)>,          // Versión YAML en directiva %YAML
+    version: Option<(u8, u8)>,          // YAML version in %YAML directive
     tags: Option<HashMap<String, String>>, // Tags personalizados
     
     // ===================================================================
-    // 💾 ESTADO: Stream y control de escritura
+    // 💾 STATE: Stream and write control
     // ===================================================================
     stream: Option<PyObject>,           // Stream de salida (archivo, StringIO)
-    document_started: bool,             // Flag de documento iniciado
+    document_started: bool,             // Document started flag
 }
 
 impl Default for SafeDumper {
     fn default() -> Self {
         Self {
-            // Opciones de formateo con valores por defecto sensatos
-            indent: Some(2),                    // 2 espacios de indentación
-            width: Some(80),                    // 80 caracteres por línea
-            canonical: Some(false),             // Formato normal (no canónico)
+            // Formatting options with sensible default values
+            indent: Some(2),                    // 2 indentation spaces
+            width: Some(80),                    // 80 characters per line
+            canonical: Some(false),             // Normal format (not canonical)
             default_flow_style: Some(false),   // Estilo bloque por defecto
             allow_unicode: true,                // Permitir Unicode
             line_break: None,                   // Line break del sistema
             encoding: Some("utf-8".to_string()), // UTF-8 por defecto
-            sort_keys: Some(false),             // No ordenar claves por defecto
+            sort_keys: Some(false),             // Don't sort keys by default
             
-            // Opciones de documento
-            explicit_start: false,              // Sin --- por defecto
-            explicit_end: false,                // Sin ... por defecto
+            // Document options
+            explicit_start: false,              // No --- by default
+            explicit_end: false,                // No ... by default
             version: Some((1, 2)),              // YAML 1.2 por defecto
-            tags: None,                         // Sin tags personalizados
+            tags: None,                         // No custom tags
             
-            // Estado
-            stream: None,                       // Sin stream por defecto
-            document_started: false,            // Documento no iniciado
+            // State
+            stream: None,                       // No stream by default
+            document_started: false,            // Document not started
         }
     }
 }
@@ -1396,17 +1396,17 @@ impl SafeDumper {
         stream: Option<Bound<PyAny>>,           // Stream de salida opcional
         default_style: Option<String>,          // Estilo por defecto (no usado)
         default_flow_style: Option<bool>,       // Estilo flujo
-        canonical: Option<bool>,                // Formato canónico
-        indent: Option<usize>,                  // Espacios indentación
-        width: Option<usize>,                   // Ancho línea
+        canonical: Option<bool>,                // Canonical format
+        indent: Option<usize>,                  // Indentation spaces
+        width: Option<usize>,                   // Line width
         allow_unicode: Option<bool>,            // Unicode permitido
         line_break: Option<String>,             // Tipo line break
         encoding: Option<String>,               // Encoding
         explicit_start: Option<bool>,           // Marcador ---
         explicit_end: Option<bool>,             // Marcador ...
-        version: Option<(u8, u8)>,              // Versión YAML
+        version: Option<(u8, u8)>,              // YAML version
         tags: Option<HashMap<String, String>>,  // Tags personalizados
-        sort_keys: Option<bool>,                // Ordenar claves
+        sort_keys: Option<bool>,                // Sort keys
     ) -> PyResult<Self> {
         let mut dumper = Self::default();
         
@@ -1473,7 +1473,7 @@ impl SafeDumper {
      * - Retornar string si no hay stream, escribir a stream si existe
      */
     pub fn dump(&self, py: Python, data: &Bound<PyAny>) -> PyResult<String> {
-        // Usar emitter con opciones configuradas
+        // Use emitter with configured options
         let node = represent_rust(py, data)?;
         let yaml_string = emit_to_string_with_options(
             &node,
@@ -1496,7 +1496,7 @@ impl SafeDumper {
     }
     
     // ===================================================================
-    // 🔧 MÉTODOS DE CONFIGURACIÓN: Modificar opciones dinámicamente
+            // 🔧 CONFIGURATION METHODS: Modify options dynamically
     // ===================================================================
     
     /**
@@ -1581,7 +1581,7 @@ impl SafeDumper {
     }
     
     // ===================================================================
-    // 🧹 MÉTODOS DE LIMPIEZA: Gestión de estado y recursos
+            // 🧹 CLEANUP METHODS: State and resource management
     // ===================================================================
     
     /**
@@ -1595,7 +1595,7 @@ impl SafeDumper {
     }
     
     // ===================================================================
-    // 📄 MÉTODOS DE ESCRITURA: Control de streams y documentos
+            // 📄 WRITING METHODS: Stream and document control
     // ===================================================================
     
     /**
@@ -1653,7 +1653,7 @@ impl SafeDumper {
     }
     
     // ===================================================================
-    // 🔧 MÉTODOS AVANZADOS: Control fino del pipeline
+            // 🔧 ADVANCED METHODS: Fine pipeline control
     // ===================================================================
     
     /**
@@ -1664,7 +1664,7 @@ impl SafeDumper {
      */
     pub fn represent(&mut self, py: Python, data: &Bound<PyAny>) -> PyResult<()> {
         let _node = represent_rust(py, data)?;
-        // TODO: Almacenar nodo para uso posterior
+        // TODO: Store node for later use
         Ok(())
     }
     
@@ -1675,7 +1675,7 @@ impl SafeDumper {
      * USO: Para control manual del pipeline
      */
     pub fn serialize(&mut self, py: Python, node: &Bound<PyAny>) -> PyResult<()> {
-        // TODO: Implementar serialización manual de nodos
+        // TODO: Implement manual node serialization
         let _ = py;
         let _ = node;
         Ok(())
@@ -1688,14 +1688,14 @@ impl SafeDumper {
      * USO: Para control manual de eventos de serialización
      */
     pub fn emit(&mut self, py: Python, event: &Bound<PyAny>) -> PyResult<()> {
-        // TODO: Implementar emisión manual de eventos
+        // TODO: Implement manual event emission
         let _ = py;
         let _ = event;
         Ok(())
     }
     
     // ===================================================================
-    // 📝 MÉTODO AUXILIAR: Escritura a stream
+            // 📝 HELPER METHOD: Stream writing
     // ===================================================================
     
     /**
@@ -1715,7 +1715,7 @@ impl SafeDumper {
     }
     
     // ===================================================================
-    // 🎭 MÉTODOS ESTÁTICOS: Registro de representers personalizados
+            // 🎭 STATIC METHODS: Custom representer registration
     // ===================================================================
     
     /**
@@ -1730,7 +1730,7 @@ impl SafeDumper {
     #[classmethod]
     pub fn add_representer(_cls: &Bound<PyType>, _data_type: PyObject, _representer: PyObject) {
         // TODO: Implementar registro de representers personalizados
-        // Por ahora no-op para compatibilidad
+        // For now no-op for compatibility
     }
     
     /**
@@ -1743,12 +1743,12 @@ impl SafeDumper {
     #[classmethod]
     pub fn add_multi_representer(_cls: &Bound<PyType>, _data_type: PyObject, _representer: PyObject) {
         // TODO: Implementar registro de multi-representers
-        // Por ahora no-op para compatibilidad
+        // For now no-op for compatibility
     }
 }
 
 // ===============================================================================
-// 🎯 FUNCIONES DE ALTO NIVEL: API compatible con PyYAML
+    // 🎯 HIGH-LEVEL FUNCTIONS: PyYAML compatible API
 // ===============================================================================
 
 /**
@@ -1853,7 +1853,7 @@ pub fn safe_load_all(py: Python, yaml_content: &str) -> PyResult<Vec<Option<PyOb
  * 
  * VENTAJAS RUST:
  * - Algoritmos de serialización optimizados
- * - Detección automática de referencias circulares
+ * - Automatic circular reference detection
  * - Memory safety garantizada
  * 
  * USO:

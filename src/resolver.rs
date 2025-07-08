@@ -19,7 +19,7 @@ impl std::fmt::Display for ResolverError {
 
 impl std::error::Error for ResolverError {}
 
-/// Resolver ultra-avanzado para tipos YAML complejos
+/// Ultra-advanced resolver for complex YAML types
 /// Incluye fechas, timestamps, binary data, merge keys, etc.
 #[pyclass]
 pub struct AdvancedResolver {
@@ -72,7 +72,7 @@ impl AdvancedResolver {
         Self::default()
     }
     
-    /// Resolver principal - determinar tag YAML correcto para un valor
+    /// Main resolver - determine correct YAML tag for a value
     pub fn resolve(&mut self, value: &str, implicit: bool) -> String {
         // Cache check primero
         if let Some(cached_tag) = self.pattern_cache.get(value) {
@@ -141,7 +141,7 @@ impl AdvancedResolver {
         
         // Timestamp patterns (ISO 8601 y variants)
         self.timestamp_patterns = vec![
-            // ISO 8601 completo: 2001-12-15T02:59:43.1Z
+            // Complete ISO 8601: 2001-12-15T02:59:43.1Z
             Regex::new(r"^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}[Tt]([0-9]{1,2}:[0-9]{2}:[0-9]{2}(\.[0-9]*)?)?([Zz]|[+-][0-9]{1,2}:[0-9]{2})?$").unwrap(),
             // Date only: 2002-12-14
             Regex::new(r"^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$").unwrap(),
@@ -172,7 +172,7 @@ impl AdvancedResolver {
     
     /// Implicit type resolution
     fn resolve_implicit(&self, value: &str) -> String {
-        // Trim whitespace para checking
+        // Trim whitespace for checking
         let trimmed = value.trim();
         
         // Check null first (most common)

@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyRuntimeError;
 use crate::parser::Mark;
 
-/// Tipos de errores YAML específicos
+/// Specific YAML error types
 #[derive(Debug, Clone)]
 pub enum YamlErrorType {
     // Parsing errors
@@ -41,7 +41,7 @@ pub enum YamlErrorType {
 }
 
 impl YamlErrorType {
-    /// Convertir a excepción Python apropiada
+    /// Convert to appropriate Python exception
     pub fn to_python_exception_name(&self) -> &'static str {
         match self {
             YamlErrorType::ScannerError | 
@@ -60,7 +60,7 @@ impl YamlErrorType {
     }
 }
 
-/// Error YAML completo con información detallada
+/// Complete YAML error with detailed information
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct YamlError {
@@ -72,7 +72,7 @@ pub struct YamlError {
     pub note: Option<String>,
     pub problem_mark: Option<Mark>,
     pub problem_value: Option<String>,
-    pub yaml_path: Vec<String>, // Path al elemento problemático (e.g., ["root", "items", "0", "name"])
+    pub yaml_path: Vec<String>, // Path to problematic element (e.g., ["root", "items", "0", "name"])
 }
 
 impl YamlError {
@@ -121,25 +121,25 @@ impl YamlError {
         }
     }
     
-    /// Agregar contexto al error
+    /// Add context to the error
     pub fn with_context(mut self, context: String) -> Self {
         self.context = Some(context);
         self
     }
     
-    /// Agregar nota explicativa
+    /// Add explanatory note
     pub fn with_note(mut self, note: String) -> Self {
         self.note = Some(note);
         self
     }
     
-    /// Agregar valor problemático
+    /// Add problematic value
     pub fn with_problem_value(mut self, value: String) -> Self {
         self.problem_value = Some(value);
         self
     }
     
-    /// Agregar path YAML
+    /// Add YAML path
     pub fn with_yaml_path(mut self, path: Vec<String>) -> Self {
         self.yaml_path = path;
         self
@@ -149,20 +149,20 @@ impl YamlError {
     pub fn format_message(&self) -> String {
         let mut parts = Vec::new();
         
-        // Tipo de error y mensaje principal
+        // Error type and main message
         parts.push(format!("{:?}: {}", self.error_type, self.message));
         
-        // Posición del problema
+        // Problem position
         if let Some(mark) = &self.problem_mark {
             parts.push(format!("  at line {}, column {}", mark.line + 1, mark.column + 1));
         }
         
-        // Path YAML si está disponible
+        // YAML path if available
         if !self.yaml_path.is_empty() {
             parts.push(format!("  in {}", self.yaml_path.join(" -> ")));
         }
         
-        // Valor problemático
+        // Problematic value
         if let Some(value) = &self.problem_value {
             if value.len() <= 100 {
                 parts.push(format!("  problem value: \"{}\"", value));
@@ -184,7 +184,7 @@ impl YamlError {
         parts.join("\n")
     }
     
-    /// Convertir a PyErr para Python
+    /// Convert to PyErr for Python
     pub fn to_pyerr(&self) -> PyErr {
         PyErr::new::<PyRuntimeError, _>(self.format_message())
     }
@@ -258,7 +258,7 @@ impl YamlErrorBuilder {
     }
 }
 
-/// Errores específicos pre-definidos para casos comunes
+/// Pre-defined specific errors for common cases
 
 /// Error de scanner
 pub fn scanner_error(message: String, mark: Mark) -> YamlError {
@@ -294,7 +294,7 @@ pub fn composer_error(message: String, mark: Option<Mark>, yaml_path: Vec<String
     builder.build()
 }
 
-/// Error de alias no encontrado
+/// Alias not found error
 pub fn unknown_alias_error(alias_name: String, mark: Mark) -> YamlError {
     YamlErrorBuilder::new(YamlErrorType::UnknownAliasError, 
                          format!("Unknown alias: '{}'", alias_name))
@@ -304,7 +304,7 @@ pub fn unknown_alias_error(alias_name: String, mark: Mark) -> YamlError {
         .build()
 }
 
-/// Error de anchor duplicado
+/// Duplicate anchor error
 pub fn duplicate_anchor_error(anchor_name: String, mark: Mark, previous_mark: Mark) -> YamlError {
     YamlErrorBuilder::new(YamlErrorType::DuplicateAnchorError,
                          format!("Duplicate anchor: '{}'", anchor_name))
@@ -316,7 +316,7 @@ pub fn duplicate_anchor_error(anchor_name: String, mark: Mark, previous_mark: Ma
         .build()
 }
 
-/// Error de referencia circular
+/// Circular reference error
 pub fn circular_reference_error(path: Vec<String>, mark: Mark) -> YamlError {
     YamlErrorBuilder::new(YamlErrorType::CircularReferenceError,
                          "Circular reference detected".to_string())
@@ -327,7 +327,7 @@ pub fn circular_reference_error(path: Vec<String>, mark: Mark) -> YamlError {
         .build()
 }
 
-/// Error de tipo inválido
+    /// Invalid type error
 pub fn type_mismatch_error(expected: String, found: String, mark: Mark) -> YamlError {
     YamlErrorBuilder::new(YamlErrorType::TypeMismatchError,
                          format!("Type mismatch: expected {}, found {}", expected, found))
@@ -337,7 +337,7 @@ pub fn type_mismatch_error(expected: String, found: String, mark: Mark) -> YamlE
         .build()
 }
 
-/// Error de documento inválido
+    /// Invalid document error
 pub fn invalid_document_error(message: String, mark: Option<Mark>) -> YamlError {
     let mut builder = YamlErrorBuilder::new(YamlErrorType::InvalidDocumentError, message)
         .with_note("Check document structure and YAML version compatibility".to_string());
@@ -397,7 +397,7 @@ pub fn create_yaml_error(error_type: String, message: String, line: Option<usize
     error
 }
 
-/// Formatear error para mostrar
+    /// Format error for display
 #[pyfunction]
 pub fn format_error(error: &YamlError) -> String {
     error.format_message()

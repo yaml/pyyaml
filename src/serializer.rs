@@ -22,20 +22,20 @@ impl std::error::Error for SerializerError {}
 /// Es el INVERSO del composer: Nodos → Eventos
 #[pyclass]
 pub struct Serializer {
-    // Estado interno para detectar referencias circulares - THREAD-SAFE
+    // Internal state to detect circular references - THREAD-SAFE
     node_addresses: HashSet<usize>, // Direcciones de memoria como usize (thread-safe)
     anchor_counter: usize,
     assigned_anchors: HashMap<usize, String>, // direccion_memoria -> anchor_name
     serialized_nodes: HashMap<usize, bool>, // direccion_memoria -> is_serialized
     
-    // Configuraciones
+    // Configurations
     canonical: bool,
     version: Option<(u8, u8)>,
     tags: Option<HashMap<String, String>>,
     explicit_start: bool,
     explicit_end: bool,
     
-    // Buffers pre-allocados para rendimiento
+    // Pre-allocated buffers for performance
     event_buffer: Vec<Event>,
 }
 
@@ -91,14 +91,14 @@ impl Serializer {
 }
 
 impl Serializer {
-    /// Serializar un nodo en eventos - punto de entrada principal
+    /// Serialize a node into events - main entry point
     pub fn serialize_node(&mut self, node: &Node) -> Result<Vec<Event>, SerializerError> {
         self.reset();
         
         // STEP 1: Pre-scan to detect multiple references and assign anchors
         self.prescan_node(node)?;
         
-        // STEP 2: Serializar eventos
+        // STEP 2: Serialize events
         self.event_buffer.clear();
         
         // Stream start
@@ -107,7 +107,7 @@ impl Serializer {
         // Document start  
         self.emit_document_start();
         
-        // Serializar el nodo principal
+        // Serialize the main node
         self.serialize_node_internal(node)?;
         
         // Document end
@@ -119,12 +119,12 @@ impl Serializer {
         Ok(self.event_buffer.clone())
     }
     
-    /// Pre-scan para detectar nodos que necesitan anchors - THREAD-SAFE CORREGIDO
+    /// Pre-scan to detect nodes that need anchors - THREAD-SAFE CORRECTED
     fn prescan_node(&mut self, node: &Node) -> Result<(), SerializerError> {
         // Get memory address of node as usize (thread-safe)
         let node_addr = node as *const Node as usize;
         
-        // Si ya hemos visto este nodo (referencia circular), asignar anchor
+                    // If we've already seen this node (circular reference), assign anchor
         if self.node_addresses.contains(&node_addr) {
             if !self.assigned_anchors.contains_key(&node_addr) {
                 let anchor_name = self.generate_anchor_name();
@@ -158,14 +158,14 @@ impl Serializer {
         Ok(())
     }
     
-    /// Serializar nodo interno recursivamente - THREAD-SAFE CORREGIDO
+    /// Serialize internal node recursively - THREAD-SAFE CORRECTED
     fn serialize_node_internal(&mut self, node: &Node) -> Result<(), SerializerError> {
         let node_addr = node as *const Node as usize;
         
-        // Check si este nodo ya fue serializado (manejo de aliases)
+        // Check if this node was already serialized (alias handling)
         if let Some(already_serialized) = self.serialized_nodes.get(&node_addr) {
             if *already_serialized {
-                // Emitir alias
+                // Emit alias
                 if let Some(anchor_name) = self.assigned_anchors.get(&node_addr) {
                     self.emit_alias(anchor_name.clone());
                     return Ok(());
@@ -390,7 +390,7 @@ pub fn serialize_with_options(
     }
 }
 
-// Extensión para PyEvent
+        // Extension for PyEvent
 impl PyEvent {
     pub fn from_event(event: Event) -> Self {
         Self { event }

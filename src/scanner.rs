@@ -244,11 +244,11 @@ impl PyScanner {
      */
     fn scan_all(&mut self) -> Vec<String> {
         if !self.done {
-            // Crear scanner nativo con lifetime temporal
+            // Create native scanner with temporary lifetime
             let mut scanner = Scanner::new(&self.input);
             let tokens = scanner.scan_all();
             
-            // Convertir tokens nativos → strings para Python
+            // Convert native tokens → strings for Python
             self.tokens = tokens.iter().map(|t| t.to_string()).collect();
             self.done = true;
         }
@@ -273,7 +273,7 @@ impl PyScanner {
             self.pos += 1;
             Some(token)
         } else {
-            None // No más tokens
+            None // No more tokens
         }
     }
     
@@ -311,7 +311,7 @@ impl PyScanner {
 }
 
 // ===============================================================================
-// 🔍 IMPLEMENTACIÓN SCANNER NATIVO: Optimizaciones extremas
+    // 🔍 NATIVE SCANNER IMPLEMENTATION: Extreme optimizations
 // ===============================================================================
 
 impl<'a> Scanner<'a> {
@@ -513,7 +513,7 @@ impl<'a> Scanner<'a> {
     }
     
     // ===================================================================
-    // 🔍 SCANNERS ESPECÍFICOS: Reconocimiento de tokens individuales
+    // 🔍 SPECIFIC SCANNERS: Individual token recognition
     // ===================================================================
     
     /**
@@ -642,7 +642,7 @@ impl<'a> Scanner<'a> {
      */
     #[inline(always)]
     fn scan_comment(&mut self) {
-        // Skip hasta end of line
+        // Skip until end of line
         while self.pos < self.end {
             let byte = unsafe { *self.bytes.get_unchecked(self.pos) };
             if byte == b'\n' || byte == b'\r' {
@@ -678,7 +678,7 @@ impl<'a> Scanner<'a> {
         }
         
         let end = self.pos;
-        // Excluir comillas del valor
+        // Exclude quotes from value
         self.add_token_with_value(TokenType::Scalar, start + 1, end - 1, None);
     }
     
@@ -708,7 +708,7 @@ impl<'a> Scanner<'a> {
         }
         
         let end = self.pos;
-        // Excluir comillas del valor
+        // Exclude quotes from value
         self.add_token_with_value(TokenType::Scalar, start + 1, end - 1, None);
     }
     
@@ -802,7 +802,7 @@ impl<'a> Scanner<'a> {
      * * SCANNER ALIAS: scan_alias()
      * 
      * PROPÓSITO:
-     * - Reconocer referencias de alias: *nombre
+     * - Recognize alias references: *name
      * - Mismas reglas de nombre que anchor
      * - Generar ALIAS token
      * 
@@ -844,7 +844,7 @@ impl<'a> Scanner<'a> {
         self.advance(1); // Skip '!'
         let start = self.pos;
         
-        // Scan tag name con caracteres extendidos
+        // Scan tag name with extended characters
         while self.pos < self.end {
             let byte = unsafe { *self.bytes.get_unchecked(self.pos) };
             if byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-' || 
@@ -909,7 +909,7 @@ impl Token {
             TokenType::StreamStart => "STREAM_START".to_string(),
             TokenType::StreamEnd => "STREAM_END".to_string(),
             
-            // 📄 TOKENS DE DOCUMENTO
+            // 📄 DOCUMENT TOKENS
             TokenType::DocumentStart => "DOCUMENT_START".to_string(),
             TokenType::DocumentEnd => "DOCUMENT_END".to_string(),
             
@@ -934,7 +934,7 @@ impl Token {
             TokenType::BlockEntry => "BLOCK_ENTRY".to_string(),
             TokenType::FlowEntry => "FLOW_ENTRY".to_string(),
             
-            // 🔗 TOKENS DE REFERENCIA
+            // 🔗 REFERENCE TOKENS
             TokenType::Anchor => {
                 if let Some(value) = self.value {
                     format!("ANCHOR({})", value)

@@ -4,7 +4,7 @@ use std::io::Read;
 use std::fs::File;
 use encoding_rs::{Encoding, UTF_8, UTF_16LE, UTF_16BE};
 
-/// Error para lectura avanzada
+/// Error for advanced reading
 #[derive(Debug)]
 pub struct ReaderError {
     pub message: String,
@@ -24,7 +24,7 @@ impl std::fmt::Display for ReaderError {
 
 impl std::error::Error for ReaderError {}
 
-/// Información de encoding detectado
+/// Detected encoding information
 #[derive(Debug, Clone)]
 pub struct EncodingInfo {
     pub encoding: &'static Encoding,
@@ -33,23 +33,23 @@ pub struct EncodingInfo {
     pub confidence: f32,
 }
 
-/// Reader avanzado con detección automática de encoding
+/// Advanced reader with automatic encoding detection
 #[pyclass]
 pub struct AdvancedReader {
-    // Estado de lectura
+    // Reading state
     content: String,
     position: usize,
     line: usize,
     column: usize,
     
-    // Información de encoding
+    // Encoding information
     encoding_info: Option<EncodingInfo>,
     
-    // Buffer para lookahead
+    // Buffer for lookahead
     buffer: Vec<char>,
     buffer_position: usize,
     
-    // Configuraciones
+    // Configuration
     detect_encoding: bool,
     strip_bom: bool,
     max_lookahead: usize,
@@ -92,7 +92,7 @@ impl AdvancedReader {
         self.max_lookahead = max;
     }
     
-    /// Cargar contenido desde diferentes fuentes
+    /// Load content from different sources
     pub fn load_from_string(&mut self, content: &str) -> PyResult<()> {
         self.content = content.to_string();
         self.reset_position();
@@ -102,7 +102,7 @@ impl AdvancedReader {
     pub fn load_from_bytes(&mut self, _py: Python, bytes: &Bound<PyBytes>) -> PyResult<()> {
         let raw_bytes = bytes.as_bytes();
         
-        // Detectar encoding y BOM
+        // Detect encoding and BOM
         let encoding_info = if self.detect_encoding {
             self.detect_encoding_from_bytes(raw_bytes)
         } else {
@@ -210,7 +210,7 @@ impl AdvancedReader {
 }
 
 impl AdvancedReader {
-    /// Reset posición de lectura
+    /// Reset reading position
     fn reset_position(&mut self) {
         self.position = 0;
         self.line = 1;
@@ -222,7 +222,7 @@ impl AdvancedReader {
         self.buffer.extend(self.content.chars());
     }
     
-    /// Detectar encoding desde bytes
+    /// Detect encoding from bytes
     fn detect_encoding_from_bytes(&self, bytes: &[u8]) -> EncodingInfo {
         // Check BOM first
         if let Some(bom_info) = self.detect_bom(bytes) {
@@ -233,7 +233,7 @@ impl AdvancedReader {
         self.detect_encoding_heuristic(bytes)
     }
     
-    /// Detectar BOM (Byte Order Mark)
+    /// Detect BOM (Byte Order Mark)
     fn detect_bom(&self, bytes: &[u8]) -> Option<EncodingInfo> {
         if bytes.len() >= 3 {
             // UTF-8 BOM
@@ -270,7 +270,7 @@ impl AdvancedReader {
         None
     }
     
-    /// Detección heurística de encoding
+    /// Heuristic encoding detection
     fn detect_encoding_heuristic(&self, bytes: &[u8]) -> EncodingInfo {
         let sample_size = std::cmp::min(bytes.len(), 8192);
         let sample = &bytes[..sample_size];
@@ -297,11 +297,11 @@ impl AdvancedReader {
     
     /// Asegurar que el buffer tiene suficientes caracteres
     fn ensure_buffer(&mut self, _count: usize) {
-        // Buffer ya está lleno con todo el contenido en reset_position
-        // Implementación simplificada para este caso
+        // Buffer is already full with all content in reset_position
+        // Simplified implementation for this case
     }
     
-    /// Avanzar posición tras leer un carácter
+    /// Advance position after reading a character
     fn advance_position(&mut self, ch: char) {
         self.position += ch.len_utf8();
         
@@ -338,7 +338,7 @@ pub fn create_reader_from_file(file_path: &str) -> PyResult<AdvancedReader> {
     Ok(reader)
 }
 
-/// Detectar encoding de bytes
+/// Detect encoding from bytes
 #[pyfunction]
 pub fn detect_encoding(bytes: &Bound<PyBytes>) -> String {
     let reader = AdvancedReader::new();

@@ -1,33 +1,33 @@
 /*!
  * ===============================================================================
- * PyYAML-Rust: Composer Estructural Avanzado
+ * PyYAML-Rust: Advanced Structural Composer
  * ===============================================================================
  * 
- * Este archivo implementa el COMPOSER de YAML con optimizaciones estructurales:
+ * This file implements the YAML COMPOSER with structural optimizations:
  * 
- * 1. 🏗️  COMPOSICIÓN: Eventos YAML → Nodos estructurados jerárquicos
- * 2. 🧠  RESOLUCIÓN: Tags automáticos + detección de tipos (int, float, bool)
- * 3. 🔗  ANCHORS/ALIAS: Soporte completo para referencias circulares
- * 4. 📊  NODOS: Representación intermedia antes de construcción Python
+ * 1. 🏗️  COMPOSITION: YAML Events → Hierarchical structured nodes
+ * 2. 🧠  RESOLUTION: Automatic tags + type detection (int, float, bool)
+ * 3. 🔗  ANCHORS/ALIAS: Complete support for circular references
+ * 4. 📊  NODES: Intermediate representation before Python construction
  * 
- * ARQUITECTURA DEL COMPOSER:
+ * COMPOSER ARCHITECTURE:
  * ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
- * │   Eventos   │ -> │  Composer   │ -> │   Nodos     │ -> │Constructor  │
- * │ (Parser)    │    │ (Estructura)│    │ (Árbol)     │    │ (Python)    │
+ * │   Events    │ -> │  Composer   │ -> │   Nodes     │ -> │Constructor  │
+ * │ (Parser)    │    │ (Structure) │    │ (Tree)      │    │ (Python)    │
  * └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
  * 
- * TIPOS DE NODOS:
- * - 🔤 Scalar: Valores individuales (strings, números, bools)
- * - 📋 Sequence: Listas/arrays ordenados
- * - 🗂️ Mapping: Diccionarios/mapas key-value
- * - 🔗 Alias: Referencias a anchors definidos
+ * NODE TYPES:
+ * - 🔤 Scalar: Individual values (strings, numbers, bools)
+ * - 📋 Sequence: Ordered lists/arrays
+ * - 🗂️ Mapping: Key-value dictionaries/maps
+ * - 🔗 Alias: References to defined anchors
  * 
- * CARACTERÍSTICAS CRÍTICAS:
- * - 🚀 Algoritmos recursivos optimizados
- * - 🧠 Resolución automática de tipos YAML
- * - 📦 Pre-allocation para evitar allocations
- * - 🔄 Soporte completo anchors & aliases
- * - ⚡ Tags YAML automáticos (!!bool, !!int, !!float)
+ * CRITICAL CHARACTERISTICS:
+ * - 🚀 Optimized recursive algorithms
+ * - 🧠 Automatic YAML type resolution
+ * - 📦 Pre-allocation to avoid allocations
+ * - 🔄 Complete anchors & aliases support
+ * - ⚡ Automatic YAML tags (!!bool, !!int, !!float)
  */
 
 use pyo3::prelude::*;
@@ -35,26 +35,26 @@ use std::collections::HashMap;
 use crate::parser::{Event, Mark, PyEvent};
 
 // ===============================================================================
-// 🏗️ VALORES DE NODO: Tipos de contenido YAML
+    // 🏗️ NODE VALUES: YAML content types
 // ===============================================================================
 
 /**
- * 🏗️ ENUM VALORES DE NODO: NodeValue
+ * 🏗️ NODE VALUE ENUM: NodeValue
  * 
- * PROPÓSITO:
- * - Representar los tres tipos principales de contenido YAML
- * - Estructura jerárquica recursiva para anidamiento
- * - Base para construcción de objetos Python finales
+ * PURPOSE:
+ * - Represent the three main types of YAML content
+ * - Recursive hierarchical structure for nesting
+ * - Base for final Python object construction
  * 
- * TIPOS:
- * 1. 🔤 Scalar(String): Valores individuales (leaf nodes)
- * 2. 📋 Sequence(Vec<Node>): Listas ordenadas de nodos
- * 3. 🗂️ Mapping(Vec<(Node, Node)>): Pares key-value
+ * TYPES:
+ * 1. 🔤 Scalar(String): Individual values (leaf nodes)
+ * 2. 📋 Sequence(Vec<Node>): Ordered lists of nodes
+ * 3. 🗂️ Mapping(Vec<(Node, Node)>): Key-value pairs
  * 
- * DISEÑO:
- * - Usa Vec en lugar de HashMap para mantener orden
- * - Estructura recursiva: Nodos pueden contener otros nodos
- * - Clone optimizado para referencias y caching
+ * DESIGN:
+ * - Uses Vec instead of HashMap to maintain order
+ * - Recursive structure: Nodes can contain other nodes
+ * - Optimized clone for references and caching
  */
 #[derive(Debug, Clone)]
 pub enum NodeValue {
@@ -68,32 +68,32 @@ pub enum NodeValue {
 // ===============================================================================
 
 /**
- * 🎯 ESTRUCTURA NODO: Node
+ * 🎯 NODE STRUCTURE: Node
  * 
- * PROPÓSITO:
- * - Representación intermedia entre eventos y objetos Python
- * - Contiene toda la información necesaria para construcción
- * - Estructura de árbol que preserva jerarquía YAML
+ * PURPOSE:
+ * - Intermediate representation between events and Python objects
+ * - Contains all information necessary for construction
+ * - Tree structure that preserves YAML hierarchy
  * 
- * CAMPOS PRINCIPALES:
- * - tag: Tipo YAML (tag:yaml.org,2002:str, etc.)
- * - value: Contenido del nodo (NodeValue enum)
- * - start_mark, end_mark: Posición en texto fuente
- * - style: Estilo de representación (' " | > etc.)
- * - flow_style: true para {}/[], false para block style
- * - anchor: Nombre de anchor para referencias
+ * MAIN FIELDS:
+ * - tag: YAML type (tag:yaml.org,2002:str, etc.)
+ * - value: Node content (NodeValue enum)
+ * - start_mark, end_mark: Position in source text
+ * - style: Representation style (' " | > etc.)
+ * - flow_style: true for {}/[], false for block style
+ * - anchor: Anchor name for references
  * 
- * COMPATIBILIDAD:
- * - Compatible con PyYAML Node structure
- * - Expuesto a Python vía PyO3
- * - Métodos Python-friendly para introspección
+ * COMPATIBILITY:
+ * - Compatible with PyYAML Node structure
+ * - Exposed to Python via PyO3
+ * - Python-friendly methods for introspection
  */
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct Node {
     #[pyo3(get)]
-    pub tag: String,                    // Tag YAML (tipo)
-    pub value: NodeValue,               // Contenido del nodo
+    pub tag: String,                    // YAML tag (type)
+    pub value: NodeValue,               // Node content
     #[pyo3(get)]
     pub start_mark: Mark,               // Start position in text
     #[pyo3(get)]
@@ -103,16 +103,16 @@ pub struct Node {
     #[pyo3(get)]
     pub flow_style: Option<bool>,       // true=flow {}, false=block
     #[pyo3(get)]
-    pub anchor: Option<String>,         // Nombre anchor para referencias
+    pub anchor: Option<String>,         // Anchor name for references
 }
 
 #[pymethods]
 impl Node {
     /**
-     * 🖨️ REPRESENTACIÓN: __repr__()
+     * 🖨️ REPRESENTATION: __repr__()
      * 
-     * PROPÓSITO: String representation para debugging Python
-     * FORMATO: ScalarNode(tag="...", value="...") etc.
+     * PURPOSE: String representation for Python debugging
+     * FORMAT: ScalarNode(tag="...", value="...") etc.
      */
     fn __repr__(&self) -> String {
         match &self.value {
@@ -125,8 +125,8 @@ impl Node {
     /**
      * 📊 VALUE PROPERTY: value getter
      * 
-     * PROPÓSITO: Obtener representación string del valor para Python
-     * SIMPLIFICADO: Solo para compatibilidad, PyYAML usa construcción
+     * PURPOSE: Get string representation of value for Python
+     * SIMPLIFIED: Only for compatibility, PyYAML uses construction
      */
     #[getter]
     fn value(&self) -> String {
@@ -141,8 +141,8 @@ impl Node {
     /**
      * 🆔 ID PROPERTY: id getter
      * 
-     * PROPÓSITO: Obtener tipo de nodo como string
-     * COMPATIBLE: Con PyYAML node.id property
+     * PURPOSE: Get node type as string
+     * COMPATIBLE: With PyYAML node.id property
      */
     #[getter]
     fn id(&self) -> &'static str {
@@ -158,8 +158,8 @@ impl Node {
     /**
      * 🏗️ CONSTRUCTOR SCALAR: new_scalar()
      * 
-     * PROPÓSITO: Crear nodo scalar optimizado
-     * USO: Para valores individuales (strings, números, bools)
+     * PURPOSE: Create optimized scalar node
+     * USAGE: For individual values (strings, numbers, bools)
      */
     pub fn new_scalar(tag: String, value: String, start_mark: Mark, end_mark: Mark, style: Option<char>) -> Self {
         Self {
@@ -168,7 +168,7 @@ impl Node {
             start_mark,
             end_mark,
             style,
-            flow_style: None,               // Scalars no tienen flow style
+            flow_style: None,               // Scalars don't have flow style
             anchor: None,
         }
     }
@@ -176,8 +176,8 @@ impl Node {
     /**
      * 🏗️ CONSTRUCTOR SEQUENCE: new_sequence()
      * 
-     * PROPÓSITO: Crear nodo sequence optimizado
-     * USO: Para listas/arrays YAML
+     * PURPOSE: Create optimized sequence node
+     * USAGE: For YAML lists/arrays
      */
     pub fn new_sequence(tag: String, items: Vec<Node>, start_mark: Mark, end_mark: Mark, flow_style: bool) -> Self {
         Self {
@@ -185,7 +185,7 @@ impl Node {
             value: NodeValue::Sequence(items),
             start_mark,
             end_mark,
-            style: None,                    // Sequences no usan char style
+            style: None,                    // Sequences don't use char style
             flow_style: Some(flow_style),   // true=[a,b,c], false=block
             anchor: None,
         }
@@ -194,8 +194,8 @@ impl Node {
     /**
      * 🏗️ CONSTRUCTOR MAPPING: new_mapping()
      * 
-     * PROPÓSITO: Crear nodo mapping optimizado
-     * USO: Para diccionarios/mapas YAML
+     * PURPOSE: Create optimized mapping node
+     * USAGE: For YAML dictionaries/maps
      */
     pub fn new_mapping(tag: String, pairs: Vec<(Node, Node)>, start_mark: Mark, end_mark: Mark, flow_style: bool) -> Self {
         Self {
@@ -203,7 +203,7 @@ impl Node {
             value: NodeValue::Mapping(pairs),
             start_mark,
             end_mark,
-            style: None,                    // Mappings no usan char style
+            style: None,                    // Mappings don't use char style
             flow_style: Some(flow_style),   // true={a:1,b:2}, false=block
             anchor: None,
         }
@@ -212,8 +212,8 @@ impl Node {
     /**
      * 🏗️ CONSTRUCTOR ALIAS: new_alias()
      * 
-     * PROPÓSITO: Crear nodo alias para referencias
-     * USO: Para *referencias a anchors definidos
+     * PURPOSE: Create alias node for references
+     * USAGE: For *references to defined anchors
      */
     pub fn new_alias(anchor: String, start_mark: Mark, end_mark: Mark) -> Self {
         Self {
@@ -229,25 +229,25 @@ impl Node {
 }
 
 // ===============================================================================
-// ❌ ERROR DE COMPOSER: Manejo de errores estructurado
+    // ❌ COMPOSER ERROR: Structured error handling
 // ===============================================================================
 
 /**
- * ❌ ESTRUCTURA ERROR: ComposerError
+ * ❌ ERROR STRUCTURE: ComposerError
  * 
- * PROPÓSITO:
- * - Errores específicos del proceso de composición
- * - Información de contexto para debugging
- * - Compatible con Result<> patterns de Rust
+ * PURPOSE:
+ * - Specific errors from the composition process
+ * - Context information for debugging
+ * - Compatible with Rust Result<> patterns
  * 
- * CAMPOS:
- * - message: Descripción del error
- * - mark: Posición opcional en texto fuente
+ * FIELDS:
+ * - message: Error description
+ * - mark: Optional position in source text
  * 
- * CASOS TÍPICOS:
- * - Alias no encontrado
- * - Estructura YAML inválida
- * - Eventos mal formados
+ * TYPICAL CASES:
+ * - Alias not found
+ * - Invalid YAML structure
+ * - Malformed events
  */
 #[derive(Debug)]
 pub struct ComposerError {
@@ -270,23 +270,23 @@ impl std::error::Error for ComposerError {}
 /**
  * 🎼 COMPOSER CLASS: Composer
  * 
- * PROPÓSITO:
- * - Engine principal para convertir eventos → nodos
- * - Gestión de estado para anchors y referencias
- * - Algoritmos optimizados para estructuras anidadas
+ * PURPOSE:
+ * - Main engine to convert events → nodes
+      * - State management for anchors and references
+      * - Optimized algorithms for nested structures
  * 
- * ESTADO INTERNO:
- * - anchors: HashMap de nombres → nodos para referencias
- * - node_cache: Cache de nodos para reutilización
- * - anchor_buffer: Buffer para nombres de anchors
- * 
- * OPTIMIZACIONES:
- * - Pre-allocation de estructuras con capacidad estimada
- * - Resolución automática de tipos YAML
- * - Algoritmos recursivos tail-call optimizados
- * - Cache de nodos frecuentemente usados
- * 
- * USO:
+ * INTERNAL STATE:
+      * - anchors: HashMap of names → nodes for references
+      * - node_cache: Cache of nodes for reuse
+      * - anchor_buffer: Buffer for anchor names
+      * 
+     * OPTIMIZATIONS:
+     * - Pre-allocation of structures with estimated capacity
+      * - Automatic YAML type resolution
+      * - Tail-call optimized recursive algorithms
+           * - Cache of frequently used nodes
+     * 
+     * USAGE:
  * ```rust
  * let mut composer = Composer::new();
  * let node = composer.compose_document(&events)?;
@@ -297,13 +297,13 @@ pub struct Composer {
     // ===================================================================
     // 📚 MAIN STATE: Anchor and reference management
     // ===================================================================
-    anchors: HashMap<String, Node>,     // Mapa de anchors → nodos definidos
+    anchors: HashMap<String, Node>,     // Map of anchors → defined nodes
     
     // ===================================================================
-    // 🚀 OPTIMIZACIONES: Caches y pre-allocation
+    // 🚀 OPTIMIZATIONS: Caches and pre-allocation
     // ===================================================================
-    node_cache: Vec<Node>,              // Cache de nodos reutilizables
-    anchor_buffer: String,              // Buffer reutilizable para anchor names
+    node_cache: Vec<Node>,              // Cache of reusable nodes
+    anchor_buffer: String,              // Reusable buffer for anchor names
 }
 
 impl Default for Composer {
@@ -321,8 +321,8 @@ impl Composer {
     /**
      * 🏗️ CONSTRUCTOR: Composer.new()
      * 
-     * PROPÓSITO: Crear composer con optimizaciones por defecto
-     * COMPATIBLE: Con interfaz PyYAML
+     * PURPOSE: Create composer with default optimizations
+     * COMPATIBLE: With PyYAML interface
      */
     #[new]
     pub fn new() -> Self {
@@ -332,8 +332,8 @@ impl Composer {
     /**
      * 🧹 CLEAR: clear()
      * 
-     * PROPÓSITO: Limpiar estado para reutilización
-     * USO: Entre documentos múltiples
+     * PURPOSE: Clean state for reuse
+     * USAGE: Between multiple documents
      */
     fn clear(&mut self) {
         self.anchors.clear();
@@ -396,37 +396,37 @@ impl Composer {
 
 impl Composer {
     /**
-     * 🎼 COMPOSICIÓN DOCUMENTO: compose_document()
+     * 🎼 DOCUMENT COMPOSITION: compose_document()
      * 
-     * PROPÓSITO:
-     * - Función principal para componer documento completo
-     * - Procesa secuencia de eventos → árbol de nodos
-     * - Gestiona estado entre documentos múltiples
+      * PURPOSE:
+ * - Main function to compose complete document
+ * - Process event sequence → node tree
+      * - Manages state between multiple documents
      * 
-     * ALGORITMO:
-     * 1. Skip eventos STREAM_START y DOCUMENT_START
-     * 2. Componer nodo raíz recursivamente
-     * 3. Skip eventos DOCUMENT_END y STREAM_END
-     * 4. Limpiar anchors para siguiente documento
+     * ALGORITHM:
+     * 1. Skip STREAM_START and DOCUMENT_START events
+     * 2. Compose root node recursively
+     * 3. Skip DOCUMENT_END and STREAM_END events
+     * 4. Clear anchors for next document
      * 
-     * OPTIMIZACIONES:
-     * - Inline para eliminar call overhead
-     * - Gestión eficiente de índices de eventos
-     * - Limpieza automática de estado
+     * OPTIMIZATIONS:
+     * - Inline to eliminate call overhead
+      * - Efficient event index management
+ * - Automatic state cleanup
      */
     #[inline(always)]
     pub fn compose_document(&mut self, events: &[Event]) -> Result<Option<Node>, ComposerError> {
         let mut event_index = 0;
         
         // ===================================================================
-        // PASO 1: Skip eventos de encabezado
+        // STEP 1: Skip header events
         // ===================================================================
-        // Skip STREAM_START (primer evento del stream)
+        // Skip STREAM_START (first event of the stream)
         if let Some(Event::StreamStart { .. }) = events.get(event_index) {
             event_index += 1;
         }
         
-        // Skip DOCUMENT_START (inicio del documento actual)
+        // Skip DOCUMENT_START (current document start)
         if let Some(Event::DocumentStart { .. }) = events.get(event_index) {
             event_index += 1;
         }
@@ -441,39 +441,39 @@ impl Composer {
         // ===================================================================
         // Skip DOCUMENT_END and STREAM_END are handled automatically
         
-        // Limpiar anchors para siguiente documento (importante para multi-doc)
+        // Clear anchors for next document (important for multi-doc)
         self.anchors.clear();
         
         Ok(node)
     }
     
     /**
-     * 🔄 COMPOSICIÓN NODO: compose_node() - RECURSIVO
+     * 🔄 NODE COMPOSITION: compose_node() - RECURSIVE
      * 
-     * PROPÓSITO:
-     * - Algoritmo recursivo principal de composición
-     * - Despacho por tipo de evento a subfunciones especializadas
-     * - Gestión de anchors y aliases
+      * PURPOSE:
+ * - Main recursive composition algorithm
+     * - Dispatch by event type to specialized subfunctions
+     * - Management of anchors and aliases
      * 
-     * PARÁMETROS:
-     * - events: Slice de eventos a procesar
-     * - event_index: Índice actual en la secuencia
-     * - _parent: Nodo padre (para contexto futuro)
-     * - _index: Índice en contenedor padre (para contexto futuro)
+     * PARAMETERS:
+     * - events: Slice of events to process
+     * - event_index: Current index in the sequence
+     * - _parent: Parent node (for future context)
+     * - _index: Index in parent container (for future context)
      * 
-     * RETORNA: (nodo_opcional, siguiente_índice)
+     * RETURNS: (optional_node, next_index)
      * 
-     * TIPOS DE EVENTOS MANEJADOS:
-     * - Scalar → crear ScalarNode directamente
-     * - Alias → resolver referencia a anchor
-     * - SequenceStart → delegar a compose_sequence_node()
-     * - MappingStart → delegar a compose_mapping_node()
-     * - StreamEnd/DocumentEnd → terminar composición
+     * HANDLED EVENT TYPES:
+     * - Scalar → create ScalarNode directly
+     * - Alias → resolve reference to anchor
+     * - SequenceStart → delegate to compose_sequence_node()
+     * - MappingStart → delegate to compose_mapping_node()
+     * - StreamEnd/DocumentEnd → terminate composition
      * 
-     * OPTIMIZACIONES:
-     * - Inline assembly hints para branch prediction
-     * - Resolución automática de tags
-     * - Gestión eficiente de memoria para anchors
+     * OPTIMIZATIONS:
+     * - Inline assembly hints for branch prediction
+     * - Automatic tag resolution
+     * - Efficient memory management for anchors
      */
     #[inline(always)]
     fn compose_node(&mut self, events: &[Event], event_index: usize, _parent: Option<&Node>, _index: Option<&Node>) -> Result<(Option<Node>, usize), ComposerError> {
@@ -504,14 +504,14 @@ impl Composer {
             },
             
             // ===================================================================
-            // 🔗 EVENTO ALIAS: Resolver referencia a anchor
+            // 🔗 ALIAS EVENT: Resolve reference to anchor
             // ===================================================================
             Event::Alias { anchor, .. } => {
                 // Search for referenced node in anchors table
                 if let Some(anchored_node) = self.anchors.get(anchor) {
                     Ok((Some(anchored_node.clone()), event_index + 1))
                 } else {
-                    // Error: alias referencia anchor no definido
+                    // Error: alias references undefined anchor
                     Err(ComposerError {
                         message: format!("Alias '{}' not found", anchor),
                         mark: None,
@@ -520,7 +520,7 @@ impl Composer {
             },
             
             // ===================================================================
-            // 📋 EVENTO SEQUENCE START: Delegar a composer especializado
+            // 📋 SEQUENCE START EVENT: Delegate to specialized composer
             // ===================================================================
             Event::SequenceStart { start_mark, flow_style, anchor, .. } => {
                 let result = self.compose_sequence_node(events, event_index, start_mark.clone(), *flow_style);
@@ -536,7 +536,7 @@ impl Composer {
             },
             
             // ===================================================================
-            // 🗂️ EVENTO MAPPING START: Delegar a composer especializado
+            // 🗂️ MAPPING START EVENT: Delegate to specialized composer
             // ===================================================================
             Event::MappingStart { start_mark, flow_style, anchor, .. } => {
                 let result = self.compose_mapping_node(events, event_index, start_mark.clone(), *flow_style);
@@ -559,43 +559,43 @@ impl Composer {
             },
             
             // ===================================================================
-            // 🔄 OTROS EVENTOS: Skip eventos no relevantes
+            // 🔄 OTHER EVENTS: Skip non-relevant events
             // ===================================================================
             _ => {
-                // Skip otros eventos y continuar
+                // Skip other events and continue
                 Ok((None, event_index + 1))
             }
         }
     }
     
     /**
-     * 📋 COMPOSICIÓN SEQUENCE: compose_sequence_node()
+     * 📋 SEQUENCE COMPOSITION: compose_sequence_node()
      * 
-     * PROPÓSITO:
-     * - Componer nodo sequence desde eventos SequenceStart...SequenceEnd
-     * - Procesar elementos de lista recursivamente
-     * - Mantener orden de elementos
+     * PURPOSE:
+     * - Compose sequence node from SequenceStart...SequenceEnd events
+     * - Process list elements recursively
+     * - Maintain element order
      * 
-     * ALGORITMO:
-     * 1. Skip evento SequenceStart
-     * 2. Loop: componer elementos hasta SequenceEnd
-     * 3. Crear SequenceNode con elementos recolectados
-     * 4. Retornar nodo y siguiente índice
+     * ALGORITHM:
+     * 1. Skip SequenceStart event
+     * 2. Loop: compose elements until SequenceEnd
+     * 3. Create SequenceNode with collected elements
+     * 4. Return node and next index
      * 
-     * OPTIMIZACIONES:
-     * - Pre-allocate vector con capacidad estimada (8 elementos típicos)
-     * - Inline para eliminar call overhead en recursión
-     * - Manejo eficiente de indices sin bounds checking
+     * OPTIMIZATIONS:
+     * - Pre-allocate vector with estimated capacity (8 typical elements)
+     * - Inline to eliminate call overhead in recursion
+     * - Efficient index handling without bounds checking
      */
     #[inline(always)]
     fn compose_sequence_node(&mut self, events: &[Event], mut event_index: usize, start_mark: Mark, flow_style: bool) -> Result<(Option<Node>, usize), ComposerError> {
-        // Skip SEQUENCE_START (ya procesado en dispatcher)
+        // Skip SEQUENCE_START (already processed in dispatcher)
         event_index += 1;
         
         let mut items = Vec::with_capacity(8); // Pre-allocate for typical elements
         
         // ===================================================================
-        // LOOP PRINCIPAL: Componer elementos hasta SequenceEnd
+        // MAIN LOOP: Compose elements until SequenceEnd
         // ===================================================================
         while event_index < events.len() {
             match &events[event_index] {
@@ -609,7 +609,7 @@ impl Composer {
                 },
                 _ => {
                     // ===================================================================
-                    // ELEMENTO: Componer recursivamente y agregar a items
+                    // ELEMENT: Compose recursively and add to items
                     // ===================================================================
                     let (item_node, next_index) = self.compose_node(events, event_index, None, None)?;
                     event_index = next_index;
@@ -631,38 +631,38 @@ impl Composer {
     }
     
     /**
-     * 🗂️ COMPOSICIÓN MAPPING: compose_mapping_node()
+     * 🗂️ MAPPING COMPOSITION: compose_mapping_node()
      * 
-     * PROPÓSITO:
-     * - Componer nodo mapping desde eventos MappingStart...MappingEnd
-     * - Procesar pares key-value recursivamente
-     * - Mantener orden de pares (importante en YAML)
+     * PURPOSE:
+     * - Compose mapping node from MappingStart...MappingEnd events
+     * - Process key-value pairs recursively
+     * - Maintain pair order (important in YAML)
      * 
-     * ALGORITMO:
-     * 1. Skip evento MappingStart
-     * 2. Loop: componer pares (key, value) hasta MappingEnd
-     * 3. Crear MappingNode con pares recolectados
-     * 4. Retornar nodo y siguiente índice
+     * ALGORITHM:
+     * 1. Skip MappingStart event
+     * 2. Loop: compose pairs (key, value) until MappingEnd
+     * 3. Create MappingNode with collected pairs
+     * 4. Return node and next index
      * 
-     * CARACTERÍSTICAS:
-     * - Usa Vec<(Node, Node)> en lugar de HashMap para preservar orden
-     * - Composición recursiva para keys y values complejos
-     * - Manejo de errores si estructura es inválida
+     * CHARACTERISTICS:
+     * - Uses Vec<(Node, Node)> instead of HashMap to preserve order
+     * - Recursive composition for complex keys and values
+     * - Error handling if structure is invalid
      * 
-     * OPTIMIZACIONES:
-     * - Pre-allocate vector con capacidad estimada (8 pares típicos)
-     * - Inline para eliminar call overhead en recursión
-     * - Procesamiento eficiente de pares alternados
+     * OPTIMIZATIONS:
+     * - Pre-allocate vector with estimated capacity (8 typical pairs)
+     * - Inline to eliminate call overhead in recursion
+     * - Efficient processing of alternating pairs
      */
     #[inline(always)]
     fn compose_mapping_node(&mut self, events: &[Event], mut event_index: usize, start_mark: Mark, flow_style: bool) -> Result<(Option<Node>, usize), ComposerError> {
-        // Skip MAPPING_START (ya procesado en dispatcher)
+        // Skip MAPPING_START (already processed in dispatcher)
         event_index += 1;
         
         let mut pairs = Vec::with_capacity(8); // Pre-allocate for typical pairs
         
         // ===================================================================
-        // LOOP PRINCIPAL: Componer pares hasta MappingEnd
+        // MAIN LOOP: Compose pairs until MappingEnd
         // ===================================================================
         while event_index < events.len() {
             match &events[event_index] {
@@ -676,14 +676,14 @@ impl Composer {
                 },
                 _ => {
                     // ===================================================================
-                    // PAR KEY-VALUE: Componer key y value consecutivamente
+                    // KEY-VALUE PAIR: Compose key and value consecutively
                     // ===================================================================
                     
-                    // Componer KEY
+                    // Compose KEY
                     let (key_node, next_index) = self.compose_node(events, event_index, None, None)?;
                     event_index = next_index;
                     
-                    // Componer VALUE
+                    // Compose VALUE
                     let (value_node, next_index) = self.compose_node(events, event_index, None, None)?;
                     event_index = next_index;
                     
@@ -705,30 +705,30 @@ impl Composer {
     }
     
     /**
-     * 🏷️ RESOLUCIÓN TAG SCALAR: resolve_scalar_tag()
+     * 🏷️ SCALAR TAG RESOLUTION: resolve_scalar_tag()
      * 
-     * PROPÓSITO:
-     * - Resolver tag automático basado en contenido del valor
-     * - Detección inteligente de tipos YAML fundamentales
-     * - Optimizado para casos comunes con fast paths
+     * PURPOSE:
+     * - Resolve automatic tag based on value content
+     * - Intelligent detection of fundamental YAML types
+     * - Optimized for common cases with fast paths
      * 
-     * TIPOS DETECTADOS:
+     * DETECTED TYPES:
      * - bool: true, True, TRUE, false, False, FALSE
-     * - null: null, Null, NULL, ~, "" (string vacío)
-     * - int: secuencias de dígitos, negativos incluidos
-     * - float: números con punto decimal o notación científica
-     * - str: todo lo demás (fallback)
+     * - null: null, Null, NULL, ~, "" (empty string)
+     * - int: digit sequences, negatives included
+     * - float: numbers with decimal point or scientific notation
+     * - str: everything else (fallback)
      * 
-     * OPTIMIZACIONES:
-     * - String interning para tags comunes
-     * - Fast path para valores frecuentes
-     * - Algoritmos optimizados para detección numérica
-     * - Inline para eliminar call overhead
+     * OPTIMIZATIONS:
+     * - String interning for common tags
+     * - Fast path for frequent values
+     * - Optimized algorithms for numeric detection
+     * - Inline to eliminate call overhead
      */
     #[inline(always)]
     fn resolve_scalar_tag(&self, value: &str) -> String {
         // ===================================================================
-        // FAST PATH: Valores comunes con string interning
+        // FAST PATH: Common values with string interning
         // ===================================================================
         match value {
             // Boolean values (case-insensitive)
@@ -748,7 +748,7 @@ impl Composer {
                 } else if self.is_float(value) {
                     "tag:yaml.org,2002:float".to_string()
                 } else {
-                    // Fallback: string por defecto
+                    // Fallback: default string
                     "tag:yaml.org,2002:str".to_string()
                 }
             }
@@ -756,22 +756,22 @@ impl Composer {
     }
     
     /**
-     * 🔢 DETECCIÓN ENTERO: is_int()
+     * 🔢 INTEGER DETECTION: is_int()
      * 
-     * PROPÓSITO:
-     * - Verificar si string representa entero válido
-     * - Optimizado para casos comunes con fast paths
-     * - Manejo de números negativos
+     * PURPOSE:
+     * - Verify if string represents valid integer
+     * - Optimized for common cases with fast paths
+     * - Handling of negative numbers
      * 
-     * ALGORITMO:
-     * 1. Fast path para dígitos únicos
-     * 2. Manejo de signo negativo opcional
-     * 3. Verificación que todos caracteres sean dígitos
+     * ALGORITHM:
+     * 1. Fast path for single digits
+     * 2. Handling of optional negative sign
+     * 3. Verification that all characters are digits
      * 
-     * OPTIMIZACIONES:
-     * - Early return para casos comunes
-     * - ASCII-only checking (más rápido que Unicode)
-     * - Inline para eliminar call overhead
+     * OPTIMIZATIONS:
+     * - Early return for common cases
+     * - ASCII-only checking (faster than Unicode)
+     * - Inline to eliminate call overhead
      */
     #[inline(always)]
     fn is_int(&self, value: &str) -> bool {
@@ -795,22 +795,22 @@ impl Composer {
     }
     
     /**
-     * 🔢 DETECCIÓN FLOTANTE: is_float()
+     * 🔢 FLOAT DETECTION: is_float()
      * 
-     * PROPÓSITO:
-     * - Verificar si string representa número flotante válido
-     * - Detección de punto decimal y notación científica
-     * - Validación usando parser nativo de Rust
+     * PURPOSE:
+     * - Verify if string represents valid floating point number
+     * - Detection of decimal point and scientific notation
+     * - Validation using Rust's native parser
      * 
-     * CARACTERÍSTICAS:
-     * - Detecta punto decimal (3.14)
-     * - Detecta notación científica (1.5e10, 2E-3)
-     * - Validación final con parse::<f64>()
+     * CHARACTERISTICS:
+     * - Detects decimal point (3.14)
+     * - Detects scientific notation (1.5e10, 2E-3)
+     * - Final validation with parse::<f64>()
      * 
-     * OPTIMIZACIONES:
-     * - Fast check para características flotante
-     * - Lazy evaluation: solo parse si tiene indicadores
-     * - Inline para eliminar call overhead
+     * OPTIMIZATIONS:
+     * - Fast check for float characteristics
+     * - Lazy evaluation: only parse if it has indicators
+     * - Inline to eliminate call overhead
      */
     #[inline(always)]
     fn is_float(&self, value: &str) -> bool {
@@ -818,12 +818,12 @@ impl Composer {
             return false;
         }
         
-        // Fast check para indicadores de flotante
+        // Fast check for float indicators
         if value.contains('.') || value.contains('e') || value.contains('E') {
             // Definitive validation with native parser
             value.parse::<f64>().is_ok()
         } else {
-            false // Sin indicadores flotante
+            false // No float indicators
         }
     }
 }
@@ -836,19 +836,19 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
         return Ok(None);
     }
     
-    println!("🔍 DEBUG compose_rust: {} eventos PyEvent recibidos", py_events.len());
+    println!("🔍 DEBUG compose_rust: {} PyEvent events received", py_events.len());
     
             // Convert PyEvent to internal events WITHOUT problematic conversion
     let mut internal_events = Vec::with_capacity(py_events.len());
     
     for py_event in py_events {
         let event_repr = format!("{:?}", py_event);
-        println!("🔍 DEBUG evento: {}", event_repr);
+        println!("🔍 DEBUG event: {}", event_repr);
         
         let start_mark = Mark::new(0, 0, 0);
         let end_mark = Mark::new(0, 0, 0);
         
-        // Detectar eventos basándose en la estructura más que en el formato string
+        // Detect events based on structure rather than string format
         if event_repr.contains("StreamStart") {
             internal_events.push(Event::StreamStart {
                 start_mark: start_mark.clone(),
@@ -864,7 +864,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
                 tags: None,
             });
         } else if event_repr.contains("MappingStart") {
-            println!("🔍 DEBUG: MappingStart detectado");
+            println!("🔍 DEBUG: MappingStart detected");
             internal_events.push(Event::MappingStart {
                 anchor: None,
                 tag: None,
@@ -874,13 +874,13 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
                 flow_style: false,
             });
         } else if event_repr.contains("MappingEnd") {
-            println!("🔍 DEBUG: MappingEnd detectado");
+            println!("🔍 DEBUG: MappingEnd detected");
             internal_events.push(Event::MappingEnd {
                 start_mark: start_mark.clone(),
                 end_mark: end_mark.clone(),
             });
         } else if event_repr.contains("SequenceStart") {
-            println!("🔍 DEBUG: SequenceStart detectado");
+            println!("🔍 DEBUG: SequenceStart detected");
             internal_events.push(Event::SequenceStart {
                 anchor: None,
                 tag: None,
@@ -890,7 +890,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
                 flow_style: false,
             });
         } else if event_repr.contains("SequenceEnd") {
-            println!("🔍 DEBUG: SequenceEnd detectado");
+            println!("🔍 DEBUG: SequenceEnd detected");
             internal_events.push(Event::SequenceEnd {
                 start_mark: start_mark.clone(),
                 end_mark: end_mark.clone(),
@@ -898,7 +898,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
         } else if event_repr.contains("Scalar") {
             // Extract value from debug string more aggressively
             let value = extract_scalar_value_from_debug_repr(&event_repr);
-            println!("🔍 DEBUG: Scalar extraído: '{}'", value);
+            println!("🔍 DEBUG: Scalar extracted: '{}'", value);
             
             internal_events.push(Event::Scalar {
                 anchor: None,
@@ -923,17 +923,17 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
         }
     }
     
-    println!("🔍 DEBUG compose_rust: {} eventos internos convertidos", internal_events.len());
+    println!("🔍 DEBUG compose_rust: {} internal events converted", internal_events.len());
     
-    // Usar composer para procesar eventos
+    // Use composer to process events
     let mut composer = Composer::new();
     match composer.compose_document(&internal_events) {
         Ok(node) => {
-            println!("🔍 DEBUG compose_rust: composer exitoso");
+            println!("🔍 DEBUG compose_rust: composer successful");
             Ok(node)
         },
         Err(e) => {
-            println!("🔍 DEBUG compose_rust: composer falló: {}", e);
+            println!("🔍 DEBUG compose_rust: composer failed: {}", e);
             Ok(None)
         },
     }
@@ -941,7 +941,7 @@ pub fn compose_rust(_py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Nod
 
 #[pyfunction] 
 pub fn compose_document_rust(py: Python, py_events: Vec<PyEvent>) -> PyResult<Option<Node>> {
-    // Wrapper para mantener compatibilidad - usa la nueva signatura
+            // Wrapper to maintain compatibility - uses new signature
     compose_rust(py, py_events)
 }
 
@@ -984,7 +984,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
         return Ok(None);
     }
     
-    println!("🔍 DEBUG compose_events_direct: {} eventos recibidos", py_events.len());
+    println!("🔍 DEBUG compose_events_direct: {} events received", py_events.len());
     
     // Convert PyEvent to internal Event WITHOUT the problematic conversion
     let mut internal_events = Vec::with_capacity(py_events.len());
@@ -994,7 +994,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
         let start_mark = Mark::new(0, 0, 0);
         let end_mark = Mark::new(0, 0, 0);
         
-        // Parsear eventos desde su representación debug
+        // Parse events from their debug representation
         if event_repr.contains("StreamStart") {
             internal_events.push(Event::StreamStart {
                 start_mark: start_mark.clone(),
@@ -1012,7 +1012,7 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
         } else if event_repr.contains("Scalar") {
             // Extract value from debug string
             let value = extract_scalar_value_from_debug_repr(&event_repr);
-            println!("🔍 DEBUG: Scalar extraído: '{}'", value);
+            println!("🔍 DEBUG: Scalar extracted: '{}'", value);
             
             internal_events.push(Event::Scalar {
                 anchor: None,
@@ -1065,17 +1065,17 @@ pub fn compose_events_direct(_py: Python, py_events: Vec<PyEvent>) -> PyResult<O
         }
     }
     
-    println!("🔍 DEBUG compose_events_direct: {} eventos internos convertidos", internal_events.len());
+    println!("🔍 DEBUG compose_events_direct: {} internal events converted", internal_events.len());
     
-    // Usar composer para procesar eventos
+    // Use composer to process events
     let mut composer = Composer::new();
     match composer.compose_document(&internal_events) {
         Ok(node) => {
-            println!("🔍 DEBUG compose_events_direct: composer exitoso");
+            println!("🔍 DEBUG compose_events_direct: composer successful");
             Ok(node)
         },
         Err(e) => {
-            println!("🔍 DEBUG compose_events_direct: composer falló: {}", e);
+            println!("🔍 DEBUG compose_events_direct: composer failed: {}", e);
             Ok(None)
         },
     }
@@ -1110,7 +1110,7 @@ fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
     if let Some(value_start) = debug_str.find("value: ") {
         let after_value = &debug_str[value_start + 7..];
         
-        // Si empieza con comilla doble
+        // If it starts with double quote
         if after_value.starts_with('"') {
             if let Some(end_quote) = after_value[1..].find('"') {
                 return after_value[1..end_quote + 1].to_string();
@@ -1125,7 +1125,7 @@ fn extract_scalar_value_from_debug_repr(debug_str: &str) -> String {
             }
         }
         
-        // Hasta el final del string si no hay coma
+        // Until end of string if no comma
         if let Some(space_pos) = after_value.find(' ') {
             let value_part = after_value[..space_pos].trim();
             if !value_part.is_empty() && !value_part.starts_with('"') {

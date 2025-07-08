@@ -35,7 +35,7 @@ pub struct MultiDocumentProcessor {
     explicit_document_start: bool,
     explicit_document_end: bool,
     
-    // Buffers para performance
+    // Buffers for performance
     event_buffer: VecDeque<PyEvent>,
     separator_buffer: String,
 }
@@ -181,9 +181,9 @@ impl MultiDocumentProcessor {
         for line in yaml_content.lines() {
             let trimmed = line.trim();
             
-            // Detectar separador de documento
+            // Detect document separator
             if at_line_start && (trimmed == "---" || trimmed.starts_with("--- ")) {
-                // Finalizar documento anterior si existe
+                // Finalize previous document if exists
                 if !current_doc.trim().is_empty() {
                     documents.push(current_doc.trim().to_string());
                     current_doc.clear();
@@ -192,7 +192,7 @@ impl MultiDocumentProcessor {
                 continue;
             }
             
-            // Detectar fin de documento
+            // Detect end of document
             if trimmed == "..." {
                 current_doc.push_str(line);
                 current_doc.push('\n');
@@ -207,12 +207,12 @@ impl MultiDocumentProcessor {
             at_line_start = trimmed.is_empty();
         }
         
-        // Agregar último documento
+        // Add last document
         if !current_doc.trim().is_empty() {
             documents.push(current_doc.trim().to_string());
         }
         
-        // Si no hay documentos separados, retornar todo como un documento
+        // If there are no separate documents, return everything as one document
         if documents.is_empty() && !yaml_content.trim().is_empty() {
             documents.push(yaml_content.to_string());
         }
@@ -220,7 +220,7 @@ impl MultiDocumentProcessor {
         documents
     }
     
-    /// Combinar múltiples documentos en un YAML string
+    /// Combine multiple documents into a YAML string
     pub fn combine_documents(&self, document_strings: &[String]) -> String {
         if document_strings.is_empty() {
             return String::new();
@@ -261,10 +261,10 @@ impl MultiDocumentProcessor {
 
 // === FUNCIONES PYTHON INTEGRATION ===
 
-/// Cargar múltiples documentos desde un stream
+/// Load multiple documents from a stream
 #[pyfunction]
 pub fn load_all_rust(py: Python, stream: Bound<PyAny>) -> PyResult<Vec<Option<PyObject>>> {
-    // Leer contenido completo
+    // Read complete content
     let yaml_content = if let Ok(string_content) = stream.call_method0("read") {
         string_content.extract::<String>()?
     } else if let Ok(getvalue) = stream.call_method0("getvalue") {
@@ -277,27 +277,27 @@ pub fn load_all_rust(py: Python, stream: Bound<PyAny>) -> PyResult<Vec<Option<Py
         return Ok(vec![]);
     }
     
-    // ✅ NUEVA LÓGICA: Usar parser mejorado que maneja múltiples documentos
-    // Crear stream desde contenido
+    // ✅ NEW LOGIC: Use improved parser that handles multiple documents
+          // Create stream from content
     let io_module = py.import("io")?;
     let new_stream = io_module.getattr("StringIO")?.call1((yaml_content,))?;
     
-    // Parse todo el contenido - el parser ahora detecta múltiples documentos
+    // Parse all content - the parser now detects multiple documents
     let all_events = parse_rust(py, new_stream)?;
     
-    // Separar eventos por documentos basándose en DocumentStart/DocumentEnd
+    // Separate events by documents based on DocumentStart/DocumentEnd
     let document_event_groups = split_events_by_documents(all_events);
     
     let mut results = Vec::new();
     
-    // Procesar cada grupo de eventos como un documento
+    // Process each event group as a document
     for events in document_event_groups {
         if events.is_empty() {
             results.push(None);
             continue;
         }
         
-        // Compose y construct cada documento
+        // Compose and construct each document
         let node_result = compose_rust(py, events)?;
         
         if let Some(node) = node_result {
@@ -323,14 +323,14 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
         let event_repr = format!("{:?}", event);
         
         if event_repr.contains("StreamStart") {
-            // Solo agregar StreamStart una vez al inicio
+            // Only add StreamStart once at the beginning
             if !stream_start_seen {
                 stream_start_seen = true;
                 current_doc.push(event);
             }
             continue;
         } else if event_repr.contains("StreamEnd") {
-            // ✅ CORRECCIÓN: Finalizar documento actual Y marcar como finalizado
+            // ✅ CORRECTION: Finalize current document AND mark as finalized
             if !current_doc.is_empty() && in_document && !document_finalized {
                 current_doc.push(event);
                 result.push(current_doc.clone());
@@ -338,9 +338,9 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
             }
             break;
         } else if event_repr.contains("DocumentStart") {
-            // Nuevo documento
+            // New document
             if in_document && !current_doc.is_empty() {
-                // Finalizar documento anterior
+                // Finalize previous document
                 current_doc.push(PyEvent {
                     event: crate::parser::Event::StreamEnd {
                         start_mark: crate::parser::Mark::new(0, 0, 0),
@@ -349,7 +349,7 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
                 });
                 result.push(current_doc.clone());
                 
-                // Reiniciar para nuevo documento
+                // Reset for new document
                 current_doc.clear();
                 current_doc.push(PyEvent {
                     event: crate::parser::Event::StreamStart {
@@ -363,7 +363,7 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
             current_doc.push(event);
         } else if event_repr.contains("DocumentEnd") {
             current_doc.push(event);
-            // No finalizar aquí - puede haber más documentos
+            // Don't finalize here - there may be more documents
         } else {
             // Eventos de contenido
             if in_document {
@@ -372,7 +372,7 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
         }
     }
     
-    // ✅ CORRECCIÓN: Solo agregar si NO fue finalizado por StreamEnd
+    // ✅ CORRECTION: Only add if NOT finalized by StreamEnd
     if !current_doc.is_empty() && in_document && !document_finalized {
         // Verificar que no sea solo StreamStart/DocumentStart
         let content_events = current_doc.iter().filter(|e| {
@@ -394,7 +394,7 @@ fn split_events_by_documents(events: Vec<PyEvent>) -> Vec<Vec<PyEvent>> {
     result
 }
 
-/// Serializar múltiples documentos a un stream
+/// Serialize multiple documents to a stream
 #[pyfunction]
 pub fn dump_all_rust(py: Python, documents: Bound<PyList>) -> PyResult<String> {
     if documents.len() == 0 {
@@ -403,20 +403,20 @@ pub fn dump_all_rust(py: Python, documents: Bound<PyList>) -> PyResult<String> {
     
     let mut yaml_strings = Vec::new();
     
-    // Procesar cada documento
+    // Process each document
     for data in documents.iter() {
-        // Usar pipeline normal de dump
+        // Use normal dump pipeline
         let node = crate::representer::represent_rust(py, &data)?;
         let yaml_string = crate::emitter::emit_to_string(&node)?;
         yaml_strings.push(yaml_string);
     }
     
-    // Combinar con separadores
+            // Combine with separators
     let processor = MultiDocumentProcessor::new();
     Ok(processor.combine_documents(&yaml_strings))
 }
 
-/// Dump múltiples documentos a stream
+/// Dump multiple documents to stream
 #[pyfunction]
 pub fn dump_all_rust_to_stream(
     py: Python, 
@@ -428,7 +428,7 @@ pub fn dump_all_rust_to_stream(
     Ok(())
 }
 
-/// Split YAML string en múltiples documentos
+/// Split YAML string into multiple documents
 #[pyfunction]
 pub fn split_yaml_documents(yaml_content: &str) -> Vec<String> {
     let processor = MultiDocumentProcessor::new();

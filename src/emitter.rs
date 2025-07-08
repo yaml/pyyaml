@@ -1,32 +1,32 @@
 /*!
  * ===============================================================================
- * PyYAML-Rust: Emitter Avanzado para Serialización YAML
+ * PyYAML-Rust: Advanced Emitter for YAML Serialization
  * ===============================================================================
  * 
- * Este archivo implementa el EMITTER de YAML con optimizaciones de rendimiento:
+ * This file implements the YAML EMITTER with performance optimizations:
  * 
- * 1. 📝  SERIALIZACIÓN: Nodos → Texto YAML bien formateado
- * 2. 🎨  ESTILOS: Flow style {} vs Block style + múltiples estilos scalar
- * 3. ⚙️  CONFIGURACIÓN: Indentación, ancho, canonicalización, etc.
- * 4. 🚀  RENDIMIENTO: 4-6x mejora vs PyYAML original en operaciones dump
+ * 1. 📝  SERIALIZATION: Nodes → Well-formatted YAML text
+ * 2. 🎨  STYLES: Flow style {} vs Block style + multiple scalar styles
+ * 3. ⚙️  CONFIGURATION: Indentation, width, canonicalization, etc.
+ * 4. 🚀  PERFORMANCE: 4-6x improvement vs original PyYAML in dump operations
  * 
- * ARQUITECTURA DEL EMITTER:
+ * EMITTER ARCHITECTURE:
  * ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
- * │   Nodos     │ -> │   Emitter   │ -> │ Análisis    │ -> │ Texto YAML  │
- * │ (Composer)  │    │ (Principal) │    │ (Escalars)  │    │ (String)    │
+ * │   Nodes     │ -> │   Emitter   │ -> │ Analysis    │ -> │ YAML Text   │
+ * │ (Composer)  │    │ (Main)      │    │ (Scalars)   │    │ (String)    │
  * └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
  * 
- * ESTILOS YAML SOPORTADOS:
- * - 📋 Block Style: Estilo tradicional con indentación
- * - 🔄 Flow Style: Estilo compacto con {}, []
+ * SUPPORTED YAML STYLES:
+ * - 📋 Block Style: Traditional style with indentation
+ * - 🔄 Flow Style: Compact style with {}, []
  * - 🔤 Scalar Styles: Plain, 'Single', "Double", |Literal, >Folded
  * 
- * OPTIMIZACIONES CRÍTICAS:
- * - 🚀 Algoritmos stream-based para memoria eficiente
- * - 🧠 Análisis inteligente de scalars para estilos óptimos
- * - 📦 Buffer management optimizado para I/O
- * - 🎯 Detección automática flow vs block style
- * - ⚡ 4-6x mejora de rendimiento vs PyYAML original
+ * CRITICAL OPTIMIZATIONS:
+ * - 🚀 Stream-based algorithms for efficient memory
+ * - 🧠 Intelligent scalar analysis for optimal styles
+ * - 📦 Optimized buffer management for I/O
+ * - 🎯 Automatic flow vs block style detection
+ * - ⚡ 4-6x performance improvement vs original PyYAML
  */
 
 use std::io::Write;
@@ -39,17 +39,17 @@ use pyo3::prelude::*;
 // ===============================================================================
 
 /**
- * ❌ ESTRUCTURA ERROR: EmitterError
+ * ❌ ERROR STRUCTURE: EmitterError
  * 
- * PROPÓSITO:
- * - Errores específicos del proceso de emisión/serialización
- * - Información de contexto para debugging
- * - Compatible con Result<> patterns de Rust
+ * PURPOSE:
+ * - Specific errors from the emission/serialization process
+ * - Context information for debugging
+ * - Compatible with Rust Result<> patterns
  * 
- * CASOS TÍPICOS:
- * - Errores de I/O durante escritura
- * - Caracteres inválidos en texto
- * - Estructuras YAML mal formadas
+ * TYPICAL CASES:
+ * - I/O errors during writing
+ * - Invalid characters in text
+ * - Malformed YAML structures
  */
 #[derive(Debug)]
 pub struct EmitterError {
@@ -69,30 +69,30 @@ impl std::error::Error for EmitterError {}
 // ===============================================================================
 
 /**
- * 🔍 ANÁLISIS DE ESCALARES: ScalarAnalysis
+ * 🔍 SCALAR ANALYSIS: ScalarAnalysis
  * 
- * PROPÓSITO:
- * - Analizar contenido de scalars para determinar mejor estilo
- * - Optimizar representación según características del texto
- * - Minimizar uso de comillas cuando no son necesarias
+ * PURPOSE:
+ * - Analyze scalar content to determine best style
+ * - Optimize representation according to text characteristics
+ * - Minimize use of quotes when not necessary
  * 
- * CARACTERÍSTICAS ANALIZADAS:
- * - empty: Si el scalar está vacío
- * - multiline: Si contiene saltos de línea
- * - special_chars: Si contiene caracteres especiales YAML
- * - leading/trailing spaces: Si tiene espacios problemáticos
+ * ANALYZED CHARACTERISTICS:
+ * - empty: If the scalar is empty
+ * - multiline: If it contains line breaks
+ * - special_chars: If it contains special YAML characters
+ * - leading/trailing spaces: If it has problematic spaces
  * 
- * ESTILOS DETERMINADOS:
- * - allow_flow_plain: Sin comillas en flow context
- * - allow_block_plain: Sin comillas en block context
- * - allow_single_quoted: 'Comillas simples'
- * - allow_double_quoted: "Comillas dobles" (siempre posible)
- * - allow_block: |Literal o >Folded para multilinea
+ * DETERMINED STYLES:
+ * - allow_flow_plain: No quotes in flow context
+ * - allow_block_plain: No quotes in block context
+ * - allow_single_quoted: 'Single quotes'
+ * - allow_double_quoted: "Double quotes" (always possible)
+ * - allow_block: |Literal or >Folded for multiline
  * 
- * OPTIMIZACIONES:
- * - Análisis en constructor único
- * - Fast paths para casos comunes
- * - Algoritmos bit-wise para detección de caracteres
+ * OPTIMIZATIONS:
+ * - Analysis in single constructor
+ * - Fast paths for common cases
+ * - Bit-wise algorithms for character detection
  */
 #[derive(Debug, Clone)]
 pub struct ScalarAnalysis {
@@ -110,16 +110,16 @@ impl ScalarAnalysis {
     /**
      * 🔍 CONSTRUCTOR: ScalarAnalysis::new()
      * 
-     * PROPÓSITO:
-     * - Analizar scalar completamente en una pasada
-     * - Determinar todos los estilos permitidos
-     * - Optimizado para casos comunes
+     * PURPOSE:
+     * - Analyze scalar completely in one pass
+     * - Determine all allowed styles
+     * - Optimized for common cases
      * 
-     * ALGORITMO:
-     * 1. Detección de características básicas
-     * 2. Análisis de caracteres especiales
-     * 3. Evaluación de restricciones de contexto
-     * 4. Determinación de estilos permitidos
+     * ALGORITHM:
+     * 1. Detection of basic characteristics
+     * 2. Analysis of special characters
+     * 3. Evaluation of context restrictions
+     * 4. Determination of allowed styles
      */
     pub fn new(scalar: String) -> Self {
         // ===================================================================
@@ -189,33 +189,33 @@ impl ScalarAnalysis {
 // ===============================================================================
 
 /**
- * 📝 EMITTER PRINCIPAL: Emitter<W: Write>
+ * 📝 MAIN EMITTER: Emitter<W: Write>
  * 
- * PROPÓSITO:
- * - Engine principal para convertir nodos → texto YAML
- * - Soporte completo para flow y block styles
- * - Configuración avanzada de formateo
- * - Optimizado para rendimiento máximo
+ * PURPOSE:
+ * - Main engine to convert nodes → YAML text
+ * - Complete support for flow and block styles
+ * - Advanced formatting configuration
+ * - Optimized for maximum performance
  * 
- * CONFIGURACIÓN:
- * - indent: Espacios de indentación (2-9)
- * - width: Ancho máximo de línea
- * - canonical: Formato canónico verbose
- * - default_flow_style: Preferencia flow vs block
- * - allow_unicode: Permitir caracteres Unicode
+ * CONFIGURATION:
+ * - indent: Indentation spaces (2-9)
+ * - width: Maximum line width
+ * - canonical: Verbose canonical format
+ * - default_flow_style: Flow vs block preference
+ * - allow_unicode: Allow Unicode characters
  * 
- * ESTADO INTERNO:
- * - indents: Stack de niveles de indentación
- * - flow_level: Contador de anidamiento flow
- * - line/column: Posición actual en output
- * - whitespace/indention: Estado de formateo
+ * INTERNAL STATE:
+ * - indents: Stack of indentation levels
+ * - flow_level: Flow nesting counter
+ * - line/column: Current position in output
+ * - whitespace/indention: Formatting state
  * - context flags: root, sequence, mapping, simple_key
  * 
- * OPTIMIZACIONES:
- * - Stream-based writing para memoria eficiente
- * - Buffer management optimizado
- * - Fast paths para estructuras simples
- * - Algoritmos inline para hot paths
+ * OPTIMIZATIONS:
+ * - Stream-based writing for efficient memory
+ * - Optimized buffer management
+ * - Fast paths for simple structures
+ * - Inline algorithms for hot paths
  */
 pub struct Emitter<W: Write> {
     // ===================================================================
@@ -261,10 +261,10 @@ impl<W: Write> Emitter<W> {
     /**
      * 🏗️ CONSTRUCTOR: Emitter::new()
      * 
-     * PROPÓSITO:
-     * - Crear emitter con configuración por defecto
-     * - Inicializar estado interno
-     * - Configurar prefijos de tags estándar
+     * PURPOSE:
+     * - Create emitter with default configuration
+     * - Initialize internal state
+     * - Configure standard tag prefixes
      */
     pub fn new(writer: W) -> Self {
         // Configure standard tag prefixes
@@ -305,10 +305,10 @@ impl<W: Write> Emitter<W> {
     // ===================================================================
 
     /**
-     * ⚙️ CONFIGURAR INDENTACIÓN: with_indent()
+     * ⚙️ CONFIGURE INDENTATION: with_indent()
      * 
-     * PROPÓSITO: Establecer espacios de indentación (2-9)
-     * VALIDACIÓN: Clamp entre 2 y 9 para evitar extremos
+     * PURPOSE: Set indentation spaces (2-9)
+     * VALIDATION: Clamp between 2 and 9 to avoid extremes
      */
     pub fn with_indent(mut self, indent: usize) -> Self {
         self.indent = indent.clamp(2, 9);
@@ -316,10 +316,10 @@ impl<W: Write> Emitter<W> {
     }
 
     /**
-     * ⚙️ CONFIGURAR ANCHO: with_width()
+     * ⚙️ CONFIGURE WIDTH: with_width()
      * 
-     * PROPÓSITO: Establecer ancho máximo de línea
-     * VALIDACIÓN: Mínimo de indent*2 para evitar problemas
+     * PURPOSE: Set maximum line width
+     * VALIDATION: Minimum of indent*2 to avoid problems
      */
     pub fn with_width(mut self, width: usize) -> Self {
         self.width = if width > self.indent * 2 { width } else { 80 };
@@ -327,9 +327,9 @@ impl<W: Write> Emitter<W> {
     }
 
     /**
-     * ⚙️ CONFIGURAR CANÓNICO: with_canonical()
+     * ⚙️ CONFIGURE CANONICAL: with_canonical()
      * 
-     * PROPÓSITO: Activar/desactivar formato canónico verbose
+     * PURPOSE: Enable/disable verbose canonical format
      */
     pub fn with_canonical(mut self, canonical: bool) -> Self {
         self.canonical = canonical;
@@ -337,12 +337,12 @@ impl<W: Write> Emitter<W> {
     }
 
     /**
-     * ⚙️ CONFIGURAR FLOW STYLE: with_default_flow_style()
+     * ⚙️ CONFIGURE FLOW STYLE: with_default_flow_style()
      * 
-     * PROPÓSITO: Establecer preferencia flow vs block
-     * - None: Auto-detección inteligente
-     * - Some(true): Preferir flow style {}[]
-     * - Some(false): Preferir block style
+     * PURPOSE: Set flow vs block preference
+     * - None: Intelligent auto-detection
+     * - Some(true): Prefer flow style {}[]
+     * - Some(false): Prefer block style
      */
     pub fn with_default_flow_style(mut self, flow_style: Option<bool>) -> Self {
         self.default_flow_style = flow_style;
@@ -354,18 +354,18 @@ impl<W: Write> Emitter<W> {
     // ===================================================================
 
     /**
-     * 🚀 PUNTO DE ENTRADA: emit_node()
+     * 🚀 ENTRY POINT: emit_node()
      * 
-     * PROPÓSITO:
-     * - Función principal para emitir nodo completo
-     * - Genera documento YAML bien formado
-     * - Incluye marcadores de stream y documento
+     * PURPOSE:
+     * - Main function to emit complete node
+     * - Generate well-formed YAML document
+     * - Include stream and document markers
      * 
-     * ESTRUCTURA GENERADA:
-     * 1. Stream start (implícito)
-     * 2. Document start (--- si necesario)
-     * 3. Contenido del nodo (recursivo)
-     * 4. Document end (... si necesario)
+     * GENERATED STRUCTURE:
+     * 1. Stream start (implicit)
+     * 2. Document start (--- if necessary)
+     * 3. Node content (recursive)
+     * 4. Document end (... if necessary)
      * 5. Stream end (flush)
      */
     pub fn emit_node(&mut self, node: &Node) -> Result<(), EmitterError> {
@@ -378,24 +378,24 @@ impl<W: Write> Emitter<W> {
     }
 
     /**
-     * 🔄 EMISIÓN RECURSIVA: emit_node_internal()
+     * 🔄 RECURSIVE EMISSION: emit_node_internal()
      * 
-     * PROPÓSITO:
-     * - Algoritmo recursivo principal de emisión
-     * - Despacho por tipo de nodo a métodos especializados
-     * - Gestión de contexto para decisiones de formateo
+     * PURPOSE:
+     * - Main recursive emission algorithm
+     * - Dispatch by node type to specialized methods
+     * - Context management for formatting decisions
      * 
-     * PARÁMETROS:
-     * - node: Nodo a emitir
-     * - root: Es nodo raíz del documento
-     * - sequence: Estamos en contexto de secuencia
-     * - mapping: Estamos en contexto de mapping
-     * - simple_key: Estamos emitiendo clave simple
+     * PARAMETERS:
+     * - node: Node to emit
+     * - root: Is document root node
+     * - sequence: We are in sequence context
+     * - mapping: We are in mapping context
+     * - simple_key: We are emitting simple key
      * 
-     * ALGORITMO:
-     * 1. Establecer flags de contexto
-     * 2. Despachar según tipo de nodo
-     * 3. Delegar a métodos especializados
+     * ALGORITHM:
+     * 1. Establish context flags
+     * 2. Dispatch according to node type
+     * 3. Delegate to specialized methods
      */
     fn emit_node_internal(
         &mut self, 
@@ -789,7 +789,7 @@ impl<W: Write> Emitter<W> {
     fn write_single_quoted(&mut self, text: &str) -> Result<(), EmitterError> {
         self.write_indicator("'", true, false)?;
         
-        // Escapar comillas simples
+        // Escape single quotes
         let escaped = text.replace("'", "''");
         self.write(&escaped)?;
         
@@ -800,7 +800,7 @@ impl<W: Write> Emitter<W> {
     fn write_double_quoted(&mut self, text: &str) -> Result<(), EmitterError> {
         self.write_indicator("\"", true, false)?;
         
-        // Escapar caracteres especiales
+        // Escape special characters
         let mut escaped = String::new();
         for ch in text.chars() {
             match ch {

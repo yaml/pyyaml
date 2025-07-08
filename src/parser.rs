@@ -22,7 +22,7 @@
  * - 🗂️ Mapping: MappingStart, MappingEnd + claves/valores
  * - 📋 Sequence: SequenceStart, SequenceEnd + elementos
  * - 🔤 Scalar: Valores individuales (strings, números, bools)
- * - 🔗 Reference: Alias (referencias a anchors definidos)
+ * - 🔗 Reference: Alias (references to defined anchors)
  * 
  * OPTIMIZACIONES CRÍTICAS:
  * - 🚀 Procesamiento línea por línea con análisis de indentación
@@ -102,17 +102,17 @@ impl Mark {
  * 3. 🗂️ MAPPING: Delimita pares key-value { ... }
  * 4. 📋 SEQUENCE: Delimita listas [ ... ]
  * 5. 🔤 SCALAR: Valores individuales (leaf nodes)
- * 6. 🔗 ALIAS: Referencias a anchors (*ref)
+ * 6. 🔗 ALIAS: References to anchors (*ref)
  * 
  * CAMPOS COMUNES:
  * - start_mark, end_mark: Posición en texto fuente
- * - anchor: Opcional, para referencias (&anchor)
+ * - anchor: Optional, for references (&anchor)
  * - tag: Opcional, para tipos explícitos (!!type)
  * - implicit: Flags para resolución automática de tipos
  */
 #[derive(Debug, Clone)]
 pub enum Event {
-    // 🌊 EVENTOS DE STREAM: Delimitan archivo completo
+    // 🌊 STREAM EVENTS: Delimit complete file
     StreamStart { 
         start_mark: Mark,
         end_mark: Mark,
@@ -123,7 +123,7 @@ pub enum Event {
         end_mark: Mark,
     },
     
-    // 📄 EVENTOS DE DOCUMENTO: Delimitan documentos individuales
+    // 📄 DOCUMENT EVENTS: Delimit individual documents
     DocumentStart {
         start_mark: Mark,
         end_mark: Mark,
@@ -137,19 +137,19 @@ pub enum Event {
         explicit: bool,                 // true if there's explicit ...
     },
     
-    // 🔗 EVENTOS DE REFERENCIA: Alias a anchors definidos
+    // 🔗 REFERENCE EVENTS: Alias to defined anchors
     Alias {
-        anchor: String,                 // Nombre del anchor referenciado
+        anchor: String,                 // Name of the referenced anchor
         start_mark: Mark,
         end_mark: Mark,
     },
     
     // 🔤 EVENTOS DE SCALAR: Valores individuales
     Scalar {
-        anchor: Option<String>,         // Anchor opcional (&name)
+        anchor: Option<String>,         // Optional anchor (&name)
         tag: Option<String>,            // Optional explicit tag (!!type)
         implicit: (bool, bool),         // (plain, quoted) implicit resolution
-        value: String,                  // Valor del scalar
+        value: String,                  // Scalar value
         start_mark: Mark,
         end_mark: Mark,
         style: Option<char>,            // Representation style (' " | > etc.)
@@ -157,12 +157,12 @@ pub enum Event {
     
     // 📋 EVENTOS DE SEQUENCE: Delimitan listas
     SequenceStart {
-        anchor: Option<String>,         // Anchor opcional
+        anchor: Option<String>,         // Optional anchor
         tag: Option<String>,            // Optional explicit tag
         implicit: bool,                 // Implicit type resolution
         start_mark: Mark,
         end_mark: Mark,
-        flow_style: bool,               // true para [a,b,c], false para block style
+        flow_style: bool,               // true for [a,b,c], false for block style
     },
     SequenceEnd {
         start_mark: Mark,
@@ -171,12 +171,12 @@ pub enum Event {
     
     // 🗂️ EVENTOS DE MAPPING: Delimitan key-value pairs
     MappingStart {
-        anchor: Option<String>,         // Anchor opcional
+        anchor: Option<String>,         // Optional anchor
         tag: Option<String>,            // Optional explicit tag
         implicit: bool,                 // Implicit type resolution
         start_mark: Mark,
         end_mark: Mark,
-        flow_style: bool,               // true para {a:1,b:2}, false para block style
+        flow_style: bool,               // true for {a:1,b:2}, false for block style
     },
     MappingEnd {
         start_mark: Mark,
@@ -185,7 +185,7 @@ pub enum Event {
 }
 
 // ===============================================================================
-// 🐍 WRAPPER PYTHON: Evento compatible con PyO3
+    // 🐍 PYTHON WRAPPER: PyO3 compatible event
 // ===============================================================================
 
 /**
@@ -267,7 +267,7 @@ impl PyEvent {
 }
 
 // ===============================================================================
-// 🔧 PARSER CLASS: Interfaz compatible con PyYAML
+    // 🔧 PARSER CLASS: PyYAML compatible interface
 // ===============================================================================
 
 /**
@@ -294,10 +294,10 @@ impl PyEvent {
 #[pyclass]
 pub struct Parser {
     // ===================================================================
-    // 🎛️ ESTADO PRINCIPAL: Scanner y evento actual
+    // 🎛️ MAIN STATE: Scanner and current event
     // ===================================================================
     scanner: Option<PyScanner>,         // Scanner asociado
-    current_event: Option<Event>,       // Evento actual en iteración
+    current_event: Option<Event>,       // Current event in iteration
     
     // ===================================================================
     // 🚀 OPTIMIZATIONS: Caches and pre-allocation
@@ -306,7 +306,7 @@ pub struct Parser {
     token_index: usize,                 // Current index in tokens
     
     // ===================================================================
-    // 📦 BUFFERS: Pre-allocated para evitar allocations
+    // 📦 BUFFERS: Pre-allocated to avoid allocations
     // ===================================================================
     states: Vec<ParseState>,            // Stack de estados de parsing
     marks: Vec<Mark>,                   // Pool de marks reutilizables
@@ -323,15 +323,15 @@ pub struct Parser {
 #[derive(Debug, Clone, Copy)]
 enum ParseState {
     StreamStart,        // Inicio del stream
-    DocumentStart,      // Inicio de documento
-    DocumentContent,    // Contenido del documento
-    DocumentEnd,        // Fin de documento
+    DocumentStart,      // Document start
+    DocumentContent,    // Document content
+    DocumentEnd,        // Document end
     BlockNode,          // Nodo en estilo block
-    Scalar,             // Procesando scalar
-    Key,                // Procesando clave de mapping
-    Value,              // Procesando valor de mapping
-    Sequence,           // Procesando elementos de sequence
-    Mapping,            // Procesando pares de mapping
+    Scalar,             // Processing scalar
+    Key,                // Processing mapping key
+    Value,              // Processing mapping value
+    Sequence,           // Processing sequence elements
+    Mapping,            // Processing mapping pairs
 }
 
 impl Default for Parser {
@@ -595,14 +595,14 @@ fn parse_tokens_to_events(tokens: &[crate::scanner::Token], yaml_content: &str) 
     });
     
     // ===================================================================
-    // ANÁLISIS LÍNEAS: Preparación para detección de documentos
+    // LINE ANALYSIS: Preparation for document detection
     // ===================================================================
     let yaml_lines: Vec<&str> = yaml_content.lines()
         .map(|line| line.trim_end())       // Remover whitespace final
         .collect();
     
     // ===================================================================
-    // DETECCIÓN MÚLTIPLES DOCUMENTOS: Buscar separadores ---
+    // MULTIPLE DOCUMENT DETECTION: Search for --- separators
     // ===================================================================
     let mut doc_boundaries = Vec::new();
     for (i, line) in yaml_lines.iter().enumerate() {
@@ -616,15 +616,15 @@ fn parse_tokens_to_events(tokens: &[crate::scanner::Token], yaml_content: &str) 
     // PROCESAMIENTO DOCUMENTOS: Multi-doc vs single-doc
     // ===================================================================
     if !doc_boundaries.is_empty() {
-        // 📚 MÚLTIPLES DOCUMENTOS: Procesar cada uno por separado
-        doc_boundaries.push(yaml_lines.len()); // Agregar final como boundary
+        // 📚 MULTIPLE DOCUMENTS: Process each one separately
+        doc_boundaries.push(yaml_lines.len()); // Add end as boundary
         
         for i in 0..doc_boundaries.len() {
             let start_line = if i == 0 { 0 } else { doc_boundaries[i - 1] + 1 };
             let end_line = if i == doc_boundaries.len() - 1 { yaml_lines.len() } else { doc_boundaries[i] };
             
             if start_line < end_line {
-                // Extraer líneas del documento actual (filtrar vacías y comentarios)
+                // Extract lines from current document (filter empty and comments)
                 let doc_lines: Vec<&str> = yaml_lines[start_line..end_line]
                     .iter()
                     .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
@@ -632,21 +632,21 @@ fn parse_tokens_to_events(tokens: &[crate::scanner::Token], yaml_content: &str) 
                     .collect();
                 
                 if !doc_lines.is_empty() {
-                    // DocumentStart para este documento
+                    // DocumentStart for this document
                     events.push(PyEvent {
                         event: Event::DocumentStart {
                             start_mark: mark.clone(),
                             end_mark: mark.clone(),
-                            explicit: i > 0,        // Primer documento puede ser implícito
+                            explicit: i > 0,        // First document can be implicit
                             version: None,
                             tags: None,
                         }
                     });
                     
-                    // Procesar contenido del documento
+                    // Process document content
                     process_document_content(&doc_lines, &mut events, &mark)?;
                     
-                    // DocumentEnd para este documento
+                    // DocumentEnd for this document
                     events.push(PyEvent {
                         event: Event::DocumentEnd {
                             start_mark: mark.clone(),
@@ -658,7 +658,7 @@ fn parse_tokens_to_events(tokens: &[crate::scanner::Token], yaml_content: &str) 
             }
         }
     } else {
-        // 📄 DOCUMENTO ÚNICO: Procesamiento tradicional
+        // 📄 SINGLE DOCUMENT: Traditional processing
         let filtered_lines: Vec<&str> = yaml_lines.iter()
             .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
             .copied()
@@ -676,7 +676,7 @@ fn parse_tokens_to_events(tokens: &[crate::scanner::Token], yaml_content: &str) 
                 }
             });
             
-            // Procesar contenido del documento
+            // Process document content
             process_document_content(&filtered_lines, &mut events, &mark)?;
             
             // DocumentEnd event
@@ -727,12 +727,12 @@ fn process_document_content(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Ma
     }
     
     // ===================================================================
-    // DETECCIÓN ESTRUCTURA PRINCIPAL
+            // MAIN STRUCTURE DETECTION
     // ===================================================================
     let has_mapping = lines.iter().any(|line| line.contains(':') && !line.trim_start().starts_with('-'));
     
     if has_mapping {
-        // 🗂️ DOCUMENTO ES MAPPING PRINCIPAL
+        // 🗂️ DOCUMENT IS MAIN MAPPING
         events.push(PyEvent {
             event: Event::MappingStart {
                 anchor: None,
@@ -744,7 +744,7 @@ fn process_document_content(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Ma
             }
         });
         
-        // Procesar estructura línea por línea respetando indentación
+        // Process structure line by line respecting indentation
         parse_mapping_lines(lines, events, mark)?;
         
         events.push(PyEvent {
@@ -754,11 +754,11 @@ fn process_document_content(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Ma
             }
         });
     } else {
-        // Detectar si es una secuencia
+                    // Detect if it's a sequence
         let has_sequence = lines.iter().any(|line| line.trim_start().starts_with('-'));
         
         if has_sequence {
-            // 📋 DOCUMENTO ES SEQUENCE PRINCIPAL
+            // 📋 DOCUMENT IS MAIN SEQUENCE
             events.push(PyEvent {
                 event: Event::SequenceStart {
                     anchor: None,
@@ -779,7 +779,7 @@ fn process_document_content(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Ma
                 }
             });
         } else if lines.len() == 1 {
-            // 🔤 DOCUMENTO ES SCALAR SIMPLE
+            // 🔤 DOCUMENT IS SIMPLE SCALAR
             let scalar_value = lines[0].trim().to_string();
             events.push(PyEvent {
                 event: Event::Scalar {
@@ -830,11 +830,11 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
             let value_part = trimmed[colon_pos + 1..].trim();
             
             // ===================================================================
-            // PROCESAR KEY: Limpiar comillas y generar evento Scalar
+            // PROCESS KEY: Clean quotes and generate Scalar event
             // ===================================================================
             let key_clean = clean_yaml_string(key_raw);
             
-            // Agregar KEY como Scalar event
+            // Add KEY as Scalar event
             events.push(PyEvent {
                 event: Event::Scalar {
                     anchor: None,
@@ -849,7 +849,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
             
             if !value_part.is_empty() {
                 // ===================================================================
-                // VALOR INLINE: Procesar en misma línea
+                // INLINE VALUE: Process on same line
                 // ===================================================================
                 let (clean_value, resolved_tag) = process_yaml_value(value_part);
                 
@@ -858,7 +858,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                         anchor: None,
                         tag: resolved_tag,           // Tag procesado (!!bool, etc.)
                         implicit: (true, false),
-                        value: clean_value,          // Valor limpio sin comillas
+                        value: clean_value,          // Clean value without quotes
                         start_mark: mark.clone(),
                         end_mark: mark.clone(),
                         style: None,
@@ -866,13 +866,13 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                 });
             } else {
                 // ===================================================================
-                // VALOR ANIDADO: Estructura en líneas siguientes
+                // NESTED VALUE: Structure in following lines
                 // ===================================================================
                 let current_indent = line.len() - line.trim_start().len();
                 let mut nested_lines = Vec::new();
                 let mut j = i + 1;
                 
-                // Recopilar líneas anidadas (mayor indentación)
+                // Collect nested lines (greater indentation)
                 while j < lines.len() {
                     let next_line = lines[j];
                     let next_indent = next_line.len() - next_line.trim_start().len();
@@ -886,7 +886,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                 }
                 
                 if !nested_lines.is_empty() {
-                    // Determinar tipo de estructura anidada
+                    // Determine type of nested structure
                     let is_nested_mapping = nested_lines.iter().any(|l| l.contains(':') && !l.trim_start().starts_with('-'));
                     let is_nested_sequence = nested_lines.iter().any(|l| l.trim_start().starts_with('-'));
                     
@@ -903,7 +903,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                             }
                         });
                         
-                        // Recursión para procesar mapping anidado
+                        // Recursion to process nested mapping
                         parse_mapping_lines(&nested_lines, events, mark)?;
                         
                         events.push(PyEvent {
@@ -925,7 +925,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                             }
                         });
                         
-                        // Recursión para procesar sequence anidada
+                        // Recursion to process nested sequence
                         parse_sequence_lines(&nested_lines, events, mark)?;
                         
                         events.push(PyEvent {
@@ -937,7 +937,7 @@ fn parse_mapping_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) -
                     }
                 }
                 
-                i = j - 1; // Ajustar índice para saltar líneas procesadas
+                i = j - 1; // Adjust index to skip processed lines
             }
         }
         
@@ -973,16 +973,16 @@ fn parse_sequence_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) 
             let item_value_raw = trimmed[1..].trim();  // Remover '-' inicial
             if !item_value_raw.is_empty() {
                 // ===================================================================
-                // PROCESAR ELEMENTO: Tags y limpieza
+                // PROCESS ELEMENT: Tags and cleanup
                 // ===================================================================
                 let (clean_value, resolved_tag) = process_yaml_value(item_value_raw);
                 
                 events.push(PyEvent {
                     event: Event::Scalar {
                         anchor: None,
-                        tag: resolved_tag,          // Tag procesado automáticamente
+                        tag: resolved_tag,          // Automatically processed tag
                         implicit: (true, false),
-                        value: clean_value,         // Valor limpio
+                        value: clean_value,         // Clean value
                         start_mark: mark.clone(),
                         end_mark: mark.clone(),
                         style: None,
@@ -1011,7 +1011,7 @@ fn parse_sequence_lines(lines: &[&str], events: &mut Vec<PyEvent>, mark: &Mark) 
 fn clean_yaml_string(input: &str) -> String {
     let trimmed = input.trim();
     
-    // Remover comillas simples o dobles que rodean el string completo
+            // Remove single or double quotes surrounding the complete string
     if (trimmed.starts_with('\'') && trimmed.ends_with('\'')) ||
        (trimmed.starts_with('"') && trimmed.ends_with('"')) {
         trimmed[1..trimmed.len()-1].to_string()
@@ -1046,24 +1046,24 @@ fn process_yaml_value(input: &str) -> (String, Option<String>) {
     let trimmed = input.trim();
     
     // ===================================================================
-    // DETECCIÓN TAGS EXPLÍCITOS: !!type value
+    // EXPLICIT TAG DETECTION: !!type value
     // ===================================================================
     if trimmed.starts_with("!!") {
         if let Some(space_pos) = trimmed.find(' ') {
-            let tag_part = &trimmed[2..space_pos];      // Sin el '!!' prefix
+            let tag_part = &trimmed[2..space_pos];      // Without the '!!' prefix
             let value_part = trimmed[space_pos + 1..].trim();
             
-            // Convertir tag corto a tag completo estándar YAML
+            // Convert short tag to complete standard YAML tag
             let full_tag = match tag_part {
                 "bool" => Some("tag:yaml.org,2002:bool".to_string()),
                 "int" => Some("tag:yaml.org,2002:int".to_string()),
                 "float" => Some("tag:yaml.org,2002:float".to_string()),
                 "str" => Some("tag:yaml.org,2002:str".to_string()),
                 "null" => Some("tag:yaml.org,2002:null".to_string()),
-                _ => Some(format!("tag:yaml.org,2002:{}", tag_part)),  // Tag genérico
+                _ => Some(format!("tag:yaml.org,2002:{}", tag_part)),  // Generic tag
             };
             
-            // Limpiar el valor (remover comillas si las tiene)
+            // Clean the value (remove quotes if it has them)
             let clean_value = clean_yaml_string(value_part);
             
             return (clean_value, full_tag);
@@ -1071,7 +1071,7 @@ fn process_yaml_value(input: &str) -> (String, Option<String>) {
     }
     
     // ===================================================================
-    // SIN TAG EXPLÍCITO: Solo limpiar valor
+            // NO EXPLICIT TAG: Just clean value
     // ===================================================================
     (clean_yaml_string(trimmed), None)
 }
