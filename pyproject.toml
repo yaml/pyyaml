@@ -3,7 +3,22 @@ requires = [
     "setuptools",  # FIXME: declare min/max setuptools versions?
     "wheel",
     "Cython; python_version < '3.13'",
-    "Cython>=3.0; python_version >= '3.13'"
+    "Cython>=3.0; python_version >= '3.13'",
+    "maturin>=1.0,<2.0"
 ]
 backend-path = ["packaging"]
 build-backend = "_pyyaml_pep517"
+
+[project]
+name = "PyYAML"
+dynamic = ["version"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+bindings = "pyo3"
+python-source = "lib"
+module-name = "yaml._rust"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

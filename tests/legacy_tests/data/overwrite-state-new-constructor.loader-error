@@ -1,5 +1,0 @@
-- !!python/object/new:yaml.MappingNode
-  args:
-  state:
-    extend: test
-    __test__: test

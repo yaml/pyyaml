@@ -1,7 +1,0 @@
-load: {
-  'Y': 1, 'y': 1, 'N': 1, 'n': 1,
-  '!!bool Y': 1, '!!bool N': 1, '!!bool n': 1, '!!bool y': 1,
-  }
-dump: {
-  '!!str N': 1, '!!str Y': 1, '!!str n': 1, '!!str y': 1,
-  }

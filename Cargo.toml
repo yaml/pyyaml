@@ -1,0 +1,27 @@
+[package]
+name = "pyyaml-rust"
+version = "7.0.0-dev0"
+edition = "2021"
+authors = ["PyYAML Contributors"]
+description = "Rust implementation for PyYAML"
+license = "MIT"
+
+[lib]
+name = "pyyaml_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25.1", features = ["abi3-py38", "extension-module"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_yml = "0.0.12"
+thiserror = "2.0.12"
+base64 = "0.22.1"
+regex = "1.11.1"
+chrono = { version = "0.4.41", features = ["serde"] }
+encoding_rs = "0.8.35"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+bindings = "pyo3"
+python-source = "lib"
+module-name = "yaml._rust" 

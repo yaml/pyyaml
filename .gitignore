@@ -1,19 +1,162 @@
-# build outputs
-/dist/*
-/build/*
-/lib/PyYAML.egg-info/*
-/wheelhouse/*
-/yaml/_yaml.c
-MANIFEST
+# ===== RUST/CARGO ARTIFACTS =====
+# Rust compilation artifacts
+/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# ===== PYTHON BUILD OUTPUTS =====
+# Build directories
+/dist/
+/build/
+/wheelhouse/
+/lib/PyYAML.egg-info/
+
+# Python wheels and eggs
+*.egg-info/
+*.egg
+*.whl
+
+# Compiled Python extensions
 **/*.so
 **/*.dylib
 **/*.pyd
+/yaml/_yaml.c
 
+# Build manifests
+MANIFEST
+MANIFEST.in
 
-# cached Python binaries
-*.py[cdo]
-_pycache_/*
+# ===== PYTHON CACHE & BYTECODE =====
+# Python bytecode and cache
+*.py[cod]
+*$py.class
+__pycache__/
+*.so
 
-# local IDE state
-/.idea/*
-/.tox/*
+# ===== VIRTUAL ENVIRONMENTS =====
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===== DEVELOPMENT & TEST FILES =====
+# Migration and development scripts
+*_test.py
+*_benchmark.py
+test_*.py
+benchmark_*.py
+debug_*.py
+cleanup_*.py
+massive_cleanup.py
+conservative_cleanup.py
+advanced_cleanup_analysis.py
+
+# Test output files
+*.yaml
+*.json
+*.txt
+*.md
+!README.md
+!LICENSE*
+!CHANGELOG*
+
+# Specific development files
+test-simple.py
+run_*.py
+compare_*.py
+safe_compare.py
+simple_bench.py
+smart_benchmark.py
+ultra_*.py
+final_*.py
+complete_*.py
+million_test.py
+
+# ===== BACKUP & TEMPORARY FILES =====
+# Backup directories
+backup_*/
+backups/
+.backup/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+*.swp
+*.swo
+*~
+
+# ===== IDE & EDITOR FILES =====
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+
+# ===== TESTING & COVERAGE =====
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+htmlcov/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ===== DOCUMENTATION =====
+# Documentation builds
+docs/_build/
+docs/build/
+.readthedocs.yml
+
+# ===== SYSTEM FILES =====
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===== LOGS & DATABASES =====
+# Logs
+*.log
+logs/
+.log
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== RUST SPECIFIC =====
+# Rust analyzer
+.rust-analyzer/
+
+# ===== MATURIN SPECIFIC =====
+# Maturin builds for Python-Rust
+*.abi3.so
+*.cp*.so
+*.cp*.pyd
+
+# ===== PROJECT SPECIFIC =====
+# PyYAML-Rust specific ignores
+yaml_comparison_report.json
+simple_comparison_report.json
+rust_generated_reference.yaml
+pyyaml_rust_output.txt
+comparacion_final_rust_vs_original.md
+
+# Cleanup scripts
+cleanup_vestigial.sh
