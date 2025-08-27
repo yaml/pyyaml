@@ -17,13 +17,13 @@ configuration files to object serialization and persistence."""
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = 'xi@resolvent.net'
 LICENSE = "MIT"
+LICENSE_FILES = ["LICENSE"]
 PLATFORMS = "Any"
 URL = "https://pyyaml.org/"
 DOWNLOAD_URL = "https://pypi.org/project/PyYAML/"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Cython",
     "Programming Language :: Python",
@@ -339,6 +339,7 @@ if __name__ == '__main__':
         author=AUTHOR,
         author_email=AUTHOR_EMAIL,
         license=LICENSE,
+        license_files=LICENSE_FILES,
         platforms=PLATFORMS,
         url=URL,
         download_url=DOWNLOAD_URL,
