@@ -37,7 +37,7 @@ class Serializer:
         if self.closed is None:
             raise SerializerError("serializer is not opened")
         elif not self.closed:
-            self.emit(StreamEndEvent())
+            self.emit(StreamEndEvent(explicit_end=self.use_explicit_end))
             self.closed = True
 
     #def __del__(self):

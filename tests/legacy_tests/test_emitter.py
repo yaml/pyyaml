@@ -98,6 +98,14 @@ def test_emitter_events(events_filename, verbose=False):
     new_events = list(yaml.parse(output))
     _compare_events(events, new_events)
 
+def test_marks_on_primitives():
+    assert yaml.dump(42, explicit_start=False) == '42'
+    assert yaml.dump(42, explicit_start=True) == '--- 42'
+    assert yaml.dump(42, explicit_end=False) == '42'
+    assert yaml.dump(42, explicit_end=True) == '42\n...\n'
+    assert yaml.dump(42, explicit_start=False, explicit_end=False) == '42'
+    assert yaml.dump(42, explicit_start=True, explicit_end=True) == '--- 42\n...\n'
+
 if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
