@@ -2,21 +2,14 @@
 
 set -eux
 
-if ! command -v prove >/dev/null 2>&1; then
-    echo "Installing prove (perl testing tool)..."
-    if command -v dnf >/dev/null 2>&1; then
-        dnf install -y perl-Test-Harness
-    elif command -v apt-get >/dev/null 2>&1; then
-        apt-get update && apt-get install -y libtest-harness-perl
-    else
-        echo "WARNING: Cannot install prove, tests may fail"
-    fi
-fi
-
 # ensure the prove testing tool is available
 echo "::group::ensure build/test prerequisites"
 if ! command -v prove; then
-  if grep -m 1 alpine /etc/os-release; then
+  if command -v dnf >/dev/null 2>&1; then
+    dnf install -y perl-Test-Harness
+  elif command -v apt-get >/dev/null 2>&1; then
+    apt-get update && apt-get install -y libtest-harness-perl
+  elif grep -m 1 alpine /etc/os-release; then
     apk add perl-utils
   else
     echo "prove (perl) testing tool unavailable"
