@@ -87,6 +87,7 @@ jobs:
           - { platform: manylinux2014, arch: x86_64 }
           - { platform: manylinux2014, arch: aarch64, omit: ${{ env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux_2_39, arch: riscv64, omit: ${{ env.skip_slow_jobs }}  }
           - { platform: musllinux_1_1, arch: x86_64 }
           - { platform: musllinux_1_1, arch: aarch64, omit: ${{ env.skip_slow_jobs }} }
 
@@ -161,6 +162,12 @@ jobs:
           - { platform: manylinux2014, arch: s390x, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp313, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp38, omit: ${{ env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp39, omit: ${{ env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp310, omit: ${{ env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
+          - { platform: manylinux_2_39, arch: riscv64, spec: cp313, omit: ${{ env.skip_slow_jobs }}, cibw_version: cibuildwheel==3.1.3 }
           - { platform: musllinux_1_1, arch: x86_64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_1, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_1, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -177,7 +184,7 @@ jobs:
   linux_pyyaml:
     needs: [python_sdist, linux_libyaml, make_linux_pyyaml_matrix]
     name: pyyaml ${{matrix.spec}}-${{matrix.platform}}_${{matrix.arch}}
-    runs-on: ubuntu-22.04
+    runs-on:  ${{ matrix.arch == 'riscv64' && 'ubuntu-24.04' || 'ubuntu-22.04' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.make_linux_pyyaml_matrix.outputs.matrix_json) }}
@@ -217,9 +224,10 @@ jobs:
         CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_MANYLINUX_S390X_IMAGE: ${{ matrix.manylinux_img || '' }}
-        CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_1' }}
-        CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_1' }}
-        CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_1' }}
+        CIBW_MANYLINUX_RISCV64_IMAGE: ${{ matrix.manylinux_img || '' }}
+        CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.arch == 'riscv64' && (matrix.musllinux_img || 'musllinux_1_2') || (matrix.musllinux_img || 'musllinux_1_1') }}
+        CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.arch == 'riscv64' && (matrix.musllinux_img || 'musllinux_1_2') || (matrix.musllinux_img || 'musllinux_1_1') }}
+        CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.arch == 'riscv64' && (matrix.musllinux_img || 'musllinux_1_2') || (matrix.musllinux_img || 'musllinux_1_1') }}
         CIBW_PRERELEASE_PYTHONS: 1
         CIBW_TEST_COMMAND: cd {project}; pytest
         CIBW_TEST_REQUIRES: pytest
