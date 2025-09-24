@@ -558,7 +558,6 @@ jobs:
       run: |
         set -eux
         python -V
-        python3 -m pip install -U --user pip setuptools wheel
         python -m pip install -U --user ${{ matrix.cibw_version || 'cibuildwheel' }}
         mkdir pyyaml
 
