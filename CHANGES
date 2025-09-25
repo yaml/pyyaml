@@ -3,6 +3,10 @@ For a complete changelog, see:
 
 * https://github.com/yaml/pyyaml/commits/
 
+6.0.3 (2025-09-25)
+
+* https://github.com/yaml/pyyaml/pull/864 -- Support for Python 3.14 and free-threading (experimental)
+
 6.0.2 (2024-08-06)
 
 * https://github.com/yaml/pyyaml/pull/808 -- Support for Cython 3.x and Python 3.13
