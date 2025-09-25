@@ -41,6 +41,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       artifact_name: ${{ steps.build_sdist.outputs.artifact_name }}
+      package_version: ${{ steps.build_sdist.outputs.package_version }}
     steps:
     - name: Checkout PyYAML
       uses: actions/checkout@v4
@@ -62,6 +63,7 @@ jobs:
         python -m build -s .
 
         echo "artifact_name=$(ls ./dist)" >> "$GITHUB_OUTPUT"
+        echo "package_version=$(ls ./dist | sed -En 's/pyyaml-(.+)\.tar\.gz/\1/p')" >> "$GITHUB_OUTPUT"
 
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v4
@@ -648,7 +650,7 @@ jobs:
     - name: merge all artifacts
       uses: actions/upload-artifact/merge@v4
       with:
-        name: dist
+        name: dist-pyyaml-${{ needs.python_sdist.outputs.package_version }}
         delete-merged: true
       if: ${{ env.skip_artifact_upload != 'true' }}
 
