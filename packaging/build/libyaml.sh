@@ -2,6 +2,14 @@
 
 set -eux
 
+# build the requested version of libyaml locally
+echo "::group::fetch libyaml ${LIBYAML_REF}"
+git config --global advice.detachedHead false
+git clone --branch "$LIBYAML_REF" "$LIBYAML_REPO" libyaml
+pushd libyaml
+git reset --hard "$LIBYAML_REF"
+echo "::endgroup::"
+
 # ensure the prove testing tool is available
 echo "::group::ensure build/test prerequisites"
 if ! command -v prove; then
@@ -12,14 +20,14 @@ if ! command -v prove; then
     exit 1
   fi
 fi
-echo "::endgroup::"
 
-# build the requested version of libyaml locally
-echo "::group::fetch libyaml ${LIBYAML_REF}"
-git config --global advice.detachedHead false
-git clone --branch "$LIBYAML_REF" "$LIBYAML_REPO" libyaml
-pushd libyaml
-git reset --hard "$LIBYAML_REF"
+# hack to fix up locally musl1.2 libtool macros
+if grep -m 1 alpine /etc/os-release; then
+  if ! grep -E 'AC_CONFIG_MACRO_DIRS\(\[m4])' configure.ac; then
+    echo 'AC_CONFIG_MACRO_DIRS([m4])' >> configure.ac
+    ACLOCAL_PATH=/usr/local/share/libtool/ libtoolize
+  fi
+fi
 echo "::endgroup::"
 
 echo "::group::autoconf libyaml w/ static only"
