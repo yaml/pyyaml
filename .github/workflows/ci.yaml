@@ -86,7 +86,7 @@ jobs:
           - { platform: manylinux1, arch: x86_64 }
           - { platform: manylinux2014, arch: x86_64 }
           - { platform: manylinux2014, arch: aarch64 }
-          - { platform: manylinux2014, arch: s390x, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: s390x, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64 }
           - { platform: musllinux_1_2, arch: aarch64 }
 
@@ -149,34 +149,39 @@ jobs:
           - { platform: manylinux2014, arch: x86_64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
-          - { platform: manylinux2014, arch: x86_64, spec: cp314, cibw_version: cibuildwheel~=3.0b1 }
+          - { platform: manylinux2014, arch: x86_64, spec: cp314 }
+          - { platform: manylinux2014, arch: x86_64, spec: cp314t }
           - { platform: manylinux2014, arch: aarch64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
-          - { platform: manylinux2014, arch: aarch64, spec: cp314, cibw_version: cibuildwheel~=3.0b1 }
+          - { platform: manylinux2014, arch: aarch64, spec: cp314 }
+          - { platform: manylinux2014, arch: aarch64, spec: cp314t }
           - { platform: manylinux2014, arch: s390x, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
-          - { platform: manylinux2014, arch: s390x, spec: cp314, cibw_version: cibuildwheel~=3.0b1, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: s390x, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: s390x, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
-          - { platform: musllinux_1_2, arch: x86_64, spec: cp314, cibw_version: cibuildwheel~=3.0b1 }
+          - { platform: musllinux_1_2, arch: x86_64, spec: cp314 }
+          - { platform: musllinux_1_2, arch: x86_64, spec: cp314t }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
-          - { platform: musllinux_1_2, arch: aarch64, spec: cp314, cibw_version: cibuildwheel~=3.0b1, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: aarch64, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: aarch64, spec: cp314t, omit: ${{ env.skip_slow_jobs }} }
 
   linux_pyyaml:
     needs: [python_sdist, linux_libyaml, make_linux_pyyaml_matrix]
@@ -224,7 +229,6 @@ jobs:
         CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
-        CIBW_ENABLE: cpython-prerelease
         CIBW_TEST_COMMAND: cd {project}; pytest
         CIBW_TEST_REQUIRES: pytest
       run: |
@@ -261,15 +265,13 @@ jobs:
       matrix:
         include:
         - arch: x86_64
-          runs-on: macos-13  # force x86_64 runner
-          run_wrapper: arch -x86_64 bash --noprofile --norc -eo pipefail {0}
+          runs-on: macos-15-intel  # force x86_64 runner
         - arch: arm64
           deployment_target: '11.0'
-          run_wrapper: arch -arm64 bash --noprofile --norc -eo pipefail {0}
     defaults:
       run:
-        shell: ${{ matrix.run_wrapper || 'arch -x86_64 bash --noprofile --norc -eo pipefail {0}' }}
-    runs-on: ${{ matrix.runs-on || 'macos-14' }}
+        shell: ${{ matrix.run_wrapper || 'bash --noprofile --norc -eo pipefail {0}' }}
+    runs-on: ${{ matrix.runs-on || 'macos-15' }}
     steps:
     - name: Check cached libyaml state
       id: cached_libyaml
@@ -307,27 +309,36 @@ jobs:
           include:
           ### x86_64 jobs
           - spec: cp38-macosx_x86_64
+            arch: x86_64
             cibw_version: cibuildwheel==2.11.1
-            runs_on: [macos-13]
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp39-macosx_x86_64
-            runs_on: [macos-13]
+            arch: x86_64
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp310-macosx_x86_64
-            runs_on: [macos-13]
+            arch: x86_64
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp311-macosx_x86_64
-            runs_on: [macos-13]
+            arch: x86_64
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp312-macosx_x86_64
-            runs_on: [macos-13]
+            arch: x86_64
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp313-macosx_x86_64
-            runs_on: [macos-13]
+            arch: x86_64
+            runs_on: [macos-15-intel]
             omit: ${{ env.skip_ci_redundant_jobs }}
           - spec: cp314-macosx_x86_64
-            runs_on: [macos-13]
-            cibw_version: cibuildwheel~=3.0b1
+            arch: x86_64
+            runs_on: [macos-15-intel]
+          - spec: cp314t-macosx_x86_64
+            arch: x86_64
+            runs_on: [macos-15-intel]
 
           ### arm64 jobs
           - spec: cp39-macosx_arm64
@@ -358,12 +369,15 @@ jobs:
           - spec: cp314-macosx_arm64
             deployment_target: '11.0'
             arch: arm64
-            cibw_version: cibuildwheel~=3.0b1
+          
+          - spec: cp314t-macosx_arm64
+            deployment_target: '11.0'
+            arch: arm64
 
   macos_pyyaml:
     needs: [python_sdist, macos_libyaml, make_macos_pyyaml_matrix]
     name: pyyaml ${{ matrix.spec }}
-    runs-on: ${{ matrix.runs_on || 'macos-14' }}
+    runs-on: ${{ matrix.runs_on || 'macos-15' }}
     defaults:
       run:
         shell: ${{ matrix.run_wrapper || 'bash --noprofile --norc -eo pipefail {0}' }}
@@ -382,7 +396,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: libyaml
-        key: libyaml_macos_${{ matrix.arch || 'x86_64' }}_${{env.LIBYAML_REF}}
+        key: libyaml_macos_${{ matrix.arch }}_${{env.LIBYAML_REF}}
         fail-on-cache-miss: true
 
     - name: Install python
@@ -397,7 +411,6 @@ jobs:
         C_INCLUDE_PATH: ../libyaml/include
         CIBW_BUILD: ${{matrix.spec}}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_ENABLE: cpython-prerelease
         CIBW_TEST_COMMAND: pytest {package}
         CIBW_TEST_REQUIRES: pytest
         LIBRARY_PATH: ../libyaml/src/.libs
@@ -508,7 +521,9 @@ jobs:
 
           - spec: cp314-win_amd64
             arch: x64
-            cibw_version: cibuildwheel~=3.0b1
+
+          - spec: cp314t-win_amd64
+            arch: x64
 
           ### arm64 jobs
           - spec: cp312-win_arm64
@@ -524,7 +539,10 @@ jobs:
           - spec: cp314-win_arm64
             arch: arm64
             runs-on: windows-11-arm
-            cibw_version: cibuildwheel~=3.0b1
+
+          - spec: cp314t-win_arm64
+            arch: arm64
+            runs-on: windows-11-arm
 
           ### win32 jobs
           - spec: cp38-win32
@@ -595,7 +613,6 @@ jobs:
         CIBW_BEFORE_TEST: ls -l {package}
         CIBW_TEST_COMMAND: pytest {package}
         CIBW_TEST_REQUIRES: pytest
-        CIBW_ENABLE: cpython-prerelease
         #CIBW_CONFIG_SETTINGS: |
         #  pyyaml_build_config='{"include_dirs": ["libyaml/include"], "library_dirs": ["libyaml/build/Release"], "define": [["YAML_DECLARE_STATIC", 1]], "force": 1}'
       run: |
