@@ -177,45 +177,38 @@ class SafeConstructor(BaseConstructor):
                     return self.construct_scalar(value_node)
         return super().construct_scalar(node)
 
-    def flatten_mapping(self, node):
-        merge = []
-        index = 0
-        while index < len(node.value):
-            key_node, value_node = node.value[index]
-            if key_node.tag == 'tag:yaml.org,2002:merge':
-                del node.value[index]
-                if isinstance(value_node, MappingNode):
-                    self.flatten_mapping(value_node)
-                    merge.extend(value_node.value)
-                elif isinstance(value_node, SequenceNode):
-                    submerge = []
-                    for subnode in value_node.value:
-                        if not isinstance(subnode, MappingNode):
-                            raise ConstructorError("while constructing a mapping",
-                                    node.start_mark,
-                                    "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_mark)
-                        self.flatten_mapping(subnode)
-                        submerge.append(subnode.value)
-                    submerge.reverse()
-                    for value in submerge:
-                        merge.extend(value)
-                else:
-                    raise ConstructorError("while constructing a mapping", node.start_mark,
-                            "expected a mapping or list of mappings for merging, but found %s"
-                            % value_node.id, value_node.start_mark)
-            elif key_node.tag == 'tag:yaml.org,2002:value':
-                key_node.tag = 'tag:yaml.org,2002:str'
-                index += 1
-            else:
-                index += 1
-        if merge:
-            node.value = merge + node.value
-
     def construct_mapping(self, node, deep=False):
-        if isinstance(node, MappingNode):
-            self.flatten_mapping(node)
-        return super().construct_mapping(node, deep=deep)
+        if not isinstance(node, MappingNode):
+            raise ConstructorError(None, None,
+                                   "expected a mapping node, but found %s" % node.id,
+                                   node.start_mark)
+        mapping = {}
+        for node_key, node_value in node.value:
+            if node_key.tag == 'tag:yaml.org,2002:merge':
+                if isinstance(node_value, SequenceNode):
+                    for subnode in node_value.value:
+                        merge = self.construct_object(subnode, deep=deep)
+                        if not isinstance(merge, dict):
+                            raise ConstructorError("while constructing a mapping",
+                                                   node.start_mark, "expected a dict for merging, but found %s"
+                                                   % subnode.id, subnode.start_mark)
+                        mapping.update(merge)
+                else:
+                    merge = self.construct_object(node_value, deep=deep)
+                    if not isinstance(merge, dict):
+                        raise ConstructorError("while constructing a mapping", node.start_mark,
+                                               f"expected a dict for merging, but found {node_value.id} "
+                                               f"resolved to {type(merge)}",
+                                               node_key.start_mark)
+                    mapping.update(merge)
+            else:
+                key = self.construct_object(node_key, deep=deep)
+                if not isinstance(key, collections.abc.Hashable):
+                    raise ConstructorError("while constructing a mapping", node.start_mark,
+                                           "found unhashable key", node_key.start_mark)
+                value = self.construct_object(node_value, deep=deep)
+                mapping[key] = value
+        return mapping
 
     def construct_yaml_null(self, node):
         self.construct_scalar(node)
