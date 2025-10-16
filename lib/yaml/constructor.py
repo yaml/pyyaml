@@ -20,6 +20,7 @@ class BaseConstructor:
 
     yaml_constructors = {}
     yaml_multi_constructors = {}
+    yaml_flatteners = {}
 
     def __init__(self):
         self.constructed_objects = {}
@@ -168,6 +169,12 @@ class BaseConstructor:
             cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
         cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
+    @classmethod
+    def add_flattener(cls, tag, flattener):
+        if not 'yaml_flatteners' in cls.__dict__:
+            cls.yaml_flatteners = cls.yaml_flatteners.copy()
+        cls.yaml_flatteners[tag] = flattener
+
 class SafeConstructor(BaseConstructor):
 
     def construct_scalar(self, node):
@@ -184,21 +191,10 @@ class SafeConstructor(BaseConstructor):
             key_node, value_node = node.value[index]
             if key_node.tag == 'tag:yaml.org,2002:merge':
                 del node.value[index]
-                if isinstance(value_node, MappingNode):
-                    self.flatten_mapping(value_node)
-                    merge.extend(value_node.value)
-                elif isinstance(value_node, SequenceNode):
-                    submerge = []
-                    for subnode in value_node.value:
-                        if not isinstance(subnode, MappingNode):
-                            raise ConstructorError("while constructing a mapping",
-                                    node.start_mark,
-                                    "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_mark)
-                        self.flatten_mapping(subnode)
-                        submerge.append(subnode.value)
-                    submerge.reverse()
-                    for value in submerge:
+
+                flattener = self.yaml_flatteners.get(value_node.tag)
+                if flattener:
+                    for value in flattener(self, value_node):
                         merge.extend(value)
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
@@ -428,6 +424,25 @@ class SafeConstructor(BaseConstructor):
                 "could not determine a constructor for the tag %r" % node.tag,
                 node.start_mark)
 
+    def flatten_yaml_seq(self, node):
+        submerge = []
+        for subnode in node.value:
+            if not isinstance(subnode, MappingNode):
+                raise ConstructorError("while constructing a mapping",
+                        node.start_mark,
+                        "expected a mapping for merging, but found %s"
+                        % subnode.id, subnode.start_mark)
+            self.flatten_mapping(subnode)
+            submerge.append(subnode.value)
+        submerge.reverse()
+        for value in submerge:
+            yield value
+
+    def flatten_yaml_map(self, node):
+        self.flatten_mapping(node)
+        yield node.value
+
+
 SafeConstructor.add_constructor(
         'tag:yaml.org,2002:null',
         SafeConstructor.construct_yaml_null)
@@ -478,6 +493,14 @@ SafeConstructor.add_constructor(
 
 SafeConstructor.add_constructor(None,
         SafeConstructor.construct_undefined)
+
+SafeConstructor.add_flattener(
+        'tag:yaml.org,2002:seq',
+        SafeConstructor.flatten_yaml_seq)
+
+SafeConstructor.add_flattener(
+        'tag:yaml.org,2002:map',
+        SafeConstructor.flatten_yaml_map)
 
 class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by
