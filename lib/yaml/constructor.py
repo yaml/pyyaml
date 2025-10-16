@@ -427,13 +427,18 @@ class SafeConstructor(BaseConstructor):
     def flatten_yaml_seq(self, node):
         submerge = []
         for subnode in node.value:
-            if not isinstance(subnode, MappingNode):
+            # we need to flatten each item in the seq, most likely they'll be mappings,
+            # but we need to allow for custom flatteners as well.
+            flattener = self.yaml_flatteners.get(subnode.tag)
+            if flattener:
+                for value in flattener(self, subnode):
+                    submerge.append(value)
+            else:
                 raise ConstructorError("while constructing a mapping",
                         node.start_mark,
                         "expected a mapping for merging, but found %s"
                         % subnode.id, subnode.start_mark)
-            self.flatten_mapping(subnode)
-            submerge.append(subnode.value)
+
         submerge.reverse()
         for value in submerge:
             yield value
