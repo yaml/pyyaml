@@ -122,13 +122,17 @@ def test_custom_flattener_override():
 
     test_yaml = """
 merged:
-  <<: [{x: 1, y: 2}, !yaml_string "x: 10"]
-  x: 100
-  label: override
+  v: 0
+  w: overwritten
+  <<: [{w: 1, x: overwritten, y: 3}, !yaml_string "x: 10"]
+  x: 2
+  z: 4
 """
 
     result = yaml.load(test_yaml, CustomLoader)
 
-    assert result['merged']['x'] == 100
-    assert result['merged']['y'] == 2
-    assert result['merged']['label'] == 'override'
+    assert result['merged']['v'] == 0
+    assert result['merged']['w'] == 1
+    assert result['merged']['x'] == 2
+    assert result['merged']['y'] == 3
+    assert result['merged']['z'] == 4
