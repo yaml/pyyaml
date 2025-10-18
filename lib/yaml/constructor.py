@@ -186,12 +186,8 @@ class SafeConstructor(BaseConstructor):
 
     def flatten_mapping(self, node):
         merge = []
-        index = 0
-        while index < len(node.value):
-            key_node, value_node = node.value[index]
+        for key_node, value_node in node.value:
             if key_node.tag == 'tag:yaml.org,2002:merge':
-                del node.value[index]
-
                 flattener = self.yaml_flatteners.get(value_node.tag)
                 if flattener:
                     for value in flattener(self, value_node):
@@ -200,13 +196,12 @@ class SafeConstructor(BaseConstructor):
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
                             % value_node.id, value_node.start_mark)
-            elif key_node.tag == 'tag:yaml.org,2002:value':
-                key_node.tag = 'tag:yaml.org,2002:str'
-                index += 1
             else:
-                index += 1
-        if merge:
-            node.value = merge + node.value
+                if key_node.tag == 'tag:yaml.org,2002:value':
+                    key_node.tag = 'tag:yaml.org,2002:str'
+                merge.append((key_node, value_node))
+
+        node.value = merge
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
