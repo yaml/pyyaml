@@ -224,7 +224,7 @@ jobs:
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
-        fail-on-cache-miss: true
+        fail-on-cache-miss: false
 
     - name: configure docker foreign arch support
       uses: docker/setup-qemu-action@v3
