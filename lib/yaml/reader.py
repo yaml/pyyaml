@@ -89,7 +89,9 @@ class Reader(object):
             return self.buffer[self.pointer+index]
         except IndexError:
             self.update(index+1)
-            return self.buffer[self.pointer+index]
+            if self.pointer+index < len(self.buffer):
+                return self.buffer[self.pointer+index]
+            return '\0'
 
     def prefix(self, length=1):
         if self.pointer+length >= len(self.buffer):
