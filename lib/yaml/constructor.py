@@ -189,12 +189,16 @@ class SafeConstructor(BaseConstructor):
                     merge.extend(value_node.value)
                 elif isinstance(value_node, SequenceNode):
                     submerge = []
+                    seen = set()
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
                                     node.start_mark,
                                     "expected a mapping for merging, but found %s"
                                     % subnode.id, subnode.start_mark)
+                        if id(subnode) in seen:
+                            continue
+                        seen.add(id(subnode))
                         self.flatten_mapping(subnode)
                         submerge.append(subnode.value)
                     submerge.reverse()
