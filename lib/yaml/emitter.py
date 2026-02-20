@@ -699,7 +699,7 @@ class Emitter:
             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
                 if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
                         or '\uE000' <= ch <= '\uFFFD'
-                        or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
+                        or '\U00010000' <= ch <= '\U0010ffff') and ch != '\uFEFF':
                     unicode_characters = True
                     if not self.allow_unicode:
                         special_characters = True
