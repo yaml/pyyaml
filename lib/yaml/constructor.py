@@ -235,6 +235,14 @@ class SafeConstructor(BaseConstructor):
         return self.bool_values[value.lower()]
 
     def construct_yaml_int(self, node):
+        try:
+            return self._construct_yaml_int(node)
+        except (ValueError, IndexError) as exc:
+            raise ConstructorError(None, None,
+                    "could not convert value to int: %s" % exc,
+                    node.start_mark)
+
+    def _construct_yaml_int(self, node):
         value = self.construct_scalar(node)
         value = value.replace('_', '')
         sign = +1
@@ -268,6 +276,14 @@ class SafeConstructor(BaseConstructor):
     nan_value = -inf_value/inf_value   # Trying to make a quiet NaN (like C99).
 
     def construct_yaml_float(self, node):
+        try:
+            return self._construct_yaml_float(node)
+        except (ValueError, IndexError) as exc:
+            raise ConstructorError(None, None,
+                    "could not convert value to float: %s" % exc,
+                    node.start_mark)
+
+    def _construct_yaml_float(self, node):
         value = self.construct_scalar(node)
         value = value.replace('_', '').lower()
         sign = +1
