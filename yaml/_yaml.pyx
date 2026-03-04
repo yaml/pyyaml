@@ -261,6 +261,9 @@ cdef class CParser:
         cdef is_readable
         if yaml_parser_initialize(&self.parser) == 0:
             raise MemoryError
+        # Security: Set buffer size limit to prevent YAML bomb attacks (Billion Laughs)
+        # Limit resource consumption during parsing to prevent DoS
+        yaml_parser_set_max_buffer_size(&self.parser, 10485760)  # 10MB limit
         self.parsed_event.type = YAML_NO_EVENT
         is_readable = 1
         try:
