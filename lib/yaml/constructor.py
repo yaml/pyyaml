@@ -537,10 +537,67 @@ class FullConstructor(SafeConstructor):
                     "module %r is not imported" % name, mark)
         return sys.modules[name]
 
+    def is_python_name_safe(self, name, mark):
+        """Validate that a Python name is safe for object construction.
+        
+        Blocks known dangerous modules and functions that can lead to
+        arbitrary code execution when used with untrusted input.
+        """
+        # Dangerous names that should never be constructed from YAML
+        dangerous_names = frozenset([
+            'subprocess.Popen',
+            'subprocess.call', 
+            'subprocess.check_output',
+            'subprocess.run',
+            'subprocess.check_call',
+            'os.system',
+            'os.popen',
+            'os.popen2',
+            'os.popen3',
+            'os.popen4',
+            'os.execl',
+            'os.execle',
+            'os.execlp',
+            'os.execlpe',
+            'os.execv',
+            'os.execve',
+            'os.execvp',
+            'os.execvpe',
+            'os.spawnl',
+            'os.spawnle',
+            'os.spawnlp',
+            'os.spawnlpe',
+            'os.spawnv',
+            'os.spawnve',
+            'os.spawnvp',
+            'os.spawnvpe',
+            'builtins.eval',
+            'builtins.exec',
+            'builtins.compile',
+            'builtins.__import__',
+        ])
+        
+        if name in dangerous_names:
+            raise ConstructorError("while constructing a Python object", mark,
+                    "construction of %r is not permitted for security reasons" % name, mark)
+        
+        # Block dangerous module prefixes
+        dangerous_prefixes = ('subprocess.', 'importlib.', 'pty.', 'commands.')
+        if name.startswith(dangerous_prefixes):
+            raise ConstructorError("while constructing a Python object", mark,
+                    "construction from potentially dangerous module is not permitted" , mark)
+        
+        return True
+
     def find_python_name(self, name, mark, unsafe=False):
         if not name:
             raise ConstructorError("while constructing a Python object", mark,
                     "expected non-empty name appended to the tag", mark)
+        
+        # Validate name safety for non-unsafe mode
+        if not unsafe:
+            self.is_python_name_safe(name, mark)
+        
         if '.' in name:
             module_name, object_name = name.rsplit('.', 1)
         else:
@@ -612,51 +669,31 @@ class FullConstructor(SafeConstructor):
                 setattr(instance, key, value)
 
     def construct_python_object(self, suffix, node):
-        # Format:
-        #   !!python/object:module.name { ... state ... }
-        instance = self.make_python_instance(suffix, node, newobj=True)
-        yield instance
-        deep = hasattr(instance, '__setstate__')
-        state = self.construct_mapping(node, deep=deep)
-        self.set_python_instance_state(instance, state)
+        # SECURITY: Disabled arbitrary Python object construction in FullConstructor.
+        # Use UnsafeConstructor explicitly if you need this functionality.
+        raise ConstructorError(
+            "while constructing a Python object", node.start_mark,
+            "arbitrary Python object construction is disabled for security reasons. "
+            "Use yaml.unsafe_load() or UnsafeConstructor explicitly if you trust the input.",
+            node.start_mark)
 
     def construct_python_object_apply(self, suffix, node, newobj=False):
-        # Format:
-        #   !!python/object/apply       # (or !!python/object/new)
-        #   args: [ ... arguments ... ]
-        #   kwds: { ... keywords ... }
-        #   state: ... state ...
-        #   listitems: [ ... listitems ... ]
-        #   dictitems: { ... dictitems ... }
-        # or short format:
-        #   !!python/object/apply [ ... arguments ... ]
-        # The difference between !!python/object/apply and !!python/object/new
-        # is how an object is created, check make_python_instance for details.
-        if isinstance(node, SequenceNode):
-            args = self.construct_sequence(node, deep=True)
-            kwds = {}
-            state = {}
-            listitems = []
-            dictitems = {}
-        else:
-            value = self.construct_mapping(node, deep=True)
-            args = value.get('args', [])
-            kwds = value.get('kwds', {})
-            state = value.get('state', {})
-            listitems = value.get('listitems', [])
-            dictitems = value.get('dictitems', {})
-        instance = self.make_python_instance(suffix, node, args, kwds, newobj)
-        if state:
-            self.set_python_instance_state(instance, state)
-        if listitems:
-            instance.extend(listitems)
-        if dictitems:
-            for key in dictitems:
-                instance[key] = dictitems[key]
-        return instance
+        # SECURITY: Disabled arbitrary Python object construction in FullConstructor.
+        # Use UnsafeConstructor explicitly if you need this functionality.
+        raise ConstructorError(
+            "while constructing a Python object", node.start_mark,
+            "arbitrary Python object construction is disabled for security reasons. "
+            "Use yaml.unsafe_load() or UnsafeConstructor explicitly if you trust the input.",
+            node.start_mark)
 
     def construct_python_object_new(self, suffix, node):
-        return self.construct_python_object_apply(suffix, node, newobj=True)
+        # SECURITY: Disabled arbitrary Python object construction in FullConstructor.
+        # Use UnsafeConstructor explicitly if you need this functionality.
+        raise ConstructorError(
+            "while constructing a Python object", node.start_mark,
+            "arbitrary Python object construction is disabled for security reasons. "
+            "Use yaml.unsafe_load() or UnsafeConstructor explicitly if you trust the input.",
+            node.start_mark)
 
 FullConstructor.add_constructor(
     'tag:yaml.org,2002:python/none',
@@ -725,6 +762,53 @@ class UnsafeConstructor(FullConstructor):
     def set_python_instance_state(self, instance, state):
         return super(UnsafeConstructor, self).set_python_instance_state(
             instance, state, unsafe=True)
+
+    def construct_python_object(self, suffix, node):
+        # Restore original implementation for UnsafeConstructor
+        # Format:
+        #   !!python/object:module.name { ... state ... }
+        instance = self.make_python_instance(suffix, node, newobj=True)
+        yield instance
+        deep = hasattr(instance, '__setstate__')
+        state = self.construct_mapping(node, deep=deep)
+        self.set_python_instance_state(instance, state)
+
+    def construct_python_object_apply(self, suffix, node, newobj=False):
+        # Restore original implementation for UnsafeConstructor
+        # Format:
+        #   !!python/object/apply       # (or !!python/object/new)
+        #   args: [ ... arguments ... ]
+        #   kwds: { ... keywords ... }
+        #   state: ... state ...
+        #   listitems: [ ... listitems ... ]
+        #   dictitems: { ... dictitems ... }
+        # or short format:
+        #   !!python/object/apply [ ... arguments ... ]
+        if isinstance(node, SequenceNode):
+            args = self.construct_sequence(node, deep=True)
+            kwds = {}
+            state = {}
+            listitems = []
+            dictitems = {}
+        else:
+            value = self.construct_mapping(node, deep=True)
+            args = value.get('args', [])
+            kwds = value.get('kwds', {})
+            state = value.get('state', {})
+            listitems = value.get('listitems', [])
+            dictitems = value.get('dictitems', {})
+        instance = self.make_python_instance(suffix, node, args, kwds, newobj)
+        if state:
+            self.set_python_instance_state(instance, state)
+        if listitems:
+            instance.extend(listitems)
+        if dictitems:
+            for key in dictitems:
+                instance[key] = dictitems[key]
+        return instance
+
+    def construct_python_object_new(self, suffix, node):
+        return self.construct_python_object_apply(suffix, node, newobj=True)
 
 UnsafeConstructor.add_multi_constructor(
     'tag:yaml.org,2002:python/module:',
