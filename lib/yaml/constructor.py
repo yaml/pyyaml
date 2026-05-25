@@ -232,35 +232,45 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_bool(self, node):
         value = self.construct_scalar(node)
-        return self.bool_values[value.lower()]
+        try:
+            return self.bool_values[value.lower()]
+        except KeyError:
+            raise ConstructorError(None, None,
+                    "failed to construct a bool value from %r" % value,
+                    node.start_mark)
 
     def construct_yaml_int(self, node):
-        value = self.construct_scalar(node)
-        value = value.replace('_', '')
-        sign = +1
-        if value[0] == '-':
-            sign = -1
-        if value[0] in '+-':
-            value = value[1:]
-        if value == '0':
-            return 0
-        elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
-        elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
-        elif value[0] == '0':
-            return sign*int(value, 8)
-        elif ':' in value:
-            digits = [int(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*int(value)
+        original = self.construct_scalar(node)
+        try:
+            value = original.replace('_', '')
+            sign = +1
+            if value[0] == '-':
+                sign = -1
+            if value[0] in '+-':
+                value = value[1:]
+            if value == '0':
+                return 0
+            elif value.startswith('0b'):
+                return sign*int(value[2:], 2)
+            elif value.startswith('0x'):
+                return sign*int(value[2:], 16)
+            elif value[0] == '0':
+                return sign*int(value, 8)
+            elif ':' in value:
+                digits = [int(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                result = 0
+                for digit in digits:
+                    result += digit*base
+                    base *= 60
+                return sign*result
+            else:
+                return sign*int(value)
+        except (ValueError, IndexError) as exc:
+            raise ConstructorError(None, None,
+                    "failed to construct an int value from %r: %s" % (original, exc),
+                    node.start_mark)
 
     inf_value = 1e300
     while inf_value != inf_value*inf_value:
@@ -268,28 +278,33 @@ class SafeConstructor(BaseConstructor):
     nan_value = -inf_value/inf_value   # Trying to make a quiet NaN (like C99).
 
     def construct_yaml_float(self, node):
-        value = self.construct_scalar(node)
-        value = value.replace('_', '').lower()
-        sign = +1
-        if value[0] == '-':
-            sign = -1
-        if value[0] in '+-':
-            value = value[1:]
-        if value == '.inf':
-            return sign*self.inf_value
-        elif value == '.nan':
-            return self.nan_value
-        elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*float(value)
+        original = self.construct_scalar(node)
+        try:
+            value = original.replace('_', '').lower()
+            sign = +1
+            if value[0] == '-':
+                sign = -1
+            if value[0] in '+-':
+                value = value[1:]
+            if value == '.inf':
+                return sign*self.inf_value
+            elif value == '.nan':
+                return self.nan_value
+            elif ':' in value:
+                digits = [float(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                result = 0.0
+                for digit in digits:
+                    result += digit*base
+                    base *= 60
+                return sign*result
+            else:
+                return sign*float(value)
+        except (ValueError, IndexError) as exc:
+            raise ConstructorError(None, None,
+                    "failed to construct a float value from %r: %s" % (original, exc),
+                    node.start_mark)
 
     def construct_yaml_binary(self, node):
         try:
