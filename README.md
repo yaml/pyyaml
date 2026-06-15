@@ -27,7 +27,23 @@ If you don't trust the input YAML stream, you should use:
 ## Testing
 
 PyYAML includes a comprehensive test suite.
-To run the tests, type `python setup.py test`.
+
+To run the complete local test suite, type:
+
+    make test
+
+This creates a local Python environment, runs the pure Python tests, builds a
+local copy of LibYAML, and then runs the LibYAML extension tests. The local
+LibYAML build is pinned by `LIBYAML-REF`, which defaults to `0.2.5`.
+
+To run only one test mode:
+
+    make test-python
+    make test-libyaml
+
+To test with a specific Python version:
+
+    make test PYTHON-VERSION=3.13.5
 
 ## Further Information
 

@@ -1,48 +1,96 @@
+R := https://github.com/makeplus/makes
+C := b0edc13d2045c1a06a92752ea4bfb48cbb59cc4b
+M := $(or $(MAKES_REPO_DIR),.cache/makes)
+$(shell [ -d '$M' ] || git clone -q $R '$M')
+$(shell cd '$M' && [ "$$(git rev-parse HEAD)" = '$C' ] || \
+  { git fetch -q origin && git checkout -q '$C'; })
 
-.PHONY: build dist
+include $M/init.mk
 
-PYTHON=/usr/bin/python3
+export UV_CACHE_DIR = $(LOCAL-CACHE)/uv
+PYTHON-VENV-SETUP = uv pip install Cython pytest setuptools wheel
+include $M/python.mk
+include $M/clean.mk
+include $M/shell.mk
+
+PYTHON-DEPS = $(PYTHON) $(PYTHON-VENV)
+PYTEST-PYTHON = \
+import sys; \
+sys.path.insert(0, 'build/lib'); \
+import pytest; \
+raise SystemExit(pytest.main())
+
+PYTEST-LIBYAML = \
+import pathlib, sys; \
+sys.path.insert(0, next(str(p) for p in pathlib.Path('build').glob('lib.*'))); \
+import pytest; \
+raise SystemExit(pytest.main())
+
 TEST=
 PARAMETERS=
 
-build:
-	${PYTHON} setup.py build ${PARAMETERS}
+LIBYAML-REPO ?= https://github.com/yaml/libyaml
+LIBYAML-REF ?= 0.2.5
+LIBYAML-DIR := $(LOCAL-CACHE)/libyaml-$(LIBYAML-REF)
+LIBYAML-BUILD := $(LIBYAML-DIR)/src/.libs/libyaml.$(SO)
+LIBYAML-INCLUDE := $(LIBYAML-DIR)/include
+LIBYAML-LIB := $(LIBYAML-DIR)/src/.libs
+LIBYAML-ENV := \
+  CFLAGS="-I$(LIBYAML-INCLUDE) $${CFLAGS:-}" \
+  LDFLAGS="-L$(LIBYAML-LIB) $${LDFLAGS:-}" \
+  LD_LIBRARY_PATH="$(LIBYAML-LIB):$${LD_LIBRARY_PATH:-}"
 
-buildext:
-	${PYTHON} setup.py --with-libyaml build ${PARAMETERS}
+MAKES-CLEAN := \
+  lib/PyYAML.egg-info/ \
+  lib/yaml/__pycache__/ \
+  tests/__pycache__/ \
+  tests/legacy_tests/__pycache__/ \
+  .pytest_cache/ \
+  yaml/_yaml.c \
+  build/ \
+  dist \
 
-force:
-	${PYTHON} setup.py build -f ${PARAMETERS}
 
-forceext:
-	${PYTHON} setup.py --with-libyaml build -f ${PARAMETERS}
+build: $(PYTHON-DEPS)
+	python setup.py build $(PARAMETERS)
 
-install:
-	${PYTHON} setup.py install ${PARAMETERS}
+build-python: $(PYTHON-DEPS)
+	PYYAML_FORCE_LIBYAML=0 python setup.py --without-libyaml build $(PARAMETERS)
 
-installext:
-	${PYTHON} setup.py --with-libyaml install ${PARAMETERS}
+buildext: $(PYTHON-DEPS) $(LIBYAML-BUILD)
+	$(LIBYAML-ENV) python setup.py --with-libyaml build $(PARAMETERS)
 
-test: build
-	PYYAML_FORCE_LIBYAML=0 ${PYTHON} -I -m pytest
+force: $(PYTHON-DEPS)
+	python setup.py build -f $(PARAMETERS)
 
-testext: buildext
-	PYYAML_FORCE_LIBYAML=1 ${PYTHON} -I -m pytest
+forceext: $(PYTHON-DEPS) $(LIBYAML-BUILD)
+	$(LIBYAML-ENV) python setup.py --with-libyaml build -f $(PARAMETERS)
 
-testall:
-	${PYTHON} -m pytest
+install: $(PYTHON-DEPS)
+	python setup.py install $(PARAMETERS)
 
-dist:
+installext: $(PYTHON-DEPS) $(LIBYAML-BUILD)
+	$(LIBYAML-ENV) python setup.py --with-libyaml install $(PARAMETERS)
+
+test: test-python test-libyaml
+
+test-python: build-python
+	PYYAML_FORCE_LIBYAML=0 python -I -c "$(PYTEST-PYTHON)"
+
+test-libyaml: buildext
+	$(LIBYAML-ENV) PYYAML_FORCE_LIBYAML=1 python -I -c "$(PYTEST-LIBYAML)"
+
+$(LIBYAML-BUILD):
+	rm -fr $(LIBYAML-DIR)
+	git clone --branch $(LIBYAML-REF) $(LIBYAML-REPO) $(LIBYAML-DIR)
+	cd $(LIBYAML-DIR) && git reset --hard $(LIBYAML-REF)
+	cd $(LIBYAML-DIR) && ./bootstrap
+	cd $(LIBYAML-DIR) && ./configure --disable-dependency-tracking --with-pic --enable-shared=yes
+	$(MAKE) -C $(LIBYAML-DIR)
+
+dist: $(PYTHON-DEPS)
 	@# No longer uploading a zip file to pypi
-	@# ${PYTHON} setup.py --with-libyaml sdist --formats=zip,gztar
-	${PYTHON} setup.py --with-libyaml sdist --formats=gztar
+	@# python setup.py --with-libyaml sdist --formats=zip,gztar
+	python setup.py --with-libyaml sdist --formats=gztar
 
-clean:
-	${PYTHON} setup.py --with-libyaml clean -a
-	rm -fr \
-	    dist/ \
-	    lib/PyYAML.egg-info/ \
-	    lib/yaml/__pycache__/ \
-	    tests/__pycache__/ \
-	    tests/legacy_tests/__pycache__/ \
-	    yaml/_yaml.c
+.PHONY: build dist
