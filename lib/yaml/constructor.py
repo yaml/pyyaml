@@ -180,16 +180,19 @@ class SafeConstructor(BaseConstructor):
     def flatten_mapping(self, node):
         merge = []
         index = 0
+        seen = set()
         while index < len(node.value):
             key_node, value_node = node.value[index]
             if key_node.tag == 'tag:yaml.org,2002:merge':
                 del node.value[index]
                 if isinstance(value_node, MappingNode):
+                    if id(value_node) in seen:
+                        continue
+                    seen.add(id(value_node))
                     self.flatten_mapping(value_node)
                     merge.extend(value_node.value)
                 elif isinstance(value_node, SequenceNode):
                     submerge = []
-                    seen = set()
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
