@@ -145,7 +145,7 @@ jobs:
       with:
         matrix_yaml: |
           include:
-          - { platform: manylinux1, arch: x86_64, spec: cp38 }
+          - { platform: manylinux1, arch: x86_64, spec: cp38, cibw_version: 'cibuildwheel<4' }
           - { platform: manylinux1, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -237,7 +237,7 @@ jobs:
         set -eux
 
         python3 -V
-        python3 -m pip install -U --user ${{ matrix.cibw_version || 'cibuildwheel' }}
+        python3 -m pip install -U --user "${{ matrix.cibw_version || 'cibuildwheel' }}"
 
         mkdir pyyaml
 
@@ -423,7 +423,7 @@ jobs:
       run: |
         set -eux
         python3 -V
-        python3 -m pip install -U --user ${{ matrix.cibw_version || 'cibuildwheel' }}
+        python3 -m pip install -U --user "${{ matrix.cibw_version || 'cibuildwheel' }}"
         mkdir pyyaml
 
         tar zxf pyyaml*.tar.gz/pyyaml*.tar.gz --strip-components=1 -C pyyaml
@@ -450,6 +450,7 @@ jobs:
     name: libyaml windows ${{ matrix.arch }}
     runs-on: ${{ (matrix.arch == 'arm64') && 'windows-11-arm' || 'windows-2022' }}
     strategy:
+      fail-fast: false
       matrix:
         include:
         - arch: x64
@@ -481,7 +482,7 @@ jobs:
         mkdir libyaml/build
 
         pushd libyaml/build
-        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml ..
+        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
         cmake.exe --build . --config Release
         popd
 
@@ -500,6 +501,7 @@ jobs:
           ### x86_64 jobs
           - spec: cp38-win_amd64
             arch: x64
+            cibw_version: cibuildwheel<4
 
           - spec: cp39-win_amd64
             arch: x64
@@ -620,7 +622,7 @@ jobs:
       run: |
         set -eux
         python -V
-        python -m pip install -U --user ${{ matrix.cibw_version || 'cibuildwheel' }}
+        python -m pip install -U --user "${{ matrix.cibw_version || 'cibuildwheel' }}"
         mkdir pyyaml
 
         tar zxf pyyaml*.tar.gz/pyyaml*.tar.gz --strip-components=1 -C pyyaml
