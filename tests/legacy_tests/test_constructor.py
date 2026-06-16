@@ -296,6 +296,40 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
+def test_merge_key_dos_prevention(verbose=False):
+    # Warm up to trigger lazy loading / imports
+    yaml.safe_load("L0: &L0 { x: 1 }")
+    
+    lines = ["L0: &L0 { x: 1 }"]
+    for level in range(1, 21):
+        lines.append(f"L{level}: &L{level} {{ <<: [*L{level-1}, *L{level-1}] }}")
+    payload = "\n".join(lines)
+    
+    import time
+    start = time.time()
+    yaml.safe_load(payload)
+    elapsed = time.time() - start
+    assert elapsed < 0.3, f"Merge key DoS took too long: {elapsed:.4f}s"
+
+test_merge_key_dos_prevention.unittest = True
+
+def test_multi_merge_key_dos_prevention(verbose=False):
+    # Warm up to trigger lazy loading / imports
+    yaml.safe_load("L0: &L0 { x: 1 }")
+    
+    lines = ["L0: &L0 { x: 1 }"]
+    for level in range(1, 19):
+        lines.append(f"L{level}: &L{level}\n  <<: *L{level-1}\n  <<: *L{level-1}")
+    payload = "\n".join(lines)
+    
+    import time
+    start = time.time()
+    yaml.safe_load(payload)
+    elapsed = time.time() - start
+    assert elapsed < 0.3, f"Multi-merge key DoS took too long: {elapsed:.4f}s"
+
+test_multi_merge_key_dos_prevention.unittest = True
+
 if __name__ == '__main__':
     import sys, test_constructor
     sys.modules['test_constructor'] = sys.modules['__main__']
