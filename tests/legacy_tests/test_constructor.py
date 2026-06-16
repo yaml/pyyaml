@@ -296,37 +296,45 @@ def test_subclass_blacklist_types(data_filename, verbose=False):
 
 test_subclass_blacklist_types.unittest = ['.subclass_blacklist']
 
+def run_with_timeout(payload, seconds, message):
+    if not hasattr(signal, 'SIGALRM'):
+        yaml.safe_load(payload)
+        return
+
+    def timeout_handler(signum, frame):
+        raise AssertionError(message)
+
+    previous_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    try:
+        signal.alarm(seconds)
+        yaml.safe_load(payload)
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous_handler)
+
 def test_merge_key_dos_prevention(verbose=False):
     # Warm up to trigger lazy loading / imports
     yaml.safe_load("L0: &L0 { x: 1 }")
-    
+
     lines = ["L0: &L0 { x: 1 }"]
-    for level in range(1, 21):
+    for level in range(1, 27):
         lines.append(f"L{level}: &L{level} {{ <<: [*L{level-1}, *L{level-1}] }}")
     payload = "\n".join(lines)
-    
-    import time
-    start = time.time()
-    yaml.safe_load(payload)
-    elapsed = time.time() - start
-    assert elapsed < 0.3, f"Merge key DoS took too long: {elapsed:.4f}s"
+
+    run_with_timeout(payload, 1, "Merge key DoS took too long")
 
 test_merge_key_dos_prevention.unittest = True
 
 def test_multi_merge_key_dos_prevention(verbose=False):
     # Warm up to trigger lazy loading / imports
     yaml.safe_load("L0: &L0 { x: 1 }")
-    
+
     lines = ["L0: &L0 { x: 1 }"]
-    for level in range(1, 19):
+    for level in range(1, 27):
         lines.append(f"L{level}: &L{level}\n  <<: *L{level-1}\n  <<: *L{level-1}")
     payload = "\n".join(lines)
-    
-    import time
-    start = time.time()
-    yaml.safe_load(payload)
-    elapsed = time.time() - start
-    assert elapsed < 0.3, f"Multi-merge key DoS took too long: {elapsed:.4f}s"
+
+    run_with_timeout(payload, 1, "Multi-merge key DoS took too long")
 
 test_multi_merge_key_dos_prevention.unittest = True
 
@@ -335,4 +343,3 @@ if __name__ == '__main__':
     sys.modules['test_constructor'] = sys.modules['__main__']
     import test_appliance
     test_appliance.run(globals())
-
