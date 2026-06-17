@@ -177,67 +177,32 @@ class SafeConstructor(BaseConstructor):
                     return self.construct_scalar(value_node)
         return super().construct_scalar(node)
 
-    def _node_key(self, node, seen=None):
-        if seen is None:
-            seen = set()
-        if id(node) in seen:
-            return (node.tag, id(node))
-        if isinstance(node, ScalarNode):
-            return (node.tag, node.value)
-        seen.add(id(node))
-        try:
-            if isinstance(node, SequenceNode):
-                return (node.tag, tuple(self._node_key(child, seen)
-                        for child in node.value))
-            if isinstance(node, MappingNode):
-                return (node.tag, tuple((self._node_key(key, seen),
-                        self._node_key(value, seen)) for key, value in node.value))
-        finally:
-            seen.remove(id(node))
-        return (node.tag, id(node))
-
-    def _deduplicate_mapping_pairs(self, pairs):
-        seen = set()
-        result = []
-        for key_node, value_node in reversed(pairs):
-            key = self._node_key(key_node)
-            if key in seen:
-                continue
-            seen.add(key)
-            result.append((key_node, value_node))
-        result.reverse()
-        return result
-
     def flatten_mapping(self, node):
         merge = []
+        merge_key_ids = set()  # anchor referent node objects should have reference equality here
         index = 0
-        seen = set()
         while index < len(node.value):
             key_node, value_node = node.value[index]
             if key_node.tag == 'tag:yaml.org,2002:merge':
                 del node.value[index]
                 if isinstance(value_node, MappingNode):
-                    if id(value_node) in seen:
-                        continue
-                    seen.add(id(value_node))
                     self.flatten_mapping(value_node)
-                    merge.extend(value_node.value)
+                    for pair in value_node.value:
+                        if (key_id := id(pair[0].value)) not in merge_key_ids:
+                            merge_key_ids.add(key_id)
+                            merge.append(pair)
                 elif isinstance(value_node, SequenceNode):
-                    submerge = []
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
                                     node.start_mark,
                                     "expected a mapping for merging, but found %s"
                                     % subnode.id, subnode.start_mark)
-                        if id(subnode) in seen:
-                            continue
-                        seen.add(id(subnode))
                         self.flatten_mapping(subnode)
-                        submerge.append(subnode.value)
-                    submerge.reverse()
-                    for value in submerge:
-                        merge.extend(value)
+                        for pair in subnode.value:
+                            if (key_id := id(pair[0].value)) not in merge_key_ids:
+                                merge_key_ids.add(key_id)
+                                merge.append(pair)
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
@@ -248,7 +213,6 @@ class SafeConstructor(BaseConstructor):
             else:
                 index += 1
         if merge:
-            merge = self._deduplicate_mapping_pairs(merge)
             node.value = merge + node.value
 
     def construct_mapping(self, node, deep=False):
