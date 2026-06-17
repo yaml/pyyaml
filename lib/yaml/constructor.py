@@ -177,6 +177,37 @@ class SafeConstructor(BaseConstructor):
                     return self.construct_scalar(value_node)
         return super().construct_scalar(node)
 
+    def _node_key(self, node, seen=None):
+        if seen is None:
+            seen = set()
+        if id(node) in seen:
+            return (node.tag, id(node))
+        if isinstance(node, ScalarNode):
+            return (node.tag, node.value)
+        seen.add(id(node))
+        try:
+            if isinstance(node, SequenceNode):
+                return (node.tag, tuple(self._node_key(child, seen)
+                        for child in node.value))
+            if isinstance(node, MappingNode):
+                return (node.tag, tuple((self._node_key(key, seen),
+                        self._node_key(value, seen)) for key, value in node.value))
+        finally:
+            seen.remove(id(node))
+        return (node.tag, id(node))
+
+    def _deduplicate_mapping_pairs(self, pairs):
+        seen = set()
+        result = []
+        for key_node, value_node in reversed(pairs):
+            key = self._node_key(key_node)
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append((key_node, value_node))
+        result.reverse()
+        return result
+
     def flatten_mapping(self, node):
         merge = []
         index = 0
@@ -217,6 +248,7 @@ class SafeConstructor(BaseConstructor):
             else:
                 index += 1
         if merge:
+            merge = self._deduplicate_mapping_pairs(merge)
             node.value = merge + node.value
 
     def construct_mapping(self, node, deep=False):
