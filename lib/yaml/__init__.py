@@ -50,8 +50,9 @@ def parse(stream, Loader=Loader):
 
 def compose(stream, Loader=Loader):
     """
-    Parse the first YAML document in a stream
+    Parse a single-document YAML stream
     and produce the corresponding representation tree.
+    To compose multi-document YAML stream refer to `compose_all`.
     """
     loader = Loader(stream)
     try:
@@ -73,8 +74,9 @@ def compose_all(stream, Loader=Loader):
 
 def load(stream, Loader):
     """
-    Parse the first YAML document in a stream
+    Parse a single-document YAML stream
     and produce the corresponding Python object.
+    To load multi-document YAML stream refer to `load_all`.
     """
     loader = Loader(stream)
     try:
@@ -96,8 +98,9 @@ def load_all(stream, Loader):
 
 def full_load(stream):
     """
-    Parse the first YAML document in a stream
+    Parse a single-document YAML stream
     and produce the corresponding Python object.
+    To load multi-document YAML stream refer to `full_load_all`.
 
     Resolve all tags except those known to be
     unsafe on untrusted input.
@@ -116,8 +119,9 @@ def full_load_all(stream):
 
 def safe_load(stream):
     """
-    Parse the first YAML document in a stream
+    Parse a single-document YAML stream
     and produce the corresponding Python object.
+    To load multi-document YAML stream refer to `safe_load_all`.
 
     Resolve only basic YAML tags. This is known
     to be safe for untrusted input.
@@ -136,8 +140,9 @@ def safe_load_all(stream):
 
 def unsafe_load(stream):
     """
-    Parse the first YAML document in a stream
+    Parse a single-document YAML stream
     and produce the corresponding Python object.
+    To load multi-document YAML stream refer to `unsafe_load_all`.
 
     Resolve all tags, even those known to be
     unsafe on untrusted input.
