@@ -89,6 +89,7 @@ jobs:
           - { platform: manylinux2014, arch: x86_64 }
           - { platform: manylinux2014, arch: aarch64 }
           - { platform: manylinux2014, arch: s390x, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: ppc64le }
           - { platform: musllinux_1_2, arch: x86_64 }
           - { platform: musllinux_1_2, arch: aarch64 }
 
@@ -169,6 +170,14 @@ jobs:
           - { platform: manylinux2014, arch: s390x, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp38 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp39 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp310 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp311 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp312 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp313 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp314 }
+          - { platform: manylinux2014, arch: ppc64le, spec: cp314t }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -228,6 +237,7 @@ jobs:
         CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_MANYLINUX_S390X_IMAGE: ${{ matrix.manylinux_img || '' }}
+        CIBW_MANYLINUX_PPC64LE_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
