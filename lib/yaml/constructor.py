@@ -117,8 +117,9 @@ class BaseConstructor:
     def construct_scalar(self, node):
         if not isinstance(node, ScalarNode):
             raise ConstructorError(None, None,
-                    "expected a scalar node, but found %s" % node.id,
-                    node.start_mark)
+                    "expected a scalar node, but found %s"
+                        % getattr(node, 'id', type(node).__name__),
+                    getattr(node, 'start_mark', None))
         return node.value
 
     def construct_sequence(self, node, deep=False):
