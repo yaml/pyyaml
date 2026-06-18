@@ -14,9 +14,10 @@ runs:
 
   steps:
     - id: matrix_gen
+      env:
+        MATRIX_YAML: ${{ inputs.matrix_yaml }}
       run: |
-        # FIXME: input sanity check to prevent shell injection
         python3 $GITHUB_ACTION_PATH/matrix_yaml_to_json.py --from-stdin << EOF
-        ${{ inputs.matrix_yaml }}
+        $MATRIX_YAML
         EOF
       shell: bash
