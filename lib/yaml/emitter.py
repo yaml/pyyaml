@@ -1069,7 +1069,7 @@ class Emitter:
                     data = text[start:end]
                     if self.encoding:
                         data = data.encode(self.encoding)
-                    self.stream.write(data)
+                    self.stream.write(unicode(data))
                     if ch is None:
                         self.write_line_break()
                     start = end
