@@ -215,10 +215,43 @@ class SafeConstructor(BaseConstructor):
         if merge:
             node.value = merge + node.value
 
+    @staticmethod
+    def _make_hashable(key):
+        """Recursively convert lists to tuples so sequence keys are hashable.
+
+        ``safe_dump`` serialises tuple keys as YAML sequences
+        (``tag:yaml.org,2002:seq``), which ``construct_yaml_seq`` turns back
+        into lists.  A list cannot be used as a dict key, so we convert any
+        list (and nested lists) to tuples, restoring the original tuple key.
+        """
+        if isinstance(key, list):
+            return tuple(SafeConstructor._make_hashable(item) for item in key)
+        return key
+
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
             self.flatten_mapping(node)
-        return super().construct_mapping(node, deep=deep)
+        mapping = {}
+        if not isinstance(node, MappingNode):
+            raise ConstructorError(None, None,
+                    "expected a mapping node, but found %s" % node.id,
+                    node.start_mark)
+        for key_node, value_node in node.value:
+            # Keys must be fully constructed before use (deep=True ensures
+            # generator-based constructors like construct_yaml_seq are
+            # exhausted before we read the result).
+            key = self.construct_object(key_node, deep=True)
+            # safe_dump represents tuple keys as YAML sequences, which
+            # construct_object returns as lists.  Convert them back to
+            # tuples so the round-trip {(a, b): v} → YAML → dict works.
+            key = self._make_hashable(key)
+            if not isinstance(key, collections.abc.Hashable):
+                raise ConstructorError("while constructing a mapping",
+                        node.start_mark,
+                        "found unhashable key", key_node.start_mark)
+            value = self.construct_object(value_node, deep=deep)
+            mapping[key] = value
+        return mapping
 
     def construct_yaml_null(self, node):
         self.construct_scalar(node)
@@ -486,6 +519,14 @@ class FullConstructor(SafeConstructor):
     # 'extend' is blacklisted because it is used by
     # construct_python_object_apply to add `listitems` to a newly generate
     # python instance
+
+    def construct_mapping(self, node, deep=False):
+        # FullLoader does not coerce sequence keys to tuples — use the strict
+        # BaseConstructor behaviour (unhashable key → ConstructorError).
+        if isinstance(node, MappingNode):
+            self.flatten_mapping(node)
+        return BaseConstructor.construct_mapping(self, node, deep=deep)
+
     def get_state_keys_blacklist(self):
         return ['^extend$', '^__.*__$']
 
