@@ -93,11 +93,6 @@ except ImportError:
     if with_cython:
         raise
 
-try:
-    from wheel.bdist_wheel import bdist_wheel
-except ImportError:
-    bdist_wheel = None
-
 
 try:
     from _pyyaml_pep517 import ActiveConfigSettings
@@ -325,8 +320,6 @@ cmdclass = {
     'build_ext': build_ext,
     'test': test,
 }
-if bdist_wheel:
-    cmdclass['bdist_wheel'] = bdist_wheel
 
 
 if __name__ == '__main__':
