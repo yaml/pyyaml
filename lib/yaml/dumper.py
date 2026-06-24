@@ -13,7 +13,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
-            version=None, tags=None, sort_keys=True):
+            version=None, tags=None, sort_keys=True, strict_whitespace=True):
         Emitter.__init__(self, stream, canonical=canonical,
                 indent=indent, width=width,
                 allow_unicode=allow_unicode, line_break=line_break)
@@ -31,10 +31,10 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
-            version=None, tags=None, sort_keys=True):
+            version=None, tags=None, sort_keys=True, strict_whitespace=True):
         Emitter.__init__(self, stream, canonical=canonical,
                 indent=indent, width=width,
-                allow_unicode=allow_unicode, line_break=line_break)
+                allow_unicode=allow_unicode, line_break=line_break, strict_whitespace=strict_whitespace)
         Serializer.__init__(self, encoding=encoding,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
@@ -49,10 +49,10 @@ class Dumper(Emitter, Serializer, Representer, Resolver):
             canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None,
             encoding=None, explicit_start=None, explicit_end=None,
-            version=None, tags=None, sort_keys=True):
+            version=None, tags=None, sort_keys=True, strict_whitespace=True):
         Emitter.__init__(self, stream, canonical=canonical,
                 indent=indent, width=width,
-                allow_unicode=allow_unicode, line_break=line_break)
+                allow_unicode=allow_unicode, line_break=line_break, strict_whitespace=strict_whitespace)
         Serializer.__init__(self, encoding=encoding,
                 explicit_start=explicit_start, explicit_end=explicit_end,
                 version=version, tags=tags)
