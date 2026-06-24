@@ -7,9 +7,9 @@
 # explicit_document ::= DIRECTIVE* DOCUMENT-START block_node? DOCUMENT-END*
 # block_node_or_indentless_sequence ::=
 #                       ALIAS
-#                       | properties (block_content | indentless_block_sequence)?
+#                       | properties (block_content | indentless_sequence)?
 #                       | block_content
-#                       | indentless_block_sequence
+#                       | indentless_sequence
 # block_node        ::= ALIAS
 #                       | properties block_content?
 #                       | block_content
@@ -246,9 +246,9 @@ class Parser:
         return value
 
     # block_node_or_indentless_sequence ::= ALIAS
-    #               | properties (block_content | indentless_block_sequence)?
+    #               | properties (block_content | indentless_sequence)?
     #               | block_content
-    #               | indentless_block_sequence
+    #               | indentless_sequence
     # block_node    ::= ALIAS
     #                   | properties block_content?
     #                   | block_content
