@@ -19,7 +19,8 @@ __all__ = ['Reader', 'ReaderError']
 
 from .error import YAMLError, Mark
 
-import codecs, re
+import codecs
+import re
 
 class ReaderError(YAMLError):
 
