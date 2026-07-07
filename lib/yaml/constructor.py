@@ -235,12 +235,21 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_bool(self, node):
         value = self.construct_scalar(node)
-        return self.bool_values[value.lower()]
+        try:
+            return self.bool_values[value.lower()]
+        except KeyError:
+            raise ConstructorError(
+                "while constructing a bool", node.start_mark,
+                "found invalid value %r" % value, node.start_mark)
 
     def construct_yaml_int(self, node):
         value = self.construct_scalar(node)
         value = value.replace('_', '')
         sign = +1
+        if not value:
+            raise ConstructorError(
+                "while constructing an int", node.start_mark,
+                "found empty value", node.start_mark)
         if value[0] == '-':
             sign = -1
         if value[0] in '+-':
@@ -263,7 +272,12 @@ class SafeConstructor(BaseConstructor):
                 base *= 60
             return sign*value
         else:
-            return sign*int(value)
+            try:
+                return sign*int(value)
+            except ValueError:
+                raise ConstructorError(
+                    "while constructing an int", node.start_mark,
+                    "found invalid value %r" % value, node.start_mark)
 
     inf_value = 1e300
     while inf_value != inf_value*inf_value:
@@ -292,7 +306,12 @@ class SafeConstructor(BaseConstructor):
                 base *= 60
             return sign*value
         else:
-            return sign*float(value)
+            try:
+                return sign*float(value)
+            except ValueError:
+                raise ConstructorError(
+                    "while constructing a float", node.start_mark,
+                    "found invalid value %r" % value, node.start_mark)
 
     def construct_yaml_binary(self, node):
         try:
