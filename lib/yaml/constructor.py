@@ -101,9 +101,9 @@ class BaseConstructor:
                 data = constructor(self, node)
             else:
                 data = constructor(self, tag_suffix, node)
+        except YAMLError:
+            raise
         except Exception as e:
-            if isinstance(e, YAMLError):
-                raise e
             raise ConstructorError(None, node.start_mark, f"Error constructing {node.tag!r} with value {node.value!r}") from e
 
         if isinstance(data, types.GeneratorType):
