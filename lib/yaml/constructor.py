@@ -117,23 +117,23 @@ class BaseConstructor:
     def construct_scalar(self, node):
         if not isinstance(node, ScalarNode):
             raise ConstructorError(None, None,
-                    "expected a scalar node, but found %s" % node.id,
-                    node.start_mark)
+                    "expected a scalar node, but found %s" % type(node).__name__,
+                    getattr(node, 'start_mark', None))
         return node.value
 
     def construct_sequence(self, node, deep=False):
         if not isinstance(node, SequenceNode):
             raise ConstructorError(None, None,
-                    "expected a sequence node, but found %s" % node.id,
-                    node.start_mark)
+                    "expected a sequence node, but found %s" % type(node).__name__,
+                    getattr(node, 'start_mark', None))
         return [self.construct_object(child, deep=deep)
                 for child in node.value]
 
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
-                    "expected a mapping node, but found %s" % node.id,
-                    node.start_mark)
+                    "expected a mapping node, but found %s" % type(node).__name__,
+                    getattr(node, 'start_mark', None))
         mapping = {}
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
@@ -147,8 +147,8 @@ class BaseConstructor:
     def construct_pairs(self, node, deep=False):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
-                    "expected a mapping node, but found %s" % node.id,
-                    node.start_mark)
+                    "expected a mapping node, but found %s" % type(node).__name__,
+                    getattr(node, 'start_mark', None))
         pairs = []
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
@@ -197,7 +197,7 @@ class SafeConstructor(BaseConstructor):
                             raise ConstructorError("while constructing a mapping",
                                     node.start_mark,
                                     "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_mark)
+                                    % type(subnode).__name__, getattr(subnode, 'start_mark', None))
                         self.flatten_mapping(subnode)
                         for pair in subnode.value:
                             if (key_id := id(pair[0].value)) not in merge_key_ids:
@@ -206,7 +206,7 @@ class SafeConstructor(BaseConstructor):
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
-                            % value_node.id, value_node.start_mark)
+                            % type(value_node).__name__, getattr(value_node, 'start_mark', None))
             elif key_node.tag == 'tag:yaml.org,2002:value':
                 key_node.tag = 'tag:yaml.org,2002:str'
                 index += 1
@@ -360,12 +360,12 @@ class SafeConstructor(BaseConstructor):
         yield omap
         if not isinstance(node, SequenceNode):
             raise ConstructorError("while constructing an ordered map", node.start_mark,
-                    "expected a sequence, but found %s" % node.id, node.start_mark)
+                    "expected a sequence, but found %s" % type(node).__name__, getattr(node, 'start_mark', None))
         for subnode in node.value:
             if not isinstance(subnode, MappingNode):
                 raise ConstructorError("while constructing an ordered map", node.start_mark,
-                        "expected a mapping of length 1, but found %s" % subnode.id,
-                        subnode.start_mark)
+                        "expected a mapping of length 1, but found %s" % type(subnode).__name__,
+                        getattr(subnode, 'start_mark', None))
             if len(subnode.value) != 1:
                 raise ConstructorError("while constructing an ordered map", node.start_mark,
                         "expected a single mapping item, but found %d items" % len(subnode.value),
@@ -381,12 +381,12 @@ class SafeConstructor(BaseConstructor):
         yield pairs
         if not isinstance(node, SequenceNode):
             raise ConstructorError("while constructing pairs", node.start_mark,
-                    "expected a sequence, but found %s" % node.id, node.start_mark)
+                    "expected a sequence, but found %s" % type(node).__name__, getattr(node, 'start_mark', None))
         for subnode in node.value:
             if not isinstance(subnode, MappingNode):
                 raise ConstructorError("while constructing pairs", node.start_mark,
-                        "expected a mapping of length 1, but found %s" % subnode.id,
-                        subnode.start_mark)
+                        "expected a mapping of length 1, but found %s" % type(subnode).__name__,
+                        getattr(subnode, 'start_mark', None))
             if len(subnode.value) != 1:
                 raise ConstructorError("while constructing pairs", node.start_mark,
                         "expected a single mapping item, but found %d items" % len(subnode.value),
