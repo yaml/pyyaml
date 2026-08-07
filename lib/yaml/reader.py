@@ -89,6 +89,9 @@ class Reader(object):
             return self.buffer[self.pointer+index]
         except IndexError:
             self.update(index+1)
+            # If after update we still don't have enough data, return '\0' (EOF)
+            if self.pointer + index >= len(self.buffer):
+                return '\0'
             return self.buffer[self.pointer+index]
 
     def prefix(self, length=1):
