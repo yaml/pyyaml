@@ -711,6 +711,8 @@ class Scanner:
     def check_key(self):
 
         # KEY(flow context):    '?'
+        if self.peek() == '\0':
+            return False
         if self.flow_level:
             return True
 
@@ -935,6 +937,9 @@ class Scanner:
     def scan_tag(self):
         # See the specification for details.
         start_mark = self.get_mark()
+        if self.peek() == '\0':
+            raise ScannerError("while scanning a tag", start_mark,
+                    "unexpected end of stream", self.get_mark())
         ch = self.peek(1)
         if ch == '<':
             handle = None
