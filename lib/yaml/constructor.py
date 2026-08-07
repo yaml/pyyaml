@@ -324,7 +324,11 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
-        match = self.timestamp_regexp.match(node.value)
+        match = self.timestamp_regexp.match(value)
+        if match is None:
+            raise ConstructorError(None, None,
+                    "failed to construct a timestamp from %r" % value,
+                    node.start_mark)
         values = match.groupdict()
         year = int(values['year'])
         month = int(values['month'])
@@ -520,7 +524,13 @@ class FullConstructor(SafeConstructor):
         return self.construct_yaml_int(node)
 
     def construct_python_complex(self, node):
-       return complex(self.construct_scalar(node))
+        value = self.construct_scalar(node)
+        try:
+            return complex(value)
+        except ValueError as exc:
+            raise ConstructorError(None, None,
+                    "failed to construct a complex number: %s" % exc,
+                    node.start_mark)
 
     def construct_python_tuple(self, node):
         return tuple(self.construct_sequence(node))
