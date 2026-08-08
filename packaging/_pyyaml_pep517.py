@@ -1,6 +1,22 @@
 import inspect
 
 
+def _patch_cython_build_ext():
+    try:
+        from Cython.Build.Dependencies import cythonize
+        from Cython.Distutils import build_ext
+    except ImportError:
+        return
+
+    if hasattr(build_ext, 'cython_sources'):
+        return
+
+    def cython_sources(self, sources, extension):
+        return cythonize([extension])[0].sources
+
+    build_ext.cython_sources = cython_sources
+
+
 def _bridge_build_meta():
     import functools
     import sys
@@ -47,5 +63,5 @@ def _expose_config_settings(real_method, *args, **kwargs):
         return real_method(*args, **kwargs)
 
 
+_patch_cython_build_ext()
 _bridge_build_meta()
-
