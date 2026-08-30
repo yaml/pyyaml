@@ -48,7 +48,48 @@ class CLoader(CParser, Constructor, Resolver):
         Constructor.__init__(self)
         Resolver.__init__(self)
 
-class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
+class _CEmitterGuard:
+    """Blocks reentrant calls into the C emitter.
+
+    A stream write() callback can end up calling close() (or open()/
+    serialize()) on the same dumper while an earlier call into the C
+    emitter for that dumper is still on the stack. The emitter's
+    internal state isn't designed to be torn down and rebuilt mid-call,
+    and letting that happen corrupts it badly enough to crash the
+    process during cleanup. Raise instead of ever making that call.
+    """
+
+    def open(self):
+        if getattr(self, '_cyaml_active', False):
+            raise RuntimeError(
+                'cannot call open() while this dumper is already emitting')
+        self._cyaml_active = True
+        try:
+            return super().open()
+        finally:
+            self._cyaml_active = False
+
+    def serialize(self, node):
+        if getattr(self, '_cyaml_active', False):
+            raise RuntimeError(
+                'cannot call serialize() while this dumper is already emitting')
+        self._cyaml_active = True
+        try:
+            return super().serialize(node)
+        finally:
+            self._cyaml_active = False
+
+    def close(self):
+        if getattr(self, '_cyaml_active', False):
+            raise RuntimeError(
+                'cannot call close() while this dumper is already emitting')
+        self._cyaml_active = True
+        try:
+            return super().close()
+        finally:
+            self._cyaml_active = False
+
+class CBaseDumper(_CEmitterGuard, CEmitter, BaseRepresenter, BaseResolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -65,7 +106,7 @@ class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
+class CSafeDumper(_CEmitterGuard, CEmitter, SafeRepresenter, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
@@ -82,7 +123,7 @@ class CSafeDumper(CEmitter, SafeRepresenter, Resolver):
                 default_flow_style=default_flow_style, sort_keys=sort_keys)
         Resolver.__init__(self)
 
-class CDumper(CEmitter, Serializer, Representer, Resolver):
+class CDumper(_CEmitterGuard, CEmitter, Serializer, Representer, Resolver):
 
     def __init__(self, stream,
             default_style=None, default_flow_style=False,
