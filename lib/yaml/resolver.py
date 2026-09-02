@@ -4,7 +4,13 @@ __all__ = ['BaseResolver', 'Resolver']
 from .error import *
 from .nodes import *
 
-import re
+import re, threading
+
+# Guards the copy-on-write of the class-level resolver registries.  The copy
+# and the assignment that publishes it are separate operations, so without this
+# lock two threads can each copy the inherited registry and the second
+# assignment silently discards the first thread's registration.
+_registry_lock = threading.RLock()
 
 class ResolverError(YAMLError):
     pass
@@ -24,15 +30,16 @@ class BaseResolver:
 
     @classmethod
     def add_implicit_resolver(cls, tag, regexp, first):
-        if not 'yaml_implicit_resolvers' in cls.__dict__:
-            implicit_resolvers = {}
-            for key in cls.yaml_implicit_resolvers:
-                implicit_resolvers[key] = cls.yaml_implicit_resolvers[key][:]
-            cls.yaml_implicit_resolvers = implicit_resolvers
-        if first is None:
-            first = [None]
-        for ch in first:
-            cls.yaml_implicit_resolvers.setdefault(ch, []).append((tag, regexp))
+        with _registry_lock:
+            if not 'yaml_implicit_resolvers' in cls.__dict__:
+                implicit_resolvers = {}
+                for key in cls.yaml_implicit_resolvers:
+                    implicit_resolvers[key] = cls.yaml_implicit_resolvers[key][:]
+                cls.yaml_implicit_resolvers = implicit_resolvers
+            if first is None:
+                first = [None]
+            for ch in first:
+                cls.yaml_implicit_resolvers.setdefault(ch, []).append((tag, regexp))
 
     @classmethod
     def add_path_resolver(cls, tag, path, kind=None):
@@ -48,8 +55,6 @@ class BaseResolver:
         # a mapping value that corresponds to a scalar key which content is
         # equal to the `index_check` value.  An integer `index_check` matches
         # against a sequence value with the index equal to `index_check`.
-        if not 'yaml_path_resolvers' in cls.__dict__:
-            cls.yaml_path_resolvers = cls.yaml_path_resolvers.copy()
         new_path = []
         for element in path:
             if isinstance(element, (list, tuple)):
@@ -86,7 +91,10 @@ class BaseResolver:
         elif kind not in [ScalarNode, SequenceNode, MappingNode]    \
                 and kind is not None:
             raise ResolverError("Invalid node kind: %s" % kind)
-        cls.yaml_path_resolvers[tuple(new_path), kind] = tag
+        with _registry_lock:
+            if not 'yaml_path_resolvers' in cls.__dict__:
+                cls.yaml_path_resolvers = cls.yaml_path_resolvers.copy()
+            cls.yaml_path_resolvers[tuple(new_path), kind] = tag
 
     def descend_resolver(self, current_node, current_index):
         if not self.yaml_path_resolvers:
