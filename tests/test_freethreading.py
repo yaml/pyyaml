@@ -65,6 +65,15 @@ def test_concurrent_add_representer_keeps_every_registration():
         assert not missing, f"lost {len(missing)} of {THREADS} representers: {missing[:5]}"
 
 
+def test_concurrent_add_multi_representer_keeps_every_registration():
+    types = [type(f"M{i}", (), {}) for i in range(THREADS)]
+    for _ in range(TRIALS):
+        dumper = type("TrialDumper", (yaml.SafeDumper,), {})
+        _run_concurrently(lambda i: dumper.add_multi_representer(types[i], lambda d, o: d.represent_str("x")))
+        missing = [i for i in range(THREADS) if types[i] not in dumper.yaml_multi_representers]
+        assert not missing, f"lost {len(missing)} of {THREADS} multi-representers: {missing[:5]}"
+
+
 def test_concurrent_add_implicit_resolver_keeps_every_registration():
     for _ in range(TRIALS):
         resolver = type("TrialResolver", (yaml.resolver.Resolver,), {})
