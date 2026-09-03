@@ -245,25 +245,30 @@ class SafeConstructor(BaseConstructor):
             sign = -1
         if value[0] in '+-':
             value = value[1:]
-        if value == '0':
-            return 0
-        elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
-        elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
-        elif value[0] == '0':
-            return sign*int(value, 8)
-        elif ':' in value:
-            digits = [int(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*int(value)
+        try:
+            if value == '0':
+                return 0
+            elif value.startswith('0b'):
+                return sign*int(value[2:], 2)
+            elif value.startswith('0x'):
+                return sign*int(value[2:], 16)
+            elif value[0] == '0':
+                return sign*int(value, 8)
+            elif ':' in value:
+                digits = [int(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                value = 0
+                for digit in digits:
+                    value += digit*base
+                    base *= 60
+                return sign*value
+            else:
+                return sign*int(value)
+        except ValueError:
+            raise ConstructorError(None, None,
+                    "failed to construct int from scalar %r" % (node.value,),
+                    node.start_mark)
 
     inf_value = 1e300
     while inf_value != inf_value*inf_value:
@@ -282,17 +287,22 @@ class SafeConstructor(BaseConstructor):
             return sign*self.inf_value
         elif value == '.nan':
             return self.nan_value
-        elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*float(value)
+        try:
+            if ':' in value:
+                digits = [float(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                value = 0.0
+                for digit in digits:
+                    value += digit*base
+                    base *= 60
+                return sign*value
+            else:
+                return sign*float(value)
+        except ValueError:
+            raise ConstructorError(None, None,
+                    "failed to construct float from scalar %r" % (node.value,),
+                    node.start_mark)
 
     def construct_yaml_binary(self, node):
         try:
