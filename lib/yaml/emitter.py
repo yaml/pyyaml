@@ -37,6 +37,19 @@ class Emitter:
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None):
+        
+        """
+            Initialize the emitter.
+
+            Args:
+                stream: The output stream to write to.
+                canonical: If True, produce canonical output.
+                indent: The indentation increment.
+                width: The preferred maximum line width.
+                    Note that this is a soft limit; long words will not be broken.
+                allow_unicode: If True, allow Unicode characters in the output.
+                line_break: The line break character to use.
+        """
 
         # The stream should have the methods `write` and possibly `flush`.
         self.stream = stream
