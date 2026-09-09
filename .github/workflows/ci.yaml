@@ -91,6 +91,8 @@ jobs:
           - { platform: manylinux2014, arch: s390x, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64 }
           - { platform: musllinux_1_2, arch: aarch64 }
+          - { platform: manylinux_2_39, arch: riscv64, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
 
   linux_libyaml:
     needs: [make_linux_libyaml_matrix]
@@ -184,6 +186,22 @@ jobs:
           - { platform: musllinux_1_2, arch: aarch64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp314t, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2_39, arch: riscv64, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: riscv64, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
 
   linux_pyyaml:
     needs: [python_sdist, linux_libyaml, make_linux_pyyaml_matrix]
@@ -206,7 +224,7 @@ jobs:
       with:
         path: libyaml
         key: libyaml_${{matrix.platform}}_${{matrix.arch}}_${{env.LIBYAML_REF}}
-        fail-on-cache-miss: true
+        fail-on-cache-miss: false
 
     - name: configure docker foreign arch support
       uses: docker/setup-qemu-action@v3
@@ -231,6 +249,7 @@ jobs:
         CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
+        CIBW_MANYLINUX_RISCV64_IMAGE: ${{ matrix.manylinux_img || '' }}
         CIBW_TEST_COMMAND: cd {project}; pytest
         CIBW_TEST_REQUIRES: pytest
       run: |
