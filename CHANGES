@@ -3,6 +3,10 @@ For a complete changelog, see:
 
 * https://github.com/yaml/pyyaml/commits/
 
+6.0.4 (TBD)
+
+* https://github.com/yaml/pyyaml/pull/693 -- Support for Python 3.15
+
 6.0.3 (2025-09-25)
 
 * https://github.com/yaml/pyyaml/pull/864 -- Support for Python 3.14 and free-threading (experimental)

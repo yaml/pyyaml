@@ -153,6 +153,8 @@ jobs:
           - { platform: manylinux2014, arch: x86_64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp314 }
           - { platform: manylinux2014, arch: x86_64, spec: cp314t }
+          - { platform: manylinux2014, arch: x86_64, spec: cp315 }
+          - { platform: manylinux2014, arch: x86_64, spec: cp315t }
           - { platform: manylinux2014, arch: aarch64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -161,6 +163,8 @@ jobs:
           - { platform: manylinux2014, arch: aarch64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: aarch64, spec: cp314 }
           - { platform: manylinux2014, arch: aarch64, spec: cp314t }
+          - { platform: manylinux2014, arch: aarch64, spec: cp315 }
+          - { platform: manylinux2014, arch: aarch64, spec: cp315t }
           - { platform: manylinux2014, arch: s390x, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
@@ -169,6 +173,8 @@ jobs:
           - { platform: manylinux2014, arch: s390x, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
           - { platform: manylinux2014, arch: s390x, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: s390x, spec: cp315, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: manylinux2014, arch: s390x, spec: cp315t, omit: ${{ env.skip_ci_redundant_jobs || env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp38, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -177,6 +183,8 @@ jobs:
           - { platform: musllinux_1_2, arch: x86_64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp314 }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp314t }
+          - { platform: musllinux_1_2, arch: x86_64, spec: cp315 }
+          - { platform: musllinux_1_2, arch: x86_64, spec: cp315t }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -184,6 +192,8 @@ jobs:
           - { platform: musllinux_1_2, arch: aarch64, spec: cp313, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp314, omit: ${{ env.skip_slow_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp314t, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: aarch64, spec: cp315, omit: ${{ env.skip_slow_jobs }} }
+          - { platform: musllinux_1_2, arch: aarch64, spec: cp315t, omit: ${{ env.skip_slow_jobs }} }
 
   linux_pyyaml:
     needs: [python_sdist, linux_libyaml, make_linux_pyyaml_matrix]
@@ -341,6 +351,12 @@ jobs:
           - spec: cp314t-macosx_x86_64
             arch: x86_64
             runs_on: [macos-15-intel]
+          - spec: cp315-macosx_x86_64
+            arch: x86_64
+            runs_on: [macos-15-intel]
+          - spec: cp315t-macosx_x86_64
+            arch: x86_64
+            runs_on: [macos-15-intel]
 
           ### arm64 jobs
           - spec: cp39-macosx_arm64
@@ -371,8 +387,16 @@ jobs:
           - spec: cp314-macosx_arm64
             deployment_target: '11.0'
             arch: arm64
-          
+
           - spec: cp314t-macosx_arm64
+            deployment_target: '11.0'
+            arch: arm64
+
+          - spec: cp315-macosx_arm64
+            deployment_target: '11.0'
+            arch: arm64
+
+          - spec: cp315t-macosx_arm64
             deployment_target: '11.0'
             arch: arm64
 
@@ -527,6 +551,12 @@ jobs:
           - spec: cp314t-win_amd64
             arch: x64
 
+          - spec: cp315-win_amd64
+            arch: x64
+
+          - spec: cp315t-win_amd64
+            arch: x64
+
           ### arm64 jobs
           - spec: cp312-win_arm64
             arch: arm64
@@ -543,6 +573,14 @@ jobs:
             runs-on: windows-11-arm
 
           - spec: cp314t-win_arm64
+            arch: arm64
+            runs-on: windows-11-arm
+
+          - spec: cp315-win_arm64
+            arch: arm64
+            runs-on: windows-11-arm
+
+          - spec: cp315t-win_arm64
             arch: arm64
             runs-on: windows-11-arm
 
