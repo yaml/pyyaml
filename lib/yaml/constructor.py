@@ -178,8 +178,10 @@ class SafeConstructor(BaseConstructor):
         return super().construct_scalar(node)
 
     def flatten_mapping(self, node):
-        merge = []
-        merge_key_ids = set()  # anchor referent node objects should have reference equality here
+        # Keep the last occurrence of each key/value pair. Repeated aliases
+        # must not change override order or expand the flattened mapping.
+        # A shared key node can belong to pairs with different values.
+        merge = {}
         index = 0
         while index < len(node.value):
             key_node, value_node = node.value[index]
@@ -188,9 +190,8 @@ class SafeConstructor(BaseConstructor):
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
                     for pair in value_node.value:
-                        if (key_id := id(pair[0])) not in merge_key_ids:
-                            merge_key_ids.add(key_id)
-                            merge.append(pair)
+                        merge.pop(id(pair), None)
+                        merge[id(pair)] = pair
                 elif isinstance(value_node, SequenceNode):
                     for subnode in reversed(value_node.value):
                         if not isinstance(subnode, MappingNode):
@@ -200,9 +201,8 @@ class SafeConstructor(BaseConstructor):
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
                         for pair in subnode.value:
-                            if (key_id := id(pair[0])) not in merge_key_ids:
-                                merge_key_ids.add(key_id)
-                                merge.append(pair)
+                            merge.pop(id(pair), None)
+                            merge[id(pair)] = pair
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
@@ -213,7 +213,7 @@ class SafeConstructor(BaseConstructor):
             else:
                 index += 1
         if merge:
-            node.value = merge + node.value
+            node.value = list(merge.values()) + node.value
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
