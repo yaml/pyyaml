@@ -241,20 +241,52 @@ class SafeConstructor(BaseConstructor):
         value = self.construct_scalar(node)
         value = value.replace('_', '')
         sign = +1
+        if not value:
+            raise ConstructorError(None, None,
+                    "invalid integer literal %r" % node.value, node.start_mark)
         if value[0] == '-':
             sign = -1
         if value[0] in '+-':
             value = value[1:]
+        if not value:
+            raise ConstructorError(None, None,
+                    "invalid integer literal %r" % node.value, node.start_mark)
         if value == '0':
             return 0
-        elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
-        elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
+        elif value.startswith(('0b', '0B')):
+            digits = value[2:]
+            if not digits or not all(c in '01' for c in digits):
+                raise ConstructorError(None, None,
+                        "invalid binary integer literal %r" % node.value,
+                        node.start_mark)
+            return sign*int(digits, 2)
+        elif value.startswith(('0x', '0X')):
+            digits = value[2:]
+            if not digits or not all(c in '0123456789abcdefABCDEF' for c in digits):
+                raise ConstructorError(None, None,
+                        "invalid hexadecimal integer literal %r" % node.value,
+                        node.start_mark)
+            return sign*int(digits, 16)
+        elif value.startswith(('0o', '0O')):
+            digits = value[2:]
+            if not digits or not all(c in '01234567' for c in digits):
+                raise ConstructorError(None, None,
+                        "invalid octal integer literal %r" % node.value,
+                        node.start_mark)
+            return sign*int(digits, 8)
         elif value[0] == '0':
+            if not all(c in '01234567' for c in value):
+                raise ConstructorError(None, None,
+                        "invalid octal integer literal %r" % node.value,
+                        node.start_mark)
             return sign*int(value, 8)
         elif ':' in value:
-            digits = [int(part) for part in value.split(':')]
+            try:
+                digits = [int(part) for part in value.split(':')]
+            except ValueError:
+                raise ConstructorError(None, None,
+                        "invalid sexagesimal integer literal %r" % node.value,
+                        node.start_mark)
             digits.reverse()
             base = 1
             value = 0
@@ -263,7 +295,12 @@ class SafeConstructor(BaseConstructor):
                 base *= 60
             return sign*value
         else:
-            return sign*int(value)
+            try:
+                return sign*int(value)
+            except ValueError:
+                raise ConstructorError(None, None,
+                        "invalid integer literal %r" % node.value,
+                        node.start_mark)
 
     inf_value = 1e300
     while inf_value != inf_value*inf_value:
