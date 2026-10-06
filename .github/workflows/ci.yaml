@@ -479,6 +479,7 @@ jobs:
         - arch: x64
         - arch: win32
         - arch: arm64
+          generator: "Visual Studio 18 2026"
     steps:
     - name: Get cached libyaml state
       id: cached_libyaml
@@ -505,7 +506,7 @@ jobs:
         mkdir libyaml/build
 
         pushd libyaml/build
-        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DYAML_STATIC_LIB_NAME=yaml ..
+        cmake.exe -G "${{ matrix.generator || 'Visual Studio 17 2022' }}" -A ${{ matrix.arch }} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DYAML_STATIC_LIB_NAME=yaml ..
         cmake.exe --build . --config Release
         popd
 
