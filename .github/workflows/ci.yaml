@@ -505,7 +505,7 @@ jobs:
         mkdir libyaml/build
 
         pushd libyaml/build
-        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml ..
+        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DYAML_STATIC_LIB_NAME=yaml ..
         cmake.exe --build . --config Release
         popd
 
