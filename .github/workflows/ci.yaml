@@ -145,7 +145,7 @@ jobs:
       with:
         matrix_yaml: |
           include:
-          - { platform: manylinux1, arch: x86_64, spec: cp38 }
+          - { platform: manylinux1, arch: x86_64, spec: cp38, cibw_version: cibuildwheel==3.4.1 }
           - { platform: manylinux1, arch: x86_64, spec: cp39, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: manylinux2014, arch: x86_64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -523,6 +523,7 @@ jobs:
           include:
           ### x86_64 jobs
           - spec: cp38-win_amd64
+            cibw_version: cibuildwheel==3.4.1
             arch: x64
 
           - spec: cp39-win_amd64
