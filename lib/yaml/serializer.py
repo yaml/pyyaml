@@ -86,6 +86,15 @@ class Serializer:
                 detected_tag = self.resolve(ScalarNode, node.value, (True, False))
                 default_tag = self.resolve(ScalarNode, node.value, (False, True))
                 implicit = (node.tag == detected_tag), (node.tag == default_tag)
+                # A leading-zero digit string (e.g. "08") stays a string under
+                # PyYAML's own resolver, but lenient YAML 1.1 readers may parse
+                # it as a number; write it quoted so the value cannot be
+                # corrupted for them (#966, #741).
+                if node.tag == detected_tag == 'tag:yaml.org,2002:str':
+                    body = node.value[1:] if node.value[:1] in '+-' else node.value
+                    if (len(body) > 1 and body[0] == '0'
+                            and all(ch in '0123456789_' for ch in body[1:])):
+                        node.style = "'"
                 self.emit(ScalarEvent(alias, node.tag, implicit, node.value,
                     style=node.style))
             elif isinstance(node, SequenceNode):
