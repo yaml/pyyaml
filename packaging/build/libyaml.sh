@@ -15,6 +15,8 @@ echo "::group::ensure build/test prerequisites"
 if ! command -v prove; then
   if grep -m 1 alpine /etc/os-release; then
     apk add perl-utils
+  elif grep -m 1 AlmaLinux /etc/os-release; then
+    dnf install perl-Test-Harness -y
   else
     echo "prove (perl) testing tool unavailable"
     exit 1
