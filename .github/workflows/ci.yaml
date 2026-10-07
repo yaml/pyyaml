@@ -469,7 +469,7 @@ jobs:
 
   windows_libyaml:
     name: libyaml windows ${{ matrix.arch }}
-    runs-on: ${{ (matrix.arch == 'arm64') && 'windows-11-arm' || 'windows-2022' }}
+    runs-on: ${{ (matrix.arch == 'arm64') && 'windows-11-arm' || 'windows-2025-vs2026' }}
     strategy:
       fail-fast: false
       matrix:
@@ -503,7 +503,7 @@ jobs:
         mkdir libyaml/build
 
         pushd libyaml/build
-        cmake.exe -G "Visual Studio 17 2022" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
+        cmake.exe -G "Visual Studio 18 2026" -A ${{ matrix.arch }} -DYAML_STATIC_LIB_NAME=yaml -DCMAKE_POLICY_VERSION_MINIMUM=3.10 ..
         cmake.exe --build . --config Release
         popd
 
@@ -603,7 +603,7 @@ jobs:
   windows_pyyaml:
     needs: [python_sdist, windows_libyaml, make_windows_pyyaml_matrix]
     name: pyyaml ${{matrix.spec}}
-    runs-on: ${{ matrix.runs-on || 'windows-2022' }}
+    runs-on: ${{ matrix.runs-on || 'windows-2025-vs2026' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.make_windows_pyyaml_matrix.outputs.matrix_json) }}
