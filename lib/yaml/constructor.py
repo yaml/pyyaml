@@ -417,6 +417,35 @@ class SafeConstructor(BaseConstructor):
         data.update(value)
 
     def construct_yaml_object(self, node, cls):
+
+        """
+            Construct a YAML object from a mapping node.
+
+             .. note::
+            The instance is created via ``cls.__new__(cls)`` and its
+            ``__init__`` method is **not** called.  Only the ``__dict__``
+            attribute is updated with the data from the YAML mapping.
+
+            If your class requires non-trivial initialization (e.g. setting
+            private attributes, validating data, or computing derived
+            values), you should override ``yaml_set_state`` or implement
+            ``__setstate__`` to handle this correctly.
+
+            Example::
+
+                class MyClass(yaml.YAMLObject):
+                    yaml_tag = '!MyClass'
+
+                    def __init__(self, val):
+                        # This is NOT called during yaml.load()
+                        self._val = val
+
+                    @classmethod
+                    def yaml_set_state(cls, data, state):
+                        # This IS called during yaml.load()
+                        data._val = state.get('val')
+        """
+        
         data = cls.__new__(cls)
         yield data
         if hasattr(data, '__setstate__'):
