@@ -5,7 +5,11 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections, threading
+
+# See the note in constructor.py: the copy-on-write of the class-level
+# registries is a check-then-act and needs to be atomic.
+_registry_lock = threading.RLock()
 
 class RepresenterError(YAMLError):
     pass
@@ -64,15 +68,17 @@ class BaseRepresenter:
 
     @classmethod
     def add_representer(cls, data_type, representer):
-        if not 'yaml_representers' in cls.__dict__:
-            cls.yaml_representers = cls.yaml_representers.copy()
-        cls.yaml_representers[data_type] = representer
+        with _registry_lock:
+            if not 'yaml_representers' in cls.__dict__:
+                cls.yaml_representers = cls.yaml_representers.copy()
+            cls.yaml_representers[data_type] = representer
 
     @classmethod
     def add_multi_representer(cls, data_type, representer):
-        if not 'yaml_multi_representers' in cls.__dict__:
-            cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
-        cls.yaml_multi_representers[data_type] = representer
+        with _registry_lock:
+            if not 'yaml_multi_representers' in cls.__dict__:
+                cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
+            cls.yaml_multi_representers[data_type] = representer
 
     def represent_scalar(self, tag, value, style=None):
         if style is None:
