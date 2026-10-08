@@ -14,10 +14,10 @@ def myconstructor2(constructor, tag, node):
     string = ''
     try:
         i = tag.index('!') + 1
-    except:
+    except ValueError:
         try:
             i = tag.rindex(':') + 1
-        except:
+        except ValueError:
             pass
     if i >= 0:
         tag = tag[i:]
