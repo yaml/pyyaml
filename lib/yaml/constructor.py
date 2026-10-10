@@ -16,6 +16,42 @@ import collections.abc, datetime, base64, binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+def _plain_sexagesimal(parts):
+    # Digits only, with an optional fraction on the last component.
+    # Exponents, signs, and empty components stay on the float() path.
+    if not parts or not parts[-1]:
+        return False
+    for part in parts[:-1]:
+        if not part.isdigit():
+            return False
+    last = parts[-1]
+    if last.isdigit():
+        return True
+    if last.count('.') != 1:
+        return False
+    whole, frac = last.split('.')
+    if whole and not whole.isdigit():
+        return False
+    if frac and not frac.isdigit():
+        return False
+    return bool(whole or frac)
+
+def _exact_sexagesimal_float(parts):
+    frac = ''
+    if '.' in parts[-1]:
+        whole, frac = parts[-1].split('.', 1)
+        parts = parts[:-1] + [whole or '0']
+    scale = 10**len(frac) if frac else 1
+    total = 0
+    for part in parts:
+        total = total*60 + int(part)
+    if frac:
+        total = total*scale + int(frac)
+    try:
+        return total / scale
+    except OverflowError:
+        return float('inf')
+
 class BaseConstructor:
 
     yaml_constructors = {}
@@ -283,13 +319,20 @@ class SafeConstructor(BaseConstructor):
         elif value == '.nan':
             return self.nan_value
         elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
+            parts = value.split(':')
+            # Sum a plain sexagesimal value exactly, then round once.
+            # float() on each ':' component rounds twice and can miss the
+            # nearest value that one decimal literal would produce.
+            if _plain_sexagesimal(parts):
+                value = _exact_sexagesimal_float(parts)
+            else:
+                digits = [float(part) for part in parts]
+                digits.reverse()
+                base = 1
+                value = 0.0
+                for digit in digits:
+                    value += digit*base
+                    base *= 60
             return sign*value
         else:
             return sign*float(value)
