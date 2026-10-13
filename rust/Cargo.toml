@@ -1,0 +1,19 @@
+[package]
+name = "yaml-scan"
+version = "0.1.0"
+edition = "2021"
+description = "Optional PyO3 scan accelerator (yaml._rust) for PyYAML's pure-Python scanner"
+license = "MIT"
+repository = "https://github.com/yaml/pyyaml"
+homepage = "https://github.com/yaml/pyyaml"
+
+[lib]
+name = "_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+yaml-scan-core = { path = "yaml-core", version = "0.1.0" }
+pyo3 = { version = "0.23", features = ["extension-module"] }
+
+[workspace]
+members = ["yaml-core"]
