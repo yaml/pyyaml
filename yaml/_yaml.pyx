@@ -352,9 +352,10 @@ cdef class CParser:
         if yaml_parser_scan(&self.parser, &token) == 0:
             error = self._parser_error()
             raise error
-        token_object = self._token_to_object(&token)
-        yaml_token_delete(&token)
-        return token_object
+        try:
+            return self._token_to_object(&token)
+        finally:
+            yaml_token_delete(&token)
 
     cdef object _token_to_object(self, yaml_token_t *token):
         start_mark = Mark(self.stream_name,
@@ -498,9 +499,10 @@ cdef class CParser:
         if yaml_parser_parse(&self.parser, &event) == 0:
             error = self._parser_error()
             raise error
-        event_object = self._event_to_object(&event)
-        yaml_event_delete(&event)
-        return event_object
+        try:
+            return self._event_to_object(&event)
+        finally:
+            yaml_event_delete(&event)
 
     cdef object _event_to_object(self, yaml_event_t *event):
         cdef yaml_tag_directive_t *tag_directive
