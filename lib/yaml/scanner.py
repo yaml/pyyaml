@@ -964,9 +964,11 @@ class Scanner:
             else:
                 handle = '!'
                 self.forward()
-            suffix = self.scan_tag_uri('tag', start_mark)
+            suffix = self.scan_tag_uri('tag', start_mark,
+                    stop_at_flow_indicators=bool(self.flow_level))
         ch = self.peek()
-        if ch not in '\0 \r\n\x85\u2028\u2029':
+        if ch not in '\0 \r\n\x85\u2028\u2029'   \
+                and not (self.flow_level and ch in ',[]{}'):
             raise ScannerError("while scanning a tag", start_mark,
                     "expected ' ', but found %r" % ch, self.get_mark())
         value = (handle, suffix)
@@ -1369,14 +1371,21 @@ class Scanner:
         self.forward(length)
         return value
 
-    def scan_tag_uri(self, name, start_mark):
+    def scan_tag_uri(self, name, start_mark, stop_at_flow_indicators=False):
         # See the specification for details.
         # Note: we do not check if URI is well-formed.
+        # A shorthand tag suffix is an `ns-tag-char` sequence, which
+        # excludes the flow indicators `,[]{}`, so in a flow context
+        # those characters terminate the suffix instead of being
+        # consumed as part of it. Verbatim tags and directives use
+        # `ns-uri-char`, which permits them, and are unaffected.
         chunks = []
         length = 0
         ch = self.peek(length)
         while '0' <= ch <= '9' or 'A' <= ch <= 'Z' or 'a' <= ch <= 'z'  \
                 or ch in '-;/?:@&=+$,_.!~*\'()[]%':
+            if stop_at_flow_indicators and ch in ',[]{}':
+                break
             if ch == '%':
                 chunks.append(self.prefix(length))
                 self.forward(length)
