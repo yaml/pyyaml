@@ -178,8 +178,9 @@ class SafeConstructor(BaseConstructor):
         return super().construct_scalar(node)
 
     def flatten_mapping(self, node):
-        merge = []
-        merge_key_ids = set()  # anchor referent node objects should have reference equality here
+        # keyed by key node identity: anchored mappings are shared by reference,
+        # so the same node merged twice contributes each pair once
+        merge = {}
         index = 0
         while index < len(node.value):
             key_node, value_node = node.value[index]
@@ -188,10 +189,11 @@ class SafeConstructor(BaseConstructor):
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
                     for pair in value_node.value:
-                        if (key_id := id(pair[0].value)) not in merge_key_ids:
-                            merge_key_ids.add(key_id)
-                            merge.append(pair)
+                        # a key seen again moves to the end, so later merges win
+                        merge.pop(id(pair[0]), None)
+                        merge[id(pair[0])] = pair
                 elif isinstance(value_node, SequenceNode):
+                    submerge = []
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
@@ -199,10 +201,13 @@ class SafeConstructor(BaseConstructor):
                                     "expected a mapping for merging, but found %s"
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
-                        for pair in subnode.value:
-                            if (key_id := id(pair[0].value)) not in merge_key_ids:
-                                merge_key_ids.add(key_id)
-                                merge.append(pair)
+                        submerge.append(subnode.value)
+                    # earlier mappings in the sequence override later ones
+                    submerge.reverse()
+                    for value in submerge:
+                        for pair in value:
+                            merge.pop(id(pair[0]), None)
+                            merge[id(pair[0])] = pair
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
@@ -213,7 +218,7 @@ class SafeConstructor(BaseConstructor):
             else:
                 index += 1
         if merge:
-            node.value = merge + node.value
+            node.value = list(merge.values()) + node.value
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
