@@ -48,6 +48,15 @@ def test_sexagesimal_float_exponent_uses_float_rules():
     assert yaml.safe_load('!!float "1:1e-100000"') == 60.0
 
 
+def test_sexagesimal_float_over_int_digit_limit_uses_float():
+    # int() rejects a component longer than the interpreter digit limit.
+    # The float() path still accepts these and returns 60.
+    for digits in (4301, 5001):
+        text = "1:0." + "0" * (digits - 1) + "1"
+        assert yaml.safe_load(text) == 60.0
+        assert yaml.safe_load("-" + text) == -60.0
+
+
 def test_sexagesimal_float_huge_value_is_inf():
     text = ":".join(["59"] * 400) + ".0"
     assert yaml.safe_load(text) == float("inf")
