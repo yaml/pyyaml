@@ -248,9 +248,19 @@ class SafeConstructor(BaseConstructor):
         if value == '0':
             return 0
         elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
+            digits = value[2:]
+            if not digits:
+                raise ConstructorError(None, None,
+                        "found an integer without digits %r" % node.value,
+                        node.start_mark)
+            return sign*int(digits, 2)
         elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
+            digits = value[2:]
+            if not digits:
+                raise ConstructorError(None, None,
+                        "found an integer without digits %r" % node.value,
+                        node.start_mark)
+            return sign*int(digits, 16)
         elif value[0] == '0':
             return sign*int(value, 8)
         elif ':' in value:
