@@ -16,6 +16,26 @@ import collections.abc, datetime, base64, binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+def _sexagesimal_exceeds_int_digit_limit(parts):
+    # int() refuses a digit string longer than the interpreter limit.
+    # Those components used to go through float(), which still accepts them.
+    limit = getattr(sys, 'get_int_max_str_digits', lambda: 0)()
+    if not limit:
+        return False
+    last = parts[-1]
+    if '.' in last:
+        whole, frac = last.split('.', 1)
+        checked = list(parts[:-1])
+        checked.append(whole or '0')
+        if frac:
+            checked.append(frac)
+    else:
+        checked = parts
+    for part in checked:
+        if len(part) > limit:
+            return True
+    return False
+
 def _plain_sexagesimal(parts):
     # Digits only, with an optional fraction on the last component.
     # Exponents, signs, and empty components stay on the float() path.
@@ -26,7 +46,7 @@ def _plain_sexagesimal(parts):
             return False
     last = parts[-1]
     if last.isdigit():
-        return True
+        return not _sexagesimal_exceeds_int_digit_limit(parts)
     if last.count('.') != 1:
         return False
     whole, frac = last.split('.')
@@ -34,7 +54,9 @@ def _plain_sexagesimal(parts):
         return False
     if frac and not frac.isdigit():
         return False
-    return bool(whole or frac)
+    if not (whole or frac):
+        return False
+    return not _sexagesimal_exceeds_int_digit_limit(parts)
 
 def _exact_sexagesimal_float(parts):
     frac = ''
