@@ -1,19 +1,13 @@
+import codecs
+
 
 NAME = 'PyYAML'
 VERSION = '7.0.0.dev0'
 DESCRIPTION = "YAML parser and emitter for Python"
-LONG_DESCRIPTION = """\
-YAML is a data serialization format designed for human readability
-and interaction with scripting languages.  PyYAML is a YAML parser
-and emitter for Python.
 
-PyYAML features a complete YAML 1.1 parser, Unicode support, pickle
-support, capable extension API, and sensible error messages.  PyYAML
-supports standard YAML tags and provides Python-specific tags that
-allow to represent an arbitrary Python object.
+with codecs.open('README.md', encoding='utf-8') as f:
+    LONG_DESCRIPTION = f.read()
 
-PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistence."""
 AUTHOR = "Kirill Simonov"
 AUTHOR_EMAIL = 'xi@resolvent.net'
 LICENSE = "MIT"
@@ -336,6 +330,7 @@ if __name__ == '__main__':
         version=VERSION,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
+        long_description_content_type='text/markdown',
         author=AUTHOR,
         author_email=AUTHOR_EMAIL,
         license=LICENSE,
