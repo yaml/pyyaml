@@ -752,10 +752,11 @@ cdef class CParser:
         quoted_implicit = False
         if self.parsed_event.data.scalar.quoted_implicit == 1:
             quoted_implicit = True
-        if self.parsed_event.data.scalar.tag == NULL    \
-                or (self.parsed_event.data.scalar.tag[0] == c'!'
-                        and self.parsed_event.data.scalar.tag[1] == c'\0'):
+        if self.parsed_event.data.scalar.tag == NULL:
             tag = self.resolve(ScalarNode, value, (plain_implicit, quoted_implicit))
+        elif (self.parsed_event.data.scalar.tag[0] == c'!'
+                and self.parsed_event.data.scalar.tag[1] == c'\0'):
+            tag = u'tag:yaml.org,2002:str'
         else:
             tag = PyUnicode_FromYamlString(self.parsed_event.data.scalar.tag)
         style = None
@@ -1289,7 +1290,10 @@ cdef class CEmitter:
                 plain_implicit = 0
                 quoted_implicit = 0
                 tag_object = node.tag
-                if self.resolve(ScalarNode, node.value, (True, False)) == tag_object:
+                # libyaml writes a non-specific "!" tag for an empty scalar
+                # that is plain-implicit but has to be quoted.
+                if node.value != '' \
+                        and self.resolve(ScalarNode, node.value, (True, False)) == tag_object:
                     plain_implicit = 1
                 if self.resolve(ScalarNode, node.value, (False, True)) == tag_object:
                     quoted_implicit = 1
