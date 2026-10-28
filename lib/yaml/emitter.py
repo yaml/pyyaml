@@ -202,7 +202,7 @@ class Emitter:
                     self.write_indent()
             self.state = self.expect_document_root
         elif isinstance(self.event, StreamEndEvent):
-            if self.open_ended:
+            if self.open_ended and self.event.explicit_end:
                 self.write_indicator('...', True)
                 self.write_indent()
             self.write_stream_end()
