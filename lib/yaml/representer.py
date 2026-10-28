@@ -5,7 +5,7 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections, decimal
 
 class RepresenterError(YAMLError):
     pass
@@ -220,6 +220,10 @@ class SafeRepresenter(BaseRepresenter):
         value = data.isoformat(' ')
         return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
 
+    def represent_decimal(self, data):
+        value = str(data)
+        return self.represent_scalar('tag:yaml.org,2002:float', value)
+
     def represent_yaml_object(self, tag, data, cls, flow_style=None):
         if hasattr(data, '__getstate__'):
             state = data.__getstate__()
@@ -265,6 +269,9 @@ SafeRepresenter.add_representer(datetime.date,
 
 SafeRepresenter.add_representer(datetime.datetime,
         SafeRepresenter.represent_datetime)
+
+SafeRepresenter.add_representer(decimal.Decimal,
+        SafeRepresenter.represent_decimal)
 
 SafeRepresenter.add_representer(None,
         SafeRepresenter.represent_undefined)
