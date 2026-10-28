@@ -5,7 +5,11 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime
+import copyreg
+import types
+import base64
+import collections
 
 class RepresenterError(YAMLError):
     pass
@@ -64,13 +68,13 @@ class BaseRepresenter:
 
     @classmethod
     def add_representer(cls, data_type, representer):
-        if not 'yaml_representers' in cls.__dict__:
+        if 'yaml_representers' not in cls.__dict__:
             cls.yaml_representers = cls.yaml_representers.copy()
         cls.yaml_representers[data_type] = representer
 
     @classmethod
     def add_multi_representer(cls, data_type, representer):
-        if not 'yaml_multi_representers' in cls.__dict__:
+        if 'yaml_multi_representers' not in cls.__dict__:
             cls.yaml_multi_representers = cls.yaml_multi_representers.copy()
         cls.yaml_multi_representers[data_type] = representer
 

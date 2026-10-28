@@ -1,5 +1,11 @@
 
-import sys, os, os.path, types, traceback, pprint, pathlib
+import sys
+import os
+import os.path
+import types
+import traceback
+import pathlib
+import pprint
 
 DATA = str(pathlib.Path(__file__).parent / 'data')
 
