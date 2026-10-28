@@ -55,7 +55,7 @@ class Emitter:
 
         # The current indentation level and the stack of previous indents.
         self.indents = []
-        self.indent = None
+        self.indent = indent
 
         # Flow level.
         self.flow_level = 0
