@@ -280,6 +280,7 @@ def add_implicit_resolver(tag, regexp, first=None,
         loader.Loader.add_implicit_resolver(tag, regexp, first)
         loader.FullLoader.add_implicit_resolver(tag, regexp, first)
         loader.UnsafeLoader.add_implicit_resolver(tag, regexp, first)
+        loader.SafeLoader.add_implicit_resolver(tag, regexp, first)
     else:
         Loader.add_implicit_resolver(tag, regexp, first)
     Dumper.add_implicit_resolver(tag, regexp, first)
@@ -309,6 +310,7 @@ def add_constructor(tag, constructor, Loader=None):
         loader.Loader.add_constructor(tag, constructor)
         loader.FullLoader.add_constructor(tag, constructor)
         loader.UnsafeLoader.add_constructor(tag, constructor)
+        loader.SafeLoader.add_constructor(tag, constructor)
     else:
         Loader.add_constructor(tag, constructor)
 
@@ -323,6 +325,7 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
         loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
         loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
         loader.UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
+        loader.SafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
     else:
         Loader.add_multi_constructor(tag_prefix, multi_constructor)
 
