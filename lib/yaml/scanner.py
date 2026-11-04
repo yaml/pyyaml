@@ -1214,6 +1214,13 @@ class Scanner:
                                     "expected escape sequence of %d hexadecimal numbers, but found %r" %
                                         (length, self.peek(k)), self.get_mark())
                     code = int(self.prefix(length), 16)
+                    if code > 0x10FFFF:
+                        # The hex digits are well formed, so the loop above passes; the
+                        # code point they spell is outside Unicode, and chr() would raise a
+                        # bare ValueError from a scanner that promises ScannerError.
+                        raise ScannerError("while scanning a double-quoted scalar", start_mark,
+                                "escape sequence U+%X is outside the Unicode range" % code,
+                                self.get_mark())
                     chunks.append(chr(code))
                     self.forward(length)
                 elif ch in '\r\n\x85\u2028\u2029':
