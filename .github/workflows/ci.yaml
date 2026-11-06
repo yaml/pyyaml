@@ -60,7 +60,7 @@ jobs:
         python -V
         python -m pip install build
 
-        python -m build -s .
+        python -Werror -Im build -s .
 
         echo "artifact_name=$(ls ./dist)" >> "$GITHUB_OUTPUT"
         echo "package_version=$(ls ./dist | sed -En 's/pyyaml-(.+)\.tar\.gz/\1/p')" >> "$GITHUB_OUTPUT"
