@@ -239,8 +239,8 @@ jobs:
         CIBW_MUSLLINUX_X86_64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_I686_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
         CIBW_MUSLLINUX_AARCH64_IMAGE: ${{ matrix.musllinux_img || 'musllinux_1_2' }}
-        CIBW_TEST_COMMAND: cd {project}; pytest
-        CIBW_TEST_REQUIRES: pytest
+        CIBW_TEST_COMMAND: tox -c {package} -e py --installpkg {wheel}
+        CIBW_TEST_REQUIRES: tox
       run: |
         set -eux
 
@@ -434,8 +434,8 @@ jobs:
         C_INCLUDE_PATH: ../libyaml/include
         CIBW_BUILD: ${{matrix.spec}}
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_TEST_COMMAND: pytest {package}
-        CIBW_TEST_REQUIRES: pytest
+        CIBW_TEST_COMMAND: tox -c {package} -e py --installpkg {wheel}
+        CIBW_TEST_REQUIRES: tox
         LIBRARY_PATH: ../libyaml/src/.libs
         MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target || '10.15' }}
         PYYAML_FORCE_CYTHON: 1
@@ -640,8 +640,8 @@ jobs:
         CIBW_BUILD: ${{matrix.spec}}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_BEFORE_TEST: ls -l {package}
-        CIBW_TEST_COMMAND: pytest {package}
-        CIBW_TEST_REQUIRES: pytest
+        CIBW_TEST_COMMAND: tox -c {package} -e py --installpkg {wheel}
+        CIBW_TEST_REQUIRES: tox
         #CIBW_CONFIG_SETTINGS: |
         #  pyyaml_build_config='{"include_dirs": ["libyaml/include"], "library_dirs": ["libyaml/build/Release"], "define": [["YAML_DECLARE_STATIC", 1]], "force": 1}'
       run: |
