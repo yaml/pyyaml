@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools >= 61",  # PEP 621 support
+    "setuptools >= 77.0.1",  # PEP 621 and PEP 639 support
     "Cython; python_version < '3.13'",
     "Cython>=3.0; python_version >= '3.13'"
 ]
@@ -11,11 +11,13 @@ build-backend = "_pyyaml_pep517"
 name = "PyYAML"
 version = "7.0.0.dev0"
 description = "YAML parser and emitter for Python"
-license = {text = "MIT"}
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Cython",
     "Programming Language :: Python",
