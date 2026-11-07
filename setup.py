@@ -156,7 +156,9 @@ class Distribution(_Distribution):
             return False
         if isinstance(ext, Extension):
             # the "build by default" behavior is implemented by this returning None
-            with_ext = getattr(self, ext.attr_name) or os.environ.get('PYYAML_FORCE_{0}'.format(ext.feature_name.upper()))
+            with_ext = getattr(self, ext.attr_name)
+            if with_ext is None:
+                with_ext = os.environ.get('PYYAML_FORCE_{0}'.format(ext.feature_name.upper()))
             try:
                 with_ext = int(with_ext)  # attempt coerce envvar to int
             except TypeError:
