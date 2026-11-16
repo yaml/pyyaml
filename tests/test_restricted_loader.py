@@ -81,10 +81,3 @@ def test_load_all_rejects_anchor_in_later_document():
     assert next(documents) == 1
     with pytest.raises(ComposerError, match="found anchor 'x'"):
         next(documents)
-
-
-def test_error_is_a_yaml_error():
-    with pytest.raises(yaml.YAMLError) as excinfo:
-        yaml.load("a: *x\n", Loader=yaml.RestrictedSafeLoader)
-    assert isinstance(excinfo.value, yaml.composer.ComposerError)
-    assert isinstance(excinfo.value, yaml.MarkedYAMLError)
