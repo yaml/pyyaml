@@ -1,5 +1,5 @@
 
-__all__ = ['Composer', 'ComposerError']
+__all__ = ['Composer', 'RestrictedComposer', 'ComposerError']
 
 from .error import MarkedYAMLError
 from .events import *
@@ -137,3 +137,16 @@ class Composer:
         node.end_mark = end_event.end_mark
         return node
 
+class RestrictedComposer(Composer):
+
+    def compose_node(self, parent, index):
+        event = self.peek_event()
+        if isinstance(event, AliasEvent):
+            raise ComposerError(None, None,
+                    "found alias %r; aliases are not allowed" % event.anchor,
+                    event.start_mark)
+        if event.anchor is not None:
+            raise ComposerError(None, None,
+                    "found anchor %r; anchors are not allowed" % event.anchor,
+                    event.start_mark)
+        return super().compose_node(parent, index)
