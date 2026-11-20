@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import yaml, codecs, sys, os.path, optparse
 
@@ -29,33 +29,42 @@ class Style:
     def __setstate__(self, state):
         self.__init__(**state)
 
+class StyleLoader(yaml.SafeLoader):
+    pass
+
+def construct_style(loader, node):
+    return Style(**loader.construct_mapping(node, deep=True))
+
 yaml.add_path_resolver(u'tag:yaml.org,2002:python/object:__main__.Style',
-        [None], dict)
+        [None], dict, Loader=StyleLoader)
 yaml.add_path_resolver(u'tag:yaml.org,2002:pairs',
-        [None, u'replaces'], list)
+        [None, u'replaces'], list, Loader=StyleLoader)
+yaml.add_constructor(u'tag:yaml.org,2002:python/object:__main__.Style',
+        construct_style, Loader=StyleLoader)
 
 class YAMLHighlight:
 
     def __init__(self, options):
-        config = yaml.full_load(file(options.config, 'rb').read())
+        with open(options.config, 'rb') as file:
+            config = yaml.load(file.read(), Loader=StyleLoader)
         self.style = config[options.style]
         if options.input:
-            self.input = file(options.input, 'rb')
+            self.input = open(options.input, 'rb')
         else:
-            self.input = sys.stdin
+            self.input = sys.stdin.buffer
         if options.output:
-            self.output = file(options.output, 'wb')
+            self.output = open(options.output, 'wb')
         else:
-            self.output = sys.stdout
+            self.output = sys.stdout.buffer
 
     def highlight(self):
         input = self.input.read()
         if input.startswith(codecs.BOM_UTF16_LE):
-            input = unicode(input, 'utf-16-le')
+            input = str(input, 'utf-16-le')
         elif input.startswith(codecs.BOM_UTF16_BE):
-            input = unicode(input, 'utf-16-be')
+            input = str(input, 'utf-16-be')
         else:
-            input = unicode(input, 'utf-8')
+            input = str(input, 'utf-8')
         substitutions = self.style.substitutions
         tokens = yaml.scan(input)
         events = yaml.parse(input)
@@ -92,10 +101,10 @@ class YAMLHighlight:
         chunks.reverse()
         result = u''.join(chunks)
         if self.style.header:
-            self.output.write(self.style.header)
+            self.output.write(self.style.header.encode('utf-8'))
         self.output.write(result.encode('utf-8'))
         if self.style.footer:
-            self.output.write(self.style.footer)
+            self.output.write(self.style.footer.encode('utf-8'))
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
