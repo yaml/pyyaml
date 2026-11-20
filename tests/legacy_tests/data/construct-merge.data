@@ -25,3 +25,14 @@
   << : [ *BIG, *LEFT, *SMALL ]
   x: 1
   label: center/big
+
+- # Duplicate sequence merge
+  << : [ *CENTER, *CENTER ]
+  r: 10
+  label: center/big
+
+- # Duplicate direct merge
+  << : *CENTER
+  << : *CENTER
+  r: 10
+  label: center/big

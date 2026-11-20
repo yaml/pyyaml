@@ -1,6 +1,7 @@
 # build outputs
-/dist/*
-/build/*
+/.cache/
+/dist/
+/build/
 /lib/PyYAML.egg-info/*
 /wheelhouse/*
 /yaml/_yaml.c
