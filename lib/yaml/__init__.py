@@ -8,7 +8,7 @@ from .nodes import *
 from .loader import *
 from .dumper import *
 
-__version__ = '6.0.3'
+__version__ = '6.0.4'
 try:
     from .cyaml import *
     __with_libyaml__ = True
