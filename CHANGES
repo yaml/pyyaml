@@ -3,6 +3,11 @@ For a complete changelog, see:
 
 * https://github.com/yaml/pyyaml/commits/
 
+6.0.4 (2026-11-20)
+
+* https://github.com/yaml/pyyaml/pull/937 -- Fix merge key performance
+* https://github.com/yaml/pyyaml/pull/1010 -- Expose libyaml recursion control API (no-op on libyaml < 0.2.6)
+
 6.0.3 (2025-09-25)
 
 * https://github.com/yaml/pyyaml/pull/864 -- Support for Python 3.14 and free-threading (experimental)
