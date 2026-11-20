@@ -179,6 +179,7 @@ class SafeConstructor(BaseConstructor):
 
     def flatten_mapping(self, node):
         merge = []
+        merge_key_ids = set()  # anchor referent node objects should have reference equality here
         index = 0
         while index < len(node.value):
             key_node, value_node = node.value[index]
@@ -186,9 +187,11 @@ class SafeConstructor(BaseConstructor):
                 del node.value[index]
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
-                    merge.extend(value_node.value)
+                    for pair in value_node.value:
+                        if (key_id := id(pair[0].value)) not in merge_key_ids:
+                            merge_key_ids.add(key_id)
+                            merge.append(pair)
                 elif isinstance(value_node, SequenceNode):
-                    submerge = []
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
@@ -196,10 +199,10 @@ class SafeConstructor(BaseConstructor):
                                     "expected a mapping for merging, but found %s"
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
-                        submerge.append(subnode.value)
-                    submerge.reverse()
-                    for value in submerge:
-                        merge.extend(value)
+                        for pair in subnode.value:
+                            if (key_id := id(pair[0].value)) not in merge_key_ids:
+                                merge_key_ids.add(key_id)
+                                merge.append(pair)
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
