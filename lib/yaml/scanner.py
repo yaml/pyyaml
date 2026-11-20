@@ -1214,6 +1214,10 @@ class Scanner:
                                     "expected escape sequence of %d hexadecimal numbers, but found %r" %
                                         (length, self.peek(k)), self.get_mark())
                     code = int(self.prefix(length), 16)
+                    if code > 0x10FFFF:
+                        raise ScannerError("while scanning a double-quoted scalar", start_mark,
+                                "found invalid Unicode character escape code %r" %
+                                    self.prefix(length), self.get_mark())
                     chunks.append(chr(code))
                     self.forward(length)
                 elif ch in '\r\n\x85\u2028\u2029':
