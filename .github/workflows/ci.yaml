@@ -14,7 +14,7 @@ on:
       libyaml_ref:
         description: Tag/branch ref for libyaml
         type: string
-        default: 0.2.5
+        default: 0.2.6
       skip_artifact_upload:
         description: Skip most artifact uploads?
         type: boolean
@@ -30,7 +30,7 @@ on:
 
 env:
   LIBYAML_REPO: ${{ inputs.libyaml_repo || 'https://github.com/yaml/libyaml' }}  # FIXME: can we ref the input.default value?
-  LIBYAML_REF: ${{ inputs.libyaml_ref || '0.2.5' }}  # FIXME: can we ref the input.default value?
+  LIBYAML_REF: ${{ inputs.libyaml_ref || '0.2.6' }}  # FIXME: can we ref the input.default value?
   skip_ci_redundant_jobs: ${{ inputs.skip_ci_redundant_jobs || github.event_name == 'pull_request' || github.event_name == 'push' }}
   skip_slow_jobs: ${{ inputs.skip_slow_jobs || github.event_name == 'pull_request' || github.event_name == 'push' }}
   skip_artifact_upload: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_artifact_upload) || github.event_name != 'workflow_dispatch' }}
