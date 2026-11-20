@@ -256,3 +256,13 @@ cdef extern from "_yaml.h":
     int yaml_emitter_emit(yaml_emitter_t *emitter, yaml_event_t *event) except *
     int yaml_emitter_flush(yaml_emitter_t *emitter)
 
+
+cdef extern from "_yaml.h":
+    """
+    #ifndef LIBYAML_FEATURE_NEST_DEPTH_CONTROL
+        static inline int yaml_get_max_nest_level() { return -1; }
+        static inline void yaml_set_max_nest_level(int value) { }
+    #endif
+    """
+    int yaml_get_max_nest_level()
+    void yaml_set_max_nest_level(int value)
