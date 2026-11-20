@@ -59,6 +59,12 @@ ScalarNode = yaml.nodes.ScalarNode
 SequenceNode = yaml.nodes.SequenceNode
 MappingNode = yaml.nodes.MappingNode
 
+_get_max_nest_level = yaml_get_max_nest_level
+"""Retrieve current libyaml maximum recursion depth; returns -1 if the libyaml feature is unavailable."""
+
+_set_max_nest_level = yaml_set_max_nest_level
+"""Set libyaml maximum recursion depth. Modifications to this value will affect all libyaml parsers in the process and are not thread-safe; use with caution."""
+
 cdef class Mark:
     cdef readonly object name
     cdef readonly size_t index
