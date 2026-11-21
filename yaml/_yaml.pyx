@@ -908,10 +908,13 @@ cdef class CEmitter:
     cdef int closed
     cdef int dump_unicode
     cdef object use_encoding
+    # A stream.write() callback must not re-enter LibYAML on this instance.
+    cdef bint writing
 
     def __init__(self, stream, canonical=None, indent=None, width=None,
             allow_unicode=None, line_break=None, encoding=None,
             explicit_start=None, explicit_end=None, version=None, tags=None):
+        self._check_reentrancy()
         if yaml_emitter_initialize(&self.emitter) == 0:
             raise MemoryError
         self.stream = stream
@@ -953,6 +956,11 @@ cdef class CEmitter:
 
     def dispose(self):
         pass
+
+    cdef int _check_reentrancy(self) except 0:
+        if self.writing:
+            raise EmitterError(u"reentrant calls to the emitter are not allowed")
+        return 1
 
     cdef object _emitter_error(self):
         if self.emitter.error == YAML_MEMORY_ERROR:
@@ -1147,6 +1155,7 @@ cdef class CEmitter:
 
     def emit(self, event_object):
         cdef yaml_event_t event
+        self._check_reentrancy()
         self._object_to_event(event_object, &event)
         if yaml_emitter_emit(&self.emitter, &event) == 0:
             error = self._emitter_error()
@@ -1155,6 +1164,7 @@ cdef class CEmitter:
     def open(self):
         cdef yaml_event_t event
         cdef yaml_encoding_t encoding
+        self._check_reentrancy()
         if self.closed == -1:
             if self.use_encoding == u'utf-16-le' or self.use_encoding == 'utf-16-le':
                 encoding = YAML_UTF16LE_ENCODING
@@ -1178,6 +1188,7 @@ cdef class CEmitter:
 
     def close(self):
         cdef yaml_event_t event
+        self._check_reentrancy()
         if self.closed == -1:
             raise SerializerError(u"serializer is not opened")
         elif self.closed == 0:
@@ -1194,6 +1205,7 @@ cdef class CEmitter:
         cdef yaml_tag_directive_t tag_directives_value[128]
         cdef yaml_tag_directive_t *tag_directives_start
         cdef yaml_tag_directive_t *tag_directives_end
+        self._check_reentrancy()
         if self.closed == -1:
             raise SerializerError(u"serializer is not opened")
         elif self.closed == 1:
@@ -1398,6 +1410,10 @@ cdef int output_handler(void *data, unsigned char *bufferu, size_t size) except 
         value = PyBytes_FromStringAndSize(buffer, size)
     else:
         value = PyUnicode_DecodeUTF8(buffer, size, 'strict')
-    emitter.stream.write(value)
+    emitter.writing = True
+    try:
+        emitter.stream.write(value)
+    finally:
+        emitter.writing = False
     return 1
 
