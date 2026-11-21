@@ -108,3 +108,58 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     )
 
     assert keys == ["k0", "k1", "k2", "k3"]
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["x", "kk", "long_merge_key"])
+@pytest.mark.parametrize("aliases", ["*a, *b, *c", "*a, *b, *a"])
+def test_sequence_merge_uses_first_mapping_value(Loader, key, aliases):
+    source = """
+a: &a {%s: 1}
+b: &b {%s: 2}
+c: &c {%s: 3}
+target:
+  <<: [%s]
+""" % (key, key, key, aliases)
+
+    assert yaml.load(source, Loader=Loader)["target"] == {key: 1}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("explicit_first", [False, True])
+def test_explicit_key_overrides_sequence_merge(Loader, explicit_first):
+    fields = ["  <<: [*a, *b]", "  kk: 3"]
+    if explicit_first:
+        fields.reverse()
+    source = "a: &a {kk: 1}\nb: &b {kk: 2}\ntarget:\n" + "\n".join(fields)
+
+    assert yaml.load(source, Loader=Loader)["target"] == {"kk": 3}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_nested_merge_preserves_earlier_source_override(Loader):
+    source = """
+base: &base {kk: 1, base_only: 4}
+override: &override {kk: 2}
+combined: &combined
+  <<: [*override, *base]
+target:
+  <<: [*base, *combined]
+"""
+
+    result = yaml.load(source, Loader=Loader)
+    assert result["combined"] == {"kk": 2, "base_only": 4}
+    assert result["target"] == {"kk": 1, "base_only": 4}
+    assert flatten_mapping_keys(source, "target", Loader).count("base_only") == 1
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_preserves_values_with_shared_scalar_key_node(Loader):
+    source = """
+a: &a {&key kk: 1}
+b: &b {*key: 2}
+target:
+  <<: [*a, *b]
+"""
+
+    assert yaml.load(source, Loader=Loader)["target"] == {"kk": 1}
