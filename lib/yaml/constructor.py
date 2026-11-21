@@ -16,6 +16,64 @@ import collections.abc, datetime, base64, binascii, re, sys, types
 class ConstructorError(MarkedYAMLError):
     pass
 
+def _sexagesimal_exceeds_int_digit_limit(parts):
+    # int() refuses a digit string longer than the interpreter limit.
+    # Those components used to go through float(), which still accepts them.
+    limit = getattr(sys, 'get_int_max_str_digits', lambda: 0)()
+    if not limit:
+        return False
+    last = parts[-1]
+    if '.' in last:
+        whole, frac = last.split('.', 1)
+        checked = list(parts[:-1])
+        checked.append(whole or '0')
+        if frac:
+            checked.append(frac)
+    else:
+        checked = parts
+    for part in checked:
+        if len(part) > limit:
+            return True
+    return False
+
+def _plain_sexagesimal(parts):
+    # Digits only, with an optional fraction on the last component.
+    # Exponents, signs, and empty components stay on the float() path.
+    if not parts or not parts[-1]:
+        return False
+    for part in parts[:-1]:
+        if not part.isdigit():
+            return False
+    last = parts[-1]
+    if last.isdigit():
+        return not _sexagesimal_exceeds_int_digit_limit(parts)
+    if last.count('.') != 1:
+        return False
+    whole, frac = last.split('.')
+    if whole and not whole.isdigit():
+        return False
+    if frac and not frac.isdigit():
+        return False
+    if not (whole or frac):
+        return False
+    return not _sexagesimal_exceeds_int_digit_limit(parts)
+
+def _exact_sexagesimal_float(parts):
+    frac = ''
+    if '.' in parts[-1]:
+        whole, frac = parts[-1].split('.', 1)
+        parts = parts[:-1] + [whole or '0']
+    scale = 10**len(frac) if frac else 1
+    total = 0
+    for part in parts:
+        total = total*60 + int(part)
+    if frac:
+        total = total*scale + int(frac)
+    try:
+        return total / scale
+    except OverflowError:
+        return float('inf')
+
 class BaseConstructor:
 
     yaml_constructors = {}
@@ -283,13 +341,20 @@ class SafeConstructor(BaseConstructor):
         elif value == '.nan':
             return self.nan_value
         elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
+            parts = value.split(':')
+            # Sum a plain sexagesimal value exactly, then round once.
+            # float() on each ':' component rounds twice and can miss the
+            # nearest value that one decimal literal would produce.
+            if _plain_sexagesimal(parts):
+                value = _exact_sexagesimal_float(parts)
+            else:
+                digits = [float(part) for part in parts]
+                digits.reverse()
+                base = 1
+                value = 0.0
+                for digit in digits:
+                    value += digit*base
+                    base *= 60
             return sign*value
         else:
             return sign*float(value)
