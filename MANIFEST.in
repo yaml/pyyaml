@@ -6,3 +6,4 @@ recursive-include examples *.py *.cfg *.yaml
 recursive-include tests/legacy_tests/ *.py
 recursive-include tests/legacy_tests/data *
 recursive-include yaml *
+graft rust

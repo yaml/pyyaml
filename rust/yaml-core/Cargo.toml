@@ -1,0 +1,12 @@
+[package]
+name = "yaml-scan-core"
+version = "0.1.0"
+edition = "2021"
+description = "Pure-Rust YAML 1.1 scan engine (port of PyYAML's pure-Python scanner); no Python dependency"
+license = "MIT"
+repository = "https://github.com/yaml/pyyaml"
+homepage = "https://github.com/yaml/pyyaml"
+
+[lib]
+name = "yaml_scan_core"
+crate-type = ["rlib"]

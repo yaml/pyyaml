@@ -329,6 +329,35 @@ if bdist_wheel:
     cmdclass['bdist_wheel'] = bdist_wheel
 
 
+# --- Optional Rust scanner core -------------------------------------------
+# `yaml._rust` is an opt-in PyO3 accelerator for `yaml.scan`: it speeds the
+# pure-Python scan path with zero behavior change (the scanner falls back to
+# the pure-Python implementation when the module is absent). It is built only
+# when setuptools-rust is installed and a Rust toolchain is available; every
+# other configuration skips it with a warning, exactly like the optional
+# libyaml extension above falls back to pure Python.
+# Accelerated build: `pip install setuptools-rust`, then
+# `pip install --no-build-isolation .` (build isolation would hide both
+# setuptools-rust and cargo from the backend).
+rust_extensions = []
+try:
+    from setuptools_rust import Binding as _RustBinding
+    from setuptools_rust import RustExtension as _RustExtension
+except ImportError:
+    log.warn("setuptools-rust is not installed: skipping optional Rust scanner core (yaml._rust)")
+else:
+    if shutil.which("cargo") is None:
+        log.warn("cargo not found: skipping optional Rust scanner core (yaml._rust)")
+    else:
+        rust_extensions = [
+            _RustExtension(
+                "yaml._rust",
+                path="rust/Cargo.toml",
+                binding=_RustBinding.PyO3,
+            )
+        ]
+
+
 if __name__ == '__main__':
 
     setup(
@@ -356,4 +385,6 @@ if __name__ == '__main__':
         distclass=Distribution,
         cmdclass=cmdclass,
         python_requires='>=3.8',
+        # Passed only when non-empty so pure-Python builds stay warning-free.
+        **({'rust_extensions': rust_extensions} if rust_extensions else {}),
     )

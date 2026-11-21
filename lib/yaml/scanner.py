@@ -26,11 +26,138 @@
 
 __all__ = ['Scanner', 'ScannerError']
 
+try:
+    from ._rust import Engine as _RustEngine, ScanFault as _RustScanFault, \
+        UriFault as _RustUriFault
+    _HAVE_RUST = True
+except ImportError:
+    _HAVE_RUST = False
+
 from .error import MarkedYAMLError
 from .tokens import *
 
 class ScannerError(MarkedYAMLError):
     pass
+
+if _HAVE_RUST:
+    from .error import Mark
+
+
+    def _drain_reader_text(reader):
+        """Read the whole stream through the `Reader`, preserving exact
+        `ReaderError` behavior. Returns `(text, mark_text)` where `mark_text`
+        mirrors `get_mark` buffer semantics (`None` for stream-backed readers).
+        """
+        while reader.raw_buffer is not None:
+            reader.update(len(reader.buffer) + 8192)
+        if reader.buffer.endswith('\0'):
+            text = reader.buffer[:-1]
+        else:
+            text = reader.buffer
+        if reader.stream is None:
+            mark_text = reader.buffer
+        else:
+            mark_text = None
+        reader.raw_buffer = None
+        reader.eof = True
+        return text, mark_text
+
+
+    def _make_mark(name, mark_text, triple):
+        index, line, column = triple
+        if mark_text is None:
+            return Mark(name, index, line, column, None, None)
+        return Mark(name, index, line, column, mark_text, index)
+
+
+    def _render(template, args):
+        return template % tuple(args)
+
+
+    def _raise_scan_fault(name, mark_text, payload):
+        ctx_tpl, ctx_args, ctx_mark, prob_tpl, prob_args, prob_mark = payload
+        if ctx_tpl is None:
+            context, context_mark = None, None
+        else:
+            context = _render(ctx_tpl, ctx_args)
+            if ctx_mark is None:
+                context_mark = None
+            else:
+                context_mark = _make_mark(name, mark_text, ctx_mark)
+        problem = _render(prob_tpl, prob_args)
+        raise ScannerError(
+            context, context_mark, problem, _make_mark(name, mark_text, prob_mark))
+
+
+    def _raise_uri_fault(name, mark_text, payload):
+        codes, uri_name, start_triple, mark_triple = payload
+        start_mark = _make_mark(name, mark_text, start_triple)
+        mark = _make_mark(name, mark_text, mark_triple)
+        try:
+            bytes(codes).decode('utf-8')
+        except UnicodeDecodeError as exc:
+            raise ScannerError(
+                "while scanning a %s" % uri_name, start_mark, str(exc), mark)
+        raise ScannerError(
+            "while scanning a %s" % uri_name, start_mark,
+            "invalid UTF-8 sequence", mark)
+
+
+    def _build_token(name, mark_text, desc):
+        tag, s1, s2, s3, flag, marks = desc
+        start_mark = _make_mark(name, mark_text, marks[0])
+        end_mark = _make_mark(name, mark_text, marks[1])
+        if tag == 0:
+            return StreamStartToken(start_mark, end_mark,
+                    encoding=s1 or None)
+        if tag == 1:
+            return StreamEndToken(start_mark, end_mark)
+        if tag == 2:
+            if s1 == 'YAML':
+                value = (int(s2), int(s3))
+            elif s1 == 'TAG':
+                value = (s2, s3)
+            else:
+                value = None
+            return DirectiveToken(s1, value, start_mark, end_mark)
+        if tag == 3:
+            return DocumentStartToken(start_mark, end_mark)
+        if tag == 4:
+            return DocumentEndToken(start_mark, end_mark)
+        if tag == 5:
+            return BlockSequenceStartToken(start_mark, end_mark)
+        if tag == 6:
+            return BlockMappingStartToken(start_mark, end_mark)
+        if tag == 7:
+            return BlockEndToken(start_mark, end_mark)
+        if tag == 8:
+            return FlowSequenceStartToken(start_mark, end_mark)
+        if tag == 9:
+            return FlowMappingStartToken(start_mark, end_mark)
+        if tag == 10:
+            return FlowSequenceEndToken(start_mark, end_mark)
+        if tag == 11:
+            return FlowMappingEndToken(start_mark, end_mark)
+        if tag == 12:
+            return BlockEntryToken(start_mark, end_mark)
+        if tag == 13:
+            return FlowEntryToken(start_mark, end_mark)
+        if tag == 14:
+            return KeyToken(start_mark, end_mark)
+        if tag == 15:
+            return ValueToken(start_mark, end_mark)
+        if tag == 16:
+            return AliasToken(s1, start_mark, end_mark)
+        if tag == 17:
+            return AnchorToken(s1, start_mark, end_mark)
+        if tag == 18:
+            handle = s1 if flag else None
+            return TagToken((handle, s2), start_mark, end_mark)
+        if tag == 19:
+            return ScalarToken(s1, flag, start_mark, end_mark,
+                    style=s2 or None)
+        raise AssertionError("unknown token tag %r" % (tag,))
+
 
 class SimpleKey:
     # See below simple keys treatment.
@@ -108,9 +235,32 @@ class Scanner:
         # '[', or '{' tokens.
         self.possible_simple_keys = {}
 
+        # Optional Rust accelerator (`yaml._rust`): drain the reader once and
+        # serve check_token/peek_token/get_token from the engine below. The
+        # pure-Python state above stays initialized but unused on this path;
+        # without the extension module nothing changes.
+        self._rust_active = False
+        if _HAVE_RUST:
+            text, mark_text = _drain_reader_text(self)
+            self._rust_text = text
+            self._rust_mark_text = mark_text
+            self._rust_engine = _RustEngine(text, self.encoding)
+            self._rust_head = None
+            self._rust_active = True
+
     # Public methods.
 
     def check_token(self, *choices):
+        if self._rust_active:
+            tok = self._peek_rust()
+            if tok is None:
+                return False
+            if not choices:
+                return True
+            for choice in choices:
+                if isinstance(tok, choice):
+                    return True
+            return False
         # Check if the next token is one of the given types.
         while self.need_more_tokens():
             self.fetch_more_tokens()
@@ -123,6 +273,8 @@ class Scanner:
         return False
 
     def peek_token(self):
+        if self._rust_active:
+            return self._peek_rust()
         # Return the next token, but do not delete if from the queue.
         # Return None if no more tokens.
         while self.need_more_tokens():
@@ -133,12 +285,35 @@ class Scanner:
             return None
 
     def get_token(self):
+        if self._rust_active:
+            tok = self._peek_rust()
+            if tok is None:
+                return None
+            self._rust_head = None
+            self._rust_engine.consume_token()
+            return tok
         # Return the next token.
         while self.need_more_tokens():
             self.fetch_more_tokens()
         if self.tokens:
             self.tokens_taken += 1
             return self.tokens.pop(0)
+
+    def _peek_rust(self):
+        if self._rust_head is None:
+            try:
+                desc = self._rust_engine.peek_token()
+            except _RustScanFault as exc:
+                raise _raise_scan_fault(
+                    self.name, self._rust_mark_text, exc.args)
+            except _RustUriFault as exc:
+                raise _raise_uri_fault(
+                    self.name, self._rust_mark_text, exc.args)
+            if desc is None:
+                return None
+            self._rust_head = _build_token(
+                self.name, self._rust_mark_text, desc)
+        return self._rust_head
 
     # Private methods.
 
