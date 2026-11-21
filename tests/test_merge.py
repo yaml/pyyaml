@@ -108,3 +108,61 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     )
 
     assert keys == ["k0", "k1", "k2", "k3"]
+
+
+def load_mapping(source, name, Loader):
+    return yaml.load(source, Loader=Loader)[name]
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["k", "key"])
+def test_sequence_merge_earlier_mapping_wins(Loader, key):
+    target = load_mapping(
+        """
+base: &base {%(key)s: base}
+override: &override {%(key)s: override}
+target:
+  <<: [*override, *base]
+""" % {"key": key},
+        "target",
+        Loader,
+    )
+
+    assert target == {key: "override"}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["k", "key"])
+def test_sequence_merge_earlier_mapping_wins_over_nested_merge(Loader, key):
+    target = load_mapping(
+        """
+base: &base {%(key)s: base}
+derived: &derived
+  <<: *base
+  %(key)s: derived
+target:
+  <<: [*base, *derived]
+""" % {"key": key},
+        "target",
+        Loader,
+    )
+
+    assert target == {key: "base"}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["k", "key"])
+def test_later_direct_merge_wins(Loader, key):
+    target = load_mapping(
+        """
+base: &base {%(key)s: base}
+override: &override {%(key)s: override}
+target:
+  <<: *base
+  <<: *override
+""" % {"key": key},
+        "target",
+        Loader,
+    )
+
+    assert target == {key: "override"}
