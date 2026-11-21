@@ -11,7 +11,13 @@ __all__ = [
 from .error import *
 from .nodes import *
 
-import collections.abc, datetime, base64, binascii, re, sys, types
+import collections.abc, datetime, base64, binascii, re, sys, threading, types
+
+# Guards the copy-on-write of the class-level registries below.  The copy and
+# the assignment that publishes it are two separate operations; without this
+# lock two threads can each copy the inherited dict and the second assignment
+# discards the first thread's registration.
+_registry_lock = threading.RLock()
 
 class ConstructorError(MarkedYAMLError):
     pass
@@ -158,15 +164,17 @@ class BaseConstructor:
 
     @classmethod
     def add_constructor(cls, tag, constructor):
-        if not 'yaml_constructors' in cls.__dict__:
-            cls.yaml_constructors = cls.yaml_constructors.copy()
-        cls.yaml_constructors[tag] = constructor
+        with _registry_lock:
+            if not 'yaml_constructors' in cls.__dict__:
+                cls.yaml_constructors = cls.yaml_constructors.copy()
+            cls.yaml_constructors[tag] = constructor
 
     @classmethod
     def add_multi_constructor(cls, tag_prefix, multi_constructor):
-        if not 'yaml_multi_constructors' in cls.__dict__:
-            cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
-        cls.yaml_multi_constructors[tag_prefix] = multi_constructor
+        with _registry_lock:
+            if not 'yaml_multi_constructors' in cls.__dict__:
+                cls.yaml_multi_constructors = cls.yaml_multi_constructors.copy()
+            cls.yaml_multi_constructors[tag_prefix] = multi_constructor
 
 class SafeConstructor(BaseConstructor):
 
