@@ -255,6 +255,14 @@ class SafeConstructor(BaseConstructor):
             return sign*int(value, 8)
         elif ':' in value:
             digits = [int(part) for part in value.split(':')]
+            # Building the value below is quadratic in the number of parts,
+            # so apply the same limit int() enforces on decimal strings.
+            # Each base 60 part adds fewer than two decimal digits.
+            max_str_digits = getattr(sys, 'get_int_max_str_digits', lambda: 0)()
+            if max_str_digits and len(digits) > max_str_digits // 2:
+                raise ConstructorError(None, None,
+                        "sexagesimal integer has too many parts (%d)"
+                        % len(digits), node.start_mark)
             digits.reverse()
             base = 1
             value = 0
