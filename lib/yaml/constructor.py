@@ -302,10 +302,8 @@ class SafeConstructor(BaseConstructor):
                     "failed to convert base64 data into ascii: %s" % exc,
                     node.start_mark)
         try:
-            if hasattr(base64, 'decodebytes'):
-                return base64.decodebytes(value)
-            else:
-                return base64.decodestring(value)
+            value = b''.join(value.split())
+            return base64.b64decode(value, validate=True)
         except binascii.Error as exc:
             raise ConstructorError(None, None,
                     "failed to decode base64 data: %s" % exc, node.start_mark)
