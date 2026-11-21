@@ -1,5 +1,5 @@
 
-__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'Loader', 'UnsafeLoader']
+__all__ = ['BaseLoader', 'FullLoader', 'SafeLoader', 'RestrictedSafeLoader', 'Loader', 'UnsafeLoader']
 
 from .reader import *
 from .scanner import *
@@ -35,6 +35,16 @@ class SafeLoader(Reader, Scanner, Parser, Composer, SafeConstructor, Resolver):
         Scanner.__init__(self)
         Parser.__init__(self)
         Composer.__init__(self)
+        SafeConstructor.__init__(self)
+        Resolver.__init__(self)
+
+class RestrictedSafeLoader(Reader, Scanner, Parser, RestrictedComposer, SafeConstructor, Resolver):
+
+    def __init__(self, stream):
+        Reader.__init__(self, stream)
+        Scanner.__init__(self)
+        Parser.__init__(self)
+        RestrictedComposer.__init__(self)
         SafeConstructor.__init__(self)
         Resolver.__init__(self)
 
