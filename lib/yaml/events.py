@@ -40,7 +40,8 @@ class StreamStartEvent(Event):
         self.encoding = encoding
 
 class StreamEndEvent(Event):
-    pass
+    def __init__(self, explicit_end=None):
+        self.explicit_end = explicit_end
 
 class DocumentStartEvent(Event):
     def __init__(self, start_mark=None, end_mark=None,
