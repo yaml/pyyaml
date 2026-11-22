@@ -235,35 +235,51 @@ class SafeConstructor(BaseConstructor):
 
     def construct_yaml_bool(self, node):
         value = self.construct_scalar(node)
+        if value.lower() not in self.bool_values:
+            raise ConstructorError("while constructing a bool", node.start_mark,
+                    "found a value that is not a YAML boolean: %r" % (value,), node.end_mark)
         return self.bool_values[value.lower()]
 
     def construct_yaml_int(self, node):
         value = self.construct_scalar(node)
         value = value.replace('_', '')
+        if not value:
+            raise ConstructorError("while constructing an integer", node.start_mark,
+                    "found an empty value", node.end_mark)
         sign = +1
         if value[0] == '-':
             sign = -1
         if value[0] in '+-':
             value = value[1:]
-        if value == '0':
-            return 0
-        elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
-        elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
-        elif value[0] == '0':
-            return sign*int(value, 8)
-        elif ':' in value:
-            digits = [int(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*int(value)
+        try:
+            if value == '0':
+                return 0
+            elif value.startswith('0b'):
+                return sign*int(value[2:], 2)
+            elif value.startswith('0x'):
+                return sign*int(value[2:], 16)
+            elif value[0] == '0':
+                return sign*int(value, 8)
+            elif ':' in value:
+                digits = [int(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                total = 0
+                for digit in digits:
+                    total += digit*base
+                    base *= 60
+                return sign*total
+            else:
+                return sign*int(value)
+        except (ValueError, IndexError) as exc:
+            # `int()` refuses a numeral this host will not convert (CPython caps decimal
+            # conversion at sys.get_int_max_str_digits(), 4300 digits by default) and a
+            # malformed body like ``0b`` or ``0x``. Both are the document's fault, so both
+            # are a ConstructorError -- the documented refusal -- and not a bare ValueError
+            # a caller catching yaml.YAMLError would miss.
+            raise ConstructorError("while constructing an integer", node.start_mark,
+                    "found a value that cannot be represented as a Python int: %s" % exc,
+                    node.end_mark)
 
     inf_value = 1e300
     while inf_value != inf_value*inf_value:
@@ -273,26 +289,34 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_float(self, node):
         value = self.construct_scalar(node)
         value = value.replace('_', '').lower()
+        if not value:
+            raise ConstructorError("while constructing a float", node.start_mark,
+                    "found an empty value", node.end_mark)
         sign = +1
         if value[0] == '-':
             sign = -1
         if value[0] in '+-':
             value = value[1:]
-        if value == '.inf':
-            return sign*self.inf_value
-        elif value == '.nan':
-            return self.nan_value
-        elif ':' in value:
-            digits = [float(part) for part in value.split(':')]
-            digits.reverse()
-            base = 1
-            value = 0.0
-            for digit in digits:
-                value += digit*base
-                base *= 60
-            return sign*value
-        else:
-            return sign*float(value)
+        try:
+            if value == '.inf':
+                return sign*self.inf_value
+            elif value == '.nan':
+                return self.nan_value
+            elif ':' in value:
+                digits = [float(part) for part in value.split(':')]
+                digits.reverse()
+                base = 1
+                total = 0.0
+                for digit in digits:
+                    total += digit*base
+                    base *= 60
+                return sign*total
+            else:
+                return sign*float(value)
+        except (ValueError, IndexError) as exc:
+            raise ConstructorError("while constructing a float", node.start_mark,
+                    "found a value that cannot be represented as a Python float: %s" % exc,
+                    node.end_mark)
 
     def construct_yaml_binary(self, node):
         try:
@@ -325,33 +349,45 @@ class SafeConstructor(BaseConstructor):
     def construct_yaml_timestamp(self, node):
         value = self.construct_scalar(node)
         match = self.timestamp_regexp.match(node.value)
+        if match is None:
+            raise ConstructorError("while constructing a timestamp", node.start_mark,
+                    "expected a timestamp, but found %r" % (node.value,), node.end_mark)
         values = match.groupdict()
         year = int(values['year'])
         month = int(values['month'])
         day = int(values['day'])
-        if not values['hour']:
-            return datetime.date(year, month, day)
-        hour = int(values['hour'])
-        minute = int(values['minute'])
-        second = int(values['second'])
-        fraction = 0
-        tzinfo = None
-        if values['fraction']:
-            fraction = values['fraction'][:6]
-            while len(fraction) < 6:
-                fraction += '0'
-            fraction = int(fraction)
-        if values['tz_sign']:
-            tz_hour = int(values['tz_hour'])
-            tz_minute = int(values['tz_minute'] or 0)
-            delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
-            if values['tz_sign'] == '-':
-                delta = -delta
-            tzinfo = datetime.timezone(delta)
-        elif values['tz']:
-            tzinfo = datetime.timezone.utc
-        return datetime.datetime(year, month, day, hour, minute, second, fraction,
-                                 tzinfo=tzinfo)
+        try:
+            if not values['hour']:
+                return datetime.date(year, month, day)
+            hour = int(values['hour'])
+            minute = int(values['minute'])
+            second = int(values['second'])
+            fraction = 0
+            tzinfo = None
+            if values['fraction']:
+                fraction = values['fraction'][:6]
+                while len(fraction) < 6:
+                    fraction += '0'
+                fraction = int(fraction)
+            if values['tz_sign']:
+                tz_hour = int(values['tz_hour'])
+                tz_minute = int(values['tz_minute'] or 0)
+                delta = datetime.timedelta(hours=tz_hour, minutes=tz_minute)
+                if values['tz_sign'] == '-':
+                    delta = -delta
+                tzinfo = datetime.timezone(delta)
+            elif values['tz']:
+                tzinfo = datetime.timezone.utc
+            return datetime.datetime(year, month, day, hour, minute, second, fraction,
+                                     tzinfo=tzinfo)
+        except (ValueError, OverflowError) as exc:
+            # The timestamp grammar admits digit pairs the calendar does not: month 13,
+            # day 00, second 60 (a leap second, which YAML 1.1 permits and datetime does
+            # not carry), a year 0000, or a zone offset of 24 hours or more. Each is a
+            # refusal, and a refusal is a ConstructorError.
+            raise ConstructorError("while constructing a timestamp", node.start_mark,
+                    "found a value outside the range of Python's datetime types: %s" % exc,
+                    node.end_mark)
 
     def construct_yaml_omap(self, node):
         # Note: we do not check for duplicate keys, because it's too
