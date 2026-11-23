@@ -179,7 +179,6 @@ class SafeConstructor(BaseConstructor):
 
     def flatten_mapping(self, node):
         merge = []
-        merge_key_ids = set()  # anchor referent node objects should have reference equality here
         index = 0
         while index < len(node.value):
             key_node, value_node = node.value[index]
@@ -187,11 +186,9 @@ class SafeConstructor(BaseConstructor):
                 del node.value[index]
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
-                    for pair in value_node.value:
-                        if (key_id := id(pair[0].value)) not in merge_key_ids:
-                            merge_key_ids.add(key_id)
-                            merge.append(pair)
+                    merge.extend(value_node.value)
                 elif isinstance(value_node, SequenceNode):
+                    submerge = []
                     for subnode in value_node.value:
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
@@ -199,10 +196,10 @@ class SafeConstructor(BaseConstructor):
                                     "expected a mapping for merging, but found %s"
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
-                        for pair in subnode.value:
-                            if (key_id := id(pair[0].value)) not in merge_key_ids:
-                                merge_key_ids.add(key_id)
-                                merge.append(pair)
+                        submerge.append(subnode.value)
+                    submerge.reverse()
+                    for value in submerge:
+                        merge.extend(value)
                 else:
                     raise ConstructorError("while constructing a mapping", node.start_mark,
                             "expected a mapping or list of mappings for merging, but found %s"
@@ -213,7 +210,53 @@ class SafeConstructor(BaseConstructor):
             else:
                 index += 1
         if merge:
-            node.value = merge + node.value
+            node.value = self.deduplicate_merge_pairs(merge) + node.value
+
+    def deduplicate_merge_pairs(self, merge):
+        # A mapping that is merged through several aliases brings the same
+        # key node more than once.  Keeping every copy makes the merged lists
+        # grow exponentially (#897), so each key node is kept only once.
+        # Later pairs override earlier ones when the mapping is constructed,
+        # and the kept copy must give the same mapping: a repeated key node
+        # stays at its first position, and the pairs in between with an equal
+        # scalar key are dropped, since the repeated pair overrides them.
+        # Keys that cannot be compared stay as they are; for those the earlier
+        # copy is dropped and the pair moves to the end instead.
+        result = []
+        positions = {}      # id(key node) -> index in result
+        scalar_keys = {}    # constructed scalar key -> indexes in result
+        last_other = -1     # index of the last key that cannot be compared
+        for pair in merge:
+            key_node = pair[0]
+            key = None
+            if isinstance(key_node, ScalarNode):
+                key = (self.construct_object(key_node),)
+                try:
+                    hash(key)
+                except TypeError:
+                    key = None
+            first = positions.get(id(key_node))
+            if first is not None:
+                if key is not None:
+                    kept = []
+                    for index in scalar_keys[key]:
+                        if index <= first:
+                            kept.append(index)
+                        elif result[index] is not None:
+                            del positions[id(result[index][0])]
+                            result[index] = None
+                    scalar_keys[key] = kept
+                    continue
+                if last_other <= first:
+                    continue
+                result[first] = None
+            positions[id(key_node)] = len(result)
+            if key is not None:
+                scalar_keys.setdefault(key, []).append(len(result))
+            else:
+                last_other = len(result)
+            result.append(pair)
+        return [pair for pair in result if pair is not None]
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
