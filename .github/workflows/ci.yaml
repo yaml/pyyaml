@@ -182,7 +182,7 @@ jobs:
           - { platform: musllinux_1_2, arch: x86_64, spec: cp314t, omit: ${{ env.skip_ci_redundant_jobs }}  }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp315 }
           - { platform: musllinux_1_2, arch: x86_64, spec: cp315t }
-          
+
           - { platform: musllinux_1_2, arch: aarch64, spec: cp310, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp311, omit: ${{ env.skip_ci_redundant_jobs }} }
           - { platform: musllinux_1_2, arch: aarch64, spec: cp312, omit: ${{ env.skip_ci_redundant_jobs }} }
@@ -248,7 +248,7 @@ jobs:
         python3 -m pip install -U --user "${{ matrix.cibw_version || 'cibuildwheel' }}"
 
         mkdir pyyaml
-        
+
         tar zxf ${{ steps.fetch_sdist.outputs.download-path }}/pyyaml*.tar.gz --strip-components=1 -C pyyaml
 
         cat << 'EOF' > build_config.toml
@@ -670,8 +670,59 @@ jobs:
         if-no-files-found: error
       if: ${{ env.skip_artifact_upload != 'true' }}
 
+  mobile_pyyaml:
+    needs: [python_sdist]
+    name: pyyaml ${{ matrix.platform }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - platform: ios
+          runs-on: macos-26
+          archs: all
+        - platform: android
+          runs-on: ubuntu-26.04
+          archs: all
+
+    steps:
+    - name: fetch sdist artifact
+      id: fetch_sdist
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ needs.python_sdist.outputs.artifact_name }}
+
+    - name: Install python
+      uses: actions/setup-python@v7
+      with:
+        python-version: 3.x
+
+    - name: Build/Test/Package
+      env:
+        CIBW_ARCHS: ${{ matrix.archs }}
+        CIBW_BUILD_VERBOSITY: 1
+      run: |
+        set -eux
+        python3 -V
+        python3 -m pip install -U "cibuildwheel>=4.3.5"
+        mkdir pyyaml
+
+        tar zxf ${{ steps.fetch_sdist.outputs.download-path }}/pyyaml*.tar.gz --strip-components=1 -C pyyaml
+
+        # run from the project dir; test-sources are relative to the cwd
+        cd pyyaml
+        python3 -m cibuildwheel --platform ${{ matrix.platform }} --output-dir ../dist
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: wheels-${{ matrix.platform }}
+        path: dist/*.whl
+        if-no-files-found: error
+      if: ${{ env.skip_artifact_upload != 'true' }}
+
   merge_artifacts:
-    needs: [python_sdist, macos_pyyaml, linux_pyyaml, windows_pyyaml]
+    needs: [python_sdist, macos_pyyaml, linux_pyyaml, windows_pyyaml, mobile_pyyaml]
     runs-on: ubuntu-26.04
     steps:
     - name: merge all artifacts
@@ -688,6 +739,7 @@ jobs:
     - linux_pyyaml
     - macos_pyyaml
     - windows_pyyaml
+    - mobile_pyyaml
     - merge_artifacts
     runs-on: ubuntu-latest
     steps:
