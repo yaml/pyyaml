@@ -5,7 +5,9 @@ For a complete changelog, see:
 
 7.0.0.dev0 (TBD)
 
-* TBD
+* Remove `Loader` class as an alias to `UnsafeLoader`
+* Add warning messages when using `UnsafeLoader`, `CUnsafeLoader`, `unsafe_load()`, and `unsafe_load_all()`
+* Change default loader in `scan()`, `parse()`, `compose()`, and `compose_all()` from `UnsafeLoader` to `SafeLoader`
 
 6.0.2 (2024-08-06)
 

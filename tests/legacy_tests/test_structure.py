@@ -38,7 +38,7 @@ def test_structure(data_filename, structure_filename, verbose=False):
         nodes2 = eval(file.read())
     try:
         with open(data_filename, 'rb') as file:
-            loader = yaml.Loader(file)
+            loader = yaml.UnsafeLoader(file)
             while loader.check_event():
                 if loader.check_event(
                     yaml.StreamStartEvent, yaml.StreamEndEvent,
@@ -144,9 +144,9 @@ test_composer.unittest = ['.data', '.canonical']
 def _make_loader():
     global MyLoader
 
-    class MyLoader(yaml.Loader):
+    class MyLoader(yaml.UnsafeLoader):
         def construct_sequence(self, node):
-            return tuple(yaml.Loader.construct_sequence(self, node))
+            return tuple(yaml.UnsafeLoader.construct_sequence(self, node))
         def construct_mapping(self, node):
             pairs = self.construct_pairs(node)
             pairs.sort(key=(lambda i: str(i)))
