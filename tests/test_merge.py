@@ -108,3 +108,55 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     )
 
     assert keys == ["k0", "k1", "k2", "k3"]
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["x", "a_longer_key_name"])
+def test_merge_keeps_override_of_merged_source(Loader, key):
+    # The explicit value in the merged mapping must win, whatever the key's
+    # length (string interning used to change the result).
+    source = "t: &t {x: 0}\na: {b: &s {<<: *t, x: 1}}\nc: {<<: *s}\n"
+    data = yaml.load(source.replace("x", key), Loader=Loader)
+
+    assert data["c"] == {key: 1}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+@pytest.mark.parametrize("key", ["a", "a_longer_key_name"])
+def test_merge_sequence_earlier_source_wins(Loader, key):
+    source = "m: {<<: [{a: 1}, {a: 2}]}"
+    data = yaml.load(source.replace("a", key), Loader=Loader)
+
+    assert data["m"] == {key: 1}
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_repeated_source_keeps_value_and_key_order(Loader):
+    # base is merged both directly and through derived; base comes first in
+    # the list, so its x wins, and the keys keep their first position.
+    data = yaml.load(
+        """
+base: &base {x: 0, z: 1}
+derived: &derived {<<: *base, x: 1, y: 2}
+target: {<<: [*base, *derived]}
+""",
+        Loader=Loader,
+    )
+
+    assert list(data["target"].items()) == [("x", 0), ("z", 1), ("y", 2)]
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_repeated_source_with_equal_non_string_keys(Loader):
+    # 0x1, 01 and 1 are the same int key.
+    data = yaml.load(
+        """
+a0: &a0 {0x1: 15}
+a1: &a1 {01: 23, <<: [*a0, *a0]}
+a2: &a2 {1: 93}
+target: {<<: [*a0, *a2, *a2, *a1]}
+""",
+        Loader=Loader,
+    )
+
+    assert data["target"] == {1: 15}
