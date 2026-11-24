@@ -1,8 +1,64 @@
 [build-system]
 requires = [
-    "setuptools",  # FIXME: declare min/max setuptools versions?
+    "setuptools >= 77.0.1",  # PEP 621 and PEP 639 support
     "Cython; python_version < '3.13'",
     "Cython>=3.0; python_version >= '3.13'"
 ]
 backend-path = ["packaging"]
 build-backend = "_pyyaml_pep517"
+
+[project]
+name = "PyYAML"
+version = "7.0.0.dev0"
+description = "YAML parser and emitter for Python"
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Cython",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup",
+]
+requires-python = ">=3.8"
+
+[[project.authors]]
+name = "Kirill Simonov"
+email = "xi@resolvent.net"
+
+[project.urls]
+Homepage = "https://pyyaml.org/"
+Download = "https://pypi.org/project/PyYAML/"
+"Bug Tracker" = "https://github.com/yaml/pyyaml/issues"
+CI = "https://github.com/yaml/pyyaml/actions"
+Documentation = "https://pyyaml.org/wiki/PyYAMLDocumentation"
+"Mailing lists" = "http://lists.sourceforge.net/lists/listinfo/yaml-core"
+"Source Code" = "https://github.com/yaml/pyyaml"
+
+[project.readme]
+text = """\
+YAML is a data serialization format designed for human readability
+and interaction with scripting languages.  PyYAML is a YAML parser
+and emitter for Python.
+
+PyYAML features a complete YAML 1.1 parser, Unicode support, pickle
+support, capable extension API, and sensible error messages.  PyYAML
+supports standard YAML tags and provides Python-specific tags that
+allow to represent an arbitrary Python object.
+
+PyYAML is applicable for a broad range of tasks from complex
+configuration files to object serialization and persistence."""
+content-type = "text/x-rst"

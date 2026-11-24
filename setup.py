@@ -1,51 +1,4 @@
-
-NAME = 'PyYAML'
-VERSION = '7.0.0.dev0'
-DESCRIPTION = "YAML parser and emitter for Python"
-LONG_DESCRIPTION = """\
-YAML is a data serialization format designed for human readability
-and interaction with scripting languages.  PyYAML is a YAML parser
-and emitter for Python.
-
-PyYAML features a complete YAML 1.1 parser, Unicode support, pickle
-support, capable extension API, and sensible error messages.  PyYAML
-supports standard YAML tags and provides Python-specific tags that
-allow to represent an arbitrary Python object.
-
-PyYAML is applicable for a broad range of tasks from complex
-configuration files to object serialization and persistence."""
-AUTHOR = "Kirill Simonov"
-AUTHOR_EMAIL = 'xi@resolvent.net'
-LICENSE = "MIT"
 PLATFORMS = "Any"
-URL = "https://pyyaml.org/"
-DOWNLOAD_URL = "https://pypi.org/project/PyYAML/"
-CLASSIFIERS = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Cython",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Text Processing :: Markup",
-]
-PROJECT_URLS = {
-   'Bug Tracker': 'https://github.com/yaml/pyyaml/issues',
-   'CI': 'https://github.com/yaml/pyyaml/actions',
-   'Documentation': 'https://pyyaml.org/wiki/PyYAMLDocumentation',
-   'Mailing lists': 'http://lists.sourceforge.net/lists/listinfo/yaml-core',
-   'Source Code': 'https://github.com/yaml/pyyaml',
-}
 
 LIBYAML_CHECK = """
 #include <yaml.h>
@@ -332,18 +285,7 @@ if bdist_wheel:
 if __name__ == '__main__':
 
     setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        license=LICENSE,
         platforms=PLATFORMS,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        classifiers=CLASSIFIERS,
-        project_urls=PROJECT_URLS,
 
         package_dir={'': 'lib'},
         packages=['yaml', '_yaml'],
@@ -355,5 +297,4 @@ if __name__ == '__main__':
 
         distclass=Distribution,
         cmdclass=cmdclass,
-        python_requires='>=3.8',
     )
