@@ -188,7 +188,7 @@ class SafeConstructor(BaseConstructor):
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
                     for pair in value_node.value:
-                        if (key_id := id(pair[0].value)) not in merge_key_ids:
+                        if (key_id := id(pair[0])) not in merge_key_ids:
                             merge_key_ids.add(key_id)
                             merge.append(pair)
                 elif isinstance(value_node, SequenceNode):
@@ -200,7 +200,7 @@ class SafeConstructor(BaseConstructor):
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
                         for pair in subnode.value:
-                            if (key_id := id(pair[0].value)) not in merge_key_ids:
+                            if (key_id := id(pair[0])) not in merge_key_ids:
                                 merge_key_ids.add(key_id)
                                 merge.append(pair)
                 else:
