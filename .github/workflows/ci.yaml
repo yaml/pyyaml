@@ -42,6 +42,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.build_sdist.outputs.artifact_name }}
       package_version: ${{ steps.build_sdist.outputs.package_version }}
+      wheel_artifact_name: ${{ steps.build_sdist.outputs.wheel_artifact_name }}
     steps:
     - name: Checkout PyYAML
       uses: actions/checkout@v7
@@ -51,7 +52,7 @@ jobs:
       with:
         python-version: 3.x
 
-    - name: Build sdist
+    - name: Build sdist and pure-python wheel
       id: build_sdist
       env:
         PYYAML_FORCE_CYTHON: 1
@@ -60,10 +61,11 @@ jobs:
         python -V
         python -m pip install build
 
-        python -m build -s .
+        python -m build .
 
-        echo "artifact_name=$(ls ./dist)" >> "$GITHUB_OUTPUT"
-        echo "package_version=$(ls ./dist | sed -En 's/pyyaml-(.+)\.tar\.gz/\1/p')" >> "$GITHUB_OUTPUT"
+        echo "artifact_name=$(cd ./dist && ls *.tar.gz)" >> "$GITHUB_OUTPUT"
+        echo "package_version=$(cd ./dist && ls *.tar.gz | sed -En 's/pyyaml-(.+)\.tar\.gz/\1/p')" >> "$GITHUB_OUTPUT"
+        echo "wheel_artifact_name=$(cd ./dist && ls *-py3-none-any.whl)" >> "$GITHUB_OUTPUT"
 
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v7
@@ -72,6 +74,14 @@ jobs:
         path: dist/${{ steps.build_sdist.outputs.artifact_name }}
         if-no-files-found: error
       # always upload the sdist artifact- all the wheel build jobs require it
+
+    - name: Upload pure-python wheel artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.build_sdist.outputs.wheel_artifact_name }}
+        path: dist/${{ steps.build_sdist.outputs.wheel_artifact_name }}
+        if-no-files-found: error
+      if: ${{ env.skip_artifact_upload != 'true' }}
 
   make_linux_libyaml_matrix:
     runs-on: ubuntu-26.04
