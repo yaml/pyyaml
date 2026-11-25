@@ -6,3 +6,20 @@ requires = [
 ]
 backend-path = ["packaging"]
 build-backend = "_pyyaml_pep517"
+
+# cibuildwheel is configured through the environment in CI for desktop
+# platforms; this configuration is only used for iOS and Android builds.
+[[tool.cibuildwheel.overrides]]
+select = "*-ios_* *-android_*"
+# Cross-compile a static libyaml for the target into build/deps/, and require
+# the extension to be built against it. Paths in config-settings are relative
+# to the project root.
+before-build = "bash {package}/packaging/build/libyaml-mobile.sh"
+environment = { PYYAML_FORCE_CYTHON = "1", PYYAML_FORCE_LIBYAML = "1" }
+config-settings = { pyyaml_build_config = '{"include_dirs": ["build/deps/current/prefix/include"], "library_dirs": ["build/deps/current/prefix/lib"]}' }
+test-sources = ["tests"]
+test-requires = ["pytest"]
+test-command = "python -m pytest tests"
+
+[tool.cibuildwheel.ios]
+xbuild-tools = []
