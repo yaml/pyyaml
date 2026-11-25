@@ -716,7 +716,10 @@ class Scanner:
 
         # KEY(block context):   '?' (' '|'\n')
         else:
-            return self.peek(1) in '\0 \t\r\n\x85\u2028\u2029'
+            if self.pointer + 1 < len(self.buffer):
+                return self.peek(1) in '\0 \t\r\n\x85\u2028\u2029'
+            else:
+                return self.peek() == '\0'
 
     def check_value(self):
 
@@ -726,7 +729,10 @@ class Scanner:
 
         # VALUE(block context): ':' (' '|'\n')
         else:
-            return self.peek(1) in '\0 \t\r\n\x85\u2028\u2029'
+            if self.pointer + 1 < len(self.buffer):
+                return self.peek(1) in '\0 \t\r\n\x85\u2028\u2029'
+            else:
+                return self.peek() == '\0'
 
     def check_plain(self):
 
@@ -935,7 +941,10 @@ class Scanner:
     def scan_tag(self):
         # See the specification for details.
         start_mark = self.get_mark()
-        ch = self.peek(1)
+        if self.pointer + 1 < len(self.buffer):
+            ch = self.peek(1)
+        else:
+            ch = self.peek()
         if ch == '<':
             handle = None
             self.forward(2)
@@ -965,7 +974,10 @@ class Scanner:
                 handle = '!'
                 self.forward()
             suffix = self.scan_tag_uri('tag', start_mark)
-        ch = self.peek()
+        if self.pointer < len(self.buffer):
+            ch = self.peek()
+        else:
+            ch = '\0'
         if ch not in '\0 \r\n\x85\u2028\u2029':
             raise ScannerError("while scanning a tag", start_mark,
                     "expected ' ', but found %r" % ch, self.get_mark())
