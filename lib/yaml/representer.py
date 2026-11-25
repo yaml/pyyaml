@@ -5,7 +5,7 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections, re
 
 class RepresenterError(YAMLError):
     pass
@@ -144,8 +144,11 @@ class SafeRepresenter(BaseRepresenter):
     def represent_none(self, data):
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
+    yaml12_float = re.compile(r"""^(?:[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[eE][-+]?[0-9]+)$""", re.X)
+
     def represent_str(self, data):
-        return self.represent_scalar('tag:yaml.org,2002:str', data)
+        style = "'" if self.yaml12_float.match(data) else None
+        return self.represent_scalar('tag:yaml.org,2002:str', data, style=style)
 
     def represent_binary(self, data):
         if hasattr(base64, 'encodebytes'):

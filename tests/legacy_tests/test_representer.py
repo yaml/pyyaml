@@ -42,3 +42,10 @@ if __name__ == '__main__':
     import test_appliance
     test_appliance.run(globals())
 
+
+def test_scientific_notation_string_is_quoted(verbose=False):
+    import yaml
+    assert yaml.safe_dump("1E6") != "1E6\n...\n"
+    assert yaml.safe_load(yaml.safe_dump("1E6")) == "1E6"
+
+test_scientific_notation_string_is_quoted.unittest = True
