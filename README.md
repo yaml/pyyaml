@@ -5,7 +5,19 @@ A full-featured YAML processing framework for Python
 
 ## Installation
 
-To install, type `python setup.py install`.
+Install the latest release with pip:
+
+```sh
+python -m pip install PyYAML
+```
+
+To install a local source checkout:
+
+```sh
+python -m pip install .
+```
+
+The following options apply to direct builds with `setup.py`.
 
 By default, the `setup.py` script checks whether LibYAML is installed and if
 so, builds and installs LibYAML bindings.
