@@ -51,13 +51,13 @@ def test_flatten_mapping_skips_duplicate_sequence_merge_nodes(Loader):
 base: &base {x: 1, y: 2}
 target:
   <<: [*base, *base]
-  z: 3
+  a: 3
 """,
         "target",
         Loader,
     )
 
-    assert keys == ["x", "y", "z"]
+    assert keys == ["a", "x", "y"]
 
 
 @pytest.mark.parametrize("Loader", loader_classes())
@@ -68,13 +68,13 @@ base: &base {x: 1, y: 2}
 target:
   <<: *base
   <<: *base
-  z: 3
+  a: 3
 """,
         "target",
         Loader,
     )
 
-    assert keys == ["x", "y", "z"]
+    assert keys == ["a", "x", "y"]
 
 
 @pytest.mark.parametrize("Loader", loader_classes())
@@ -96,7 +96,7 @@ target:
         Loader,
     )
 
-    assert keys == ["k0", "k1", "k2", "k3"]
+    assert keys == ["k3", "k2", "k1", "k0"]
 
 
 @pytest.mark.parametrize("Loader", loader_classes())
@@ -108,3 +108,10 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     )
 
     assert keys == ["k0", "k1", "k2", "k3"]
+
+def test_merge_key_spec_order():
+    assert yaml.safe_load("m: {<<: [{sk: 1}, {sk: 2}]}") == dict(m=dict(sk=1))
+
+def test_merge_key_passthru():
+    res = yaml.safe_load("{t: &t {x: 0}, a: {b: &s {<<: *t, x: 1}}, c: {<<: *s}}")
+    assert res['c'] == dict(x=1)
