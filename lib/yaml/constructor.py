@@ -234,9 +234,7 @@ class SafeConstructor(BaseConstructor):
             node.value.pop(index)
 
         # overlay merge sources with new keys
-        for merge_source in merge_sources.values():
-            for n in ((k, v) for k, v in merge_source if not seen(k)):
-                node.value.append(n)
+        node.value.extend(kv for kv in itertools.chain.from_iterable(merge_sources.values()) if not seen(kv[0]))
 
         # skip this process if we encounter this node instance later (e.g., via an alias)
         node._flattened = True
