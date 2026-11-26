@@ -147,7 +147,7 @@ class SafeRepresenter(BaseRepresenter):
     yaml12_float = re.compile(r"""^(?:[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[eE][-+]?[0-9]+)$""", re.X)
 
     def represent_str(self, data):
-        style = "'" if self.yaml12_float.match(data) else None
+        style = "'" if self.default_style is None and self.yaml12_float.match(data) else None
         return self.represent_scalar('tag:yaml.org,2002:str', data, style=style)
 
     def represent_binary(self, data):

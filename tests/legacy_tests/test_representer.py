@@ -49,3 +49,11 @@ def test_scientific_notation_string_is_quoted(verbose=False):
     assert yaml.safe_load(yaml.safe_dump("1E6")) == "1E6"
 
 test_scientific_notation_string_is_quoted.unittest = True
+
+
+def test_scientific_notation_keeps_caller_default_style(verbose=False):
+    import yaml
+    assert yaml.safe_dump({"a": "1e3", "b": "x"}, default_style='"') == '"a": "1e3"\n"b": "x"\n'
+    assert yaml.safe_dump(["1e3"], default_style="|") == "- |-\n  1e3\n"
+
+test_scientific_notation_keeps_caller_default_style.unittest = True
