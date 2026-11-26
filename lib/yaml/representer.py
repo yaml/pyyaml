@@ -223,6 +223,20 @@ class SafeRepresenter(BaseRepresenter):
     def represent_yaml_object(self, tag, data, cls, flow_style=None):
         if hasattr(data, '__getstate__'):
             state = data.__getstate__()
+            if state is None:
+                state = {}
+            else:
+                object_getstate = getattr(object, '__getstate__', None)
+                if (
+                    object_getstate is not None
+                    and getattr(type(data), '__getstate__', None) is object_getstate
+                    and isinstance(state, tuple)
+                    and len(state) == 2
+                ):
+                    dict_state, slot_state = state
+                    state = {} if dict_state is None else dict_state.copy()
+                    if slot_state:
+                        state.update(slot_state)
         else:
             state = data.__dict__.copy()
         return self.represent_mapping(tag, state, flow_style=flow_style)
