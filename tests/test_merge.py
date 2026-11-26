@@ -126,3 +126,16 @@ def test_merge_override_does_not_depend_on_string_interning(Loader):
     assert yaml.load(doc.replace("x", "xx_long_key_name"), Loader=Loader)["c"] == {
         "xx_long_key_name": 1
     }
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_sequence_precedence(Loader):
+    doc = """
+a: &a
+  x: 1
+  y: 10
+b: &b
+  x: 2
+  z: 20
+c:
+  <<: [*a, *b]
+"""
+    assert yaml.load(doc, Loader=Loader)["c"] == {"x": 1, "y": 10, "z": 20}

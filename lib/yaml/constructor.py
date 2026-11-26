@@ -192,7 +192,7 @@ class SafeConstructor(BaseConstructor):
                             merge_key_ids.add(key_id)
                             merge.append(pair)
                 elif isinstance(value_node, SequenceNode):
-                    for subnode in value_node.value:
+                    for subnode in reversed(value_node.value):
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
                                     node.start_mark,
