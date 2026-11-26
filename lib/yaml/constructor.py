@@ -188,11 +188,11 @@ class SafeConstructor(BaseConstructor):
                 if isinstance(value_node, MappingNode):
                     self.flatten_mapping(value_node)
                     for pair in value_node.value:
-                        if (key_id := id(pair[0].value)) not in merge_key_ids:
+                        if (key_id := id(pair[0])) not in merge_key_ids:
                             merge_key_ids.add(key_id)
                             merge.append(pair)
                 elif isinstance(value_node, SequenceNode):
-                    for subnode in value_node.value:
+                    for subnode in reversed(value_node.value):
                         if not isinstance(subnode, MappingNode):
                             raise ConstructorError("while constructing a mapping",
                                     node.start_mark,
@@ -200,7 +200,7 @@ class SafeConstructor(BaseConstructor):
                                     % subnode.id, subnode.start_mark)
                         self.flatten_mapping(subnode)
                         for pair in subnode.value:
-                            if (key_id := id(pair[0].value)) not in merge_key_ids:
+                            if (key_id := id(pair[0])) not in merge_key_ids:
                                 merge_key_ids.add(key_id)
                                 merge.append(pair)
                 else:

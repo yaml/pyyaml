@@ -100,6 +100,15 @@ target:
 
 
 @pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_override_does_not_depend_on_string_interning(Loader):
+    doc = "t: &t {x: 0}\na: {b: &s {<<: *t, x: 1}}\nc: {<<: *s}\n"
+    assert yaml.load(doc, Loader=Loader)["c"] == {"x": 1}
+    assert yaml.load(doc.replace("x", "xx_long_key_name"), Loader=Loader)["c"] == {
+        "xx_long_key_name": 1
+    }
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
 def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     keys = flatten_mapping_keys(
         merge_fanout_source(levels=4, width=4),
@@ -108,3 +117,25 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
     )
 
     assert keys == ["k0", "k1", "k2", "k3"]
+
+
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_override_does_not_depend_on_string_interning(Loader):
+    doc = "t: &t {x: 0}\na: {b: &s {<<: *t, x: 1}}\nc: {<<: *s}\n"
+    assert yaml.load(doc, Loader=Loader)["c"] == {"x": 1}
+    assert yaml.load(doc.replace("x", "xx_long_key_name"), Loader=Loader)["c"] == {
+        "xx_long_key_name": 1
+    }
+@pytest.mark.parametrize("Loader", loader_classes())
+def test_merge_sequence_precedence(Loader):
+    doc = """
+a: &a
+  x: 1
+  y: 10
+b: &b
+  x: 2
+  z: 20
+c:
+  <<: [*a, *b]
+"""
+    assert yaml.load(doc, Loader=Loader)["c"] == {"x": 1, "y": 10, "z": 20}
