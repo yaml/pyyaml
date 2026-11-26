@@ -109,9 +109,27 @@ def test_flatten_mapping_deduplicates_fanout_merge_keys(Loader):
 
     assert keys == ["k0", "k1", "k2", "k3"]
 
+
 def test_merge_key_spec_order():
+    """ Validate that sequence-based merges with conflicting keys behave according to spec. """
     assert yaml.safe_load("m: {<<: [{sk: 1}, {sk: 2}]}") == dict(m=dict(sk=1))
 
+
 def test_merge_key_passthru():
+    """ Validate that stacked merged mappings resolve correctly. """
     res = yaml.safe_load("{t: &t {x: 0}, a: {b: &s {<<: *t, x: 1}}, c: {<<: *s}}")
     assert res['c'] == dict(x=1)
+
+
+def test_tagged_merge_keys():
+    """ Validate various forms of merge keys with implicit/explicit/duplicate merge values. """
+    res = yaml.safe_load("""\
+ref_this: &refthis {from_alias: ok}
+merged:
+  local: abc
+  <<: { from<<: ok }
+  !!merge taggedmerge: { from_taggedmerge: ok }
+  <<: { alsofrom<<: ok }
+  !!merge taggedrefmerge: *refthis
+""")
+    assert set(res['merged'].keys()) == {'local', 'from<<', 'from_taggedmerge', 'alsofrom<<', 'from_alias'}
