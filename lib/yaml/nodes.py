@@ -47,3 +47,4 @@ class SequenceNode(CollectionNode):
 class MappingNode(CollectionNode):
     id = 'mapping'
 
+    _flattened: bool = False

@@ -8,6 +8,9 @@ __all__ = [
     'ConstructorError'
 ]
 
+import itertools
+from typing import Iterable
+
 from .error import *
 from .nodes import *
 
@@ -129,6 +132,18 @@ class BaseConstructor:
         return [self.construct_object(child, deep=deep)
                 for child in node.value]
 
+    def _construct_key(self, mapping_node: MappingNode, key_node: Node, deep: bool=False) -> object:
+        """ Construct a mapping key, ensuring that it is hashable. """
+        key = self.construct_object(key_node, deep=deep)
+
+        try:
+            hash(key)  # structural conformance to Hashable is insufficient; the key must actually hash
+        except Exception:
+            raise ConstructorError("while constructing a mapping", mapping_node.start_mark,
+                                   "found unhashable key", key_node.start_mark)
+
+        return key
+
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
@@ -136,10 +151,7 @@ class BaseConstructor:
                     node.start_mark)
         mapping = {}
         for key_node, value_node in node.value:
-            key = self.construct_object(key_node, deep=deep)
-            if not isinstance(key, collections.abc.Hashable):
-                raise ConstructorError("while constructing a mapping", node.start_mark,
-                        "found unhashable key", key_node.start_mark)
+            key = self._construct_key(node, key_node, deep=deep)
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
         return mapping
@@ -177,43 +189,57 @@ class SafeConstructor(BaseConstructor):
                     return self.construct_scalar(value_node)
         return super().construct_scalar(node)
 
-    def flatten_mapping(self, node):
-        merge = []
-        merge_key_ids = set()  # anchor referent node objects should have reference equality here
-        index = 0
-        while index < len(node.value):
-            key_node, value_node = node.value[index]
+    def flatten_mapping(self, node: MappingNode) -> MappingNode:
+        """ Process merge keys, normalize !!value. """
+        if not isinstance(node, MappingNode):
+            raise ConstructorError("only mappings are allowed in this context", node.start_mark)
+
+        if node._flattened:  # already done; probably an alias
+            return node
+
+        seen_keys: set[object] = set()
+        merge_sources: dict[int, Iterable] = {}
+
+        def seen(k: Node) -> bool:
+            """ Construct a key node, validate its hashability; return True if we've seen it before. """
+            reified_k = self._construct_key(node, k, deep=True)  # wasteful, but too many problems to approximate with tag + value
+
+            if reified_k not in seen_keys:
+                seen_keys.add(reified_k)
+                return False
+
+            return True
+
+        for index, (key_node, value_node) in enumerate(node.value):
             if key_node.tag == 'tag:yaml.org,2002:merge':
-                del node.value[index]
                 if isinstance(value_node, MappingNode):
-                    self.flatten_mapping(value_node)
-                    for pair in value_node.value:
-                        if (key_id := id(pair[0].value)) not in merge_key_ids:
-                            merge_key_ids.add(key_id)
-                            merge.append(pair)
+                    merge_sources[index] = self.flatten_mapping(value_node).value
                 elif isinstance(value_node, SequenceNode):
-                    for subnode in value_node.value:
-                        if not isinstance(subnode, MappingNode):
-                            raise ConstructorError("while constructing a mapping",
-                                    node.start_mark,
-                                    "expected a mapping for merging, but found %s"
-                                    % subnode.id, subnode.start_mark)
-                        self.flatten_mapping(subnode)
-                        for pair in subnode.value:
-                            if (key_id := id(pair[0].value)) not in merge_key_ids:
-                                merge_key_ids.add(key_id)
-                                merge.append(pair)
+                    merge_sources[index] = itertools.chain.from_iterable(self.flatten_mapping(subnode).value for subnode in value_node.value)
                 else:
-                    raise ConstructorError("while constructing a mapping", node.start_mark,
-                            "expected a mapping or list of mappings for merging, but found %s"
-                            % value_node.id, value_node.start_mark)
+                    raise ConstructorError("while constructing a mapping",
+                                           node.start_mark,
+                                           f"expected a mapping or list of mappings for merging, but found {value_node.id}",
+                                           value_node.start_mark)
+
+                continue  # don't track merge keys; they'll fail construction and are also allowed to be duplicated
             elif key_node.tag == 'tag:yaml.org,2002:value':
+                # assume this effectively kills !!value?
                 key_node.tag = 'tag:yaml.org,2002:str'
-                index += 1
-            else:
-                index += 1
-        if merge:
-            node.value = merge + node.value
+
+            seen(key_node)  # track source mapping key to short-circuit matching keys in merged mappings
+
+        # nuke all now-processed merge key definitions
+        for index in reversed(merge_sources):
+            node.value.pop(index)
+
+        # overlay merge sources with new keys
+        node.value.extend(kv for kv in itertools.chain.from_iterable(merge_sources.values()) if not seen(kv[0]))
+
+        # skip this process if we encounter this node instance later (e.g., via an alias)
+        node._flattened = True
+
+        return node  # return the node for fluent convenience
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, MappingNode):
