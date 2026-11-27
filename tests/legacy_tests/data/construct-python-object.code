@@ -2,6 +2,8 @@
 AnObject(1, 'two', [3,3,3]),
 AnInstance(1, 'two', [3,3,3]),
 
+NestedOuterObject.NestedInnerObject1.NestedInnerObject2.NestedInnerObject3('hi mom'),
+
 AnObject(1, 'two', [3,3,3]),
 AnInstance(1, 'two', [3,3,3]),
 
