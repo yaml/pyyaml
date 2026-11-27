@@ -1,5 +1,6 @@
 
 class Node(object):
+    id = None
     def __init__(self, tag, value, start_mark, end_mark):
         self.tag = tag
         self.value = value
@@ -21,6 +22,12 @@ class Node(object):
         #        value = repr(value)
         value = repr(value)
         return '%s(tag=%r, value=%s)' % (self.__class__.__name__, self.tag, value)
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return False
+        return self.tag==other.tag and self.value==other.value and self.id==other.id
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class ScalarNode(Node):
     id = 'scalar'
