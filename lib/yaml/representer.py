@@ -217,6 +217,14 @@ class SafeRepresenter(BaseRepresenter):
         return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
 
     def represent_datetime(self, data):
+        offset = data.utcoffset()
+        if offset is not None and offset % datetime.timedelta(minutes=1):
+            # YAML timestamps cannot express sub-minute timezone offsets.
+            try:
+                data = data.astimezone(datetime.timezone.utc)
+            except OverflowError as exc:
+                raise RepresenterError(
+                    "cannot represent datetime outside UTC range", data) from exc
         value = data.isoformat(' ')
         return self.represent_scalar('tag:yaml.org,2002:timestamp', value)
 
