@@ -5,7 +5,11 @@ __all__ = ['BaseRepresenter', 'SafeRepresenter', 'Representer',
 from .error import *
 from .nodes import *
 
-import datetime, copyreg, types, base64, collections
+import datetime, copyreg, types, base64, collections, sys
+
+if sys.version_info >= (3, 11):
+    from enum import IntEnum, StrEnum
+
 
 class RepresenterError(YAMLError):
     pass
@@ -33,6 +37,9 @@ class BaseRepresenter:
     def represent_data(self, data):
         if self.ignore_aliases(data):
             self.alias_key = None
+            if sys.version_info >= (3, 11):
+                if isinstance(data, (IntEnum, StrEnum)):
+                    data = data.value
         else:
             self.alias_key = id(data)
         if self.alias_key is not None:
