@@ -233,7 +233,7 @@ class SafeRepresenter(BaseRepresenter):
 SafeRepresenter.add_representer(type(None),
         SafeRepresenter.represent_none)
 
-SafeRepresenter.add_representer(str,
+SafeRepresenter.add_multi_representer(str,
         SafeRepresenter.represent_str)
 
 SafeRepresenter.add_representer(bytes,
