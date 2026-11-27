@@ -571,8 +571,8 @@ class Emitter:
                     chunks.append(prefix[start:end])
                 start = end = end+1
                 data = ch.encode('utf-8')
-                for ch in data:
-                    chunks.append('%%%02X' % ord(ch))
+                for byte in data:
+                    chunks.append('%%%02X' % byte)
         if start < end:
             chunks.append(prefix[start:end])
         return ''.join(chunks)
