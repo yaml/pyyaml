@@ -85,7 +85,7 @@ def test_implicit_resolver(data_filename, skip_filename, verbose=False):
         # Test loading
         try:
             loaded = yaml.safe_load(input)
-        except:
+        except Exception:
             print("Error:", sys.exc_info()[0], '(', sys.exc_info()[1], ')')
             fail+=1
             _fail(input, test)
