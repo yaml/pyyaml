@@ -50,7 +50,7 @@ To test with a specific Python version:
 * For more information, check the
   [PyYAML homepage](https://github.com/yaml/pyyaml).
 
-* [PyYAML tutorial and reference](http://pyyaml.org/wiki/PyYAMLDocumentation).
+* [PyYAML tutorial and reference](https://pyyaml.org/wiki/PyYAMLDocumentation).
 
 * Discuss PyYAML with the maintainers on
   Matrix at https://matrix.to/#/#pyyaml:yaml.io or
