@@ -88,8 +88,11 @@ class Composer:
     def compose_scalar_node(self, anchor):
         event = self.get_event()
         tag = event.tag
-        if tag is None or tag == '!':
+        if tag is None:
             tag = self.resolve(ScalarNode, event.value, event.implicit)
+        elif tag == '!':
+            # The non-specific tag "!" resolves to str for scalars.
+            tag = 'tag:yaml.org,2002:str'
         node = ScalarNode(tag, event.value,
                 event.start_mark, event.end_mark, style=event.style)
         if anchor is not None:
