@@ -1151,6 +1151,9 @@ cdef class CEmitter:
         if yaml_emitter_emit(&self.emitter, &event) == 0:
             error = self._emitter_error()
             raise error
+        if event_object.__class__ is StreamEndEvent:
+            if hasattr(self.stream, 'flush'):
+                self.stream.flush()
 
     def open(self):
         cdef yaml_event_t event
@@ -1186,6 +1189,8 @@ cdef class CEmitter:
                 error = self._emitter_error()
                 raise error
             self.closed = 1
+            if hasattr(self.stream, 'flush'):
+                self.stream.flush()
 
     def serialize(self, node):
         cdef yaml_event_t event
