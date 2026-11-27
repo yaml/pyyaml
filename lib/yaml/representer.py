@@ -225,6 +225,11 @@ class SafeRepresenter(BaseRepresenter):
             state = data.__getstate__()
         else:
             state = data.__dict__.copy()
+        if state is None:
+            # object.__getstate__() returns None for an instance with
+            # no member variables (empty __dict__); represent it as an
+            # empty mapping instead of failing in represent_mapping.
+            state = {}
         return self.represent_mapping(tag, state, flow_style=flow_style)
 
     def represent_undefined(self, data):
