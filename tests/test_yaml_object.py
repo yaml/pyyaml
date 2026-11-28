@@ -114,3 +114,50 @@ def test_yaml_object_with_slots():
     loaded_populated = yaml.safe_load(dumped_populated)
     assert isinstance(loaded_populated, SlottedValueObj)
     assert loaded_populated.value == 42
+
+
+@pytest.mark.parametrize("Dumper,Loader", dumper_loader_pairs())
+def test_slotted_yaml_object_roundtrip_without_setstate(Dumper, Loader):
+    class SlottedNoDictEmpty(yaml.YAMLObject):
+        yaml_tag = "!SlottedNoDictEmpty"
+        yaml_loader = Loader
+        yaml_dumper = Dumper
+        __slots__ = ()
+
+        def __eq__(self, other):
+            return isinstance(other, SlottedNoDictEmpty)
+
+    empty_obj = SlottedNoDictEmpty()
+    dumped_empty = yaml.dump(empty_obj, Dumper=Dumper)
+    assert dumped_empty == "!SlottedNoDictEmpty {}\n"
+    loaded_empty = yaml.load(dumped_empty, Loader=Loader)
+    assert loaded_empty == empty_obj
+    assert not hasattr(loaded_empty, "__dict__")
+
+    class SlottedNoDictPopulated(yaml.YAMLObject):
+        yaml_tag = "!SlottedNoDictPopulated"
+        yaml_loader = Loader
+        yaml_dumper = Dumper
+        __slots__ = ("a", "b")
+
+        def __init__(self, a=None, b=None):
+            self.a = a
+            self.b = b
+
+        def __eq__(self, other):
+            return (
+                isinstance(other, SlottedNoDictPopulated)
+                and getattr(self, "a", None) == getattr(other, "a", None)
+                and getattr(self, "b", None) == getattr(other, "b", None)
+            )
+
+    pop_obj = SlottedNoDictPopulated("hello", 123)
+    dumped_pop = yaml.dump(pop_obj, Dumper=Dumper)
+    assert "a: hello" in dumped_pop
+    assert "b: 123" in dumped_pop
+    loaded_pop = yaml.load(dumped_pop, Loader=Loader)
+    assert loaded_pop == pop_obj
+    assert loaded_pop.a == "hello"
+    assert loaded_pop.b == 123
+    assert not hasattr(loaded_pop, "__dict__")
+

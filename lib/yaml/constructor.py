@@ -424,7 +424,11 @@ class SafeConstructor(BaseConstructor):
             data.__setstate__(state)
         else:
             state = self.construct_mapping(node)
-            data.__dict__.update(state)
+            if hasattr(data, '__dict__'):
+                data.__dict__.update(state)
+            else:
+                for key, value in state.items():
+                    setattr(data, key, value)
 
     def construct_undefined(self, node):
         raise ConstructorError(None, None,
